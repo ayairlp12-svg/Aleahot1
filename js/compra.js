@@ -447,10 +447,13 @@ async function cargarDatosCompletosEnBackground(endpoint) {
 /**
  * ⭐ OPTIMIZACIÓN: Actualizar SOLO los boletos visibles sin limpiar el grid
  * Esto evita que se reinicie el scroll cuando se actualiza el estado de boletos
- * OPTIMIZADO: IntersectionObserver con fallback para Safari iOS
+ * OPTIMIZADO: IntersectionObserver con fallback para Safari (no tiene requestIdleCallback)
  */
 function actualizarEstadoBoletosVisibles() {
-    requestIdleCallback(() => {
+    // Polyfill para Safari que no tiene requestIdleCallback
+    const idleCallback = typeof requestIdleCallback !== 'undefined' ? requestIdleCallback : setTimeout;
+    
+    idleCallback(() => {
         const grid = document.getElementById('numerosGrid');
         if (!grid) return;
         
@@ -521,7 +524,7 @@ function actualizarEstadoBoletosVisibles() {
         // Observar todos los botones
         const botones = grid.querySelectorAll('button[data-numero]');
         botones.forEach(btn => observer.observe(btn));
-    }, { timeout: 2000 }); // Timeout para no bloquear
+    }); // Usar solo el callback, sin opciones (Safari compatible)
 }
 
 function inicializarMaquinaSuerteMejorada() {
