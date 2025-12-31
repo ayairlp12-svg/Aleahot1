@@ -2470,9 +2470,55 @@ app.get('/api/public/ordenes-stats', async (req, res) => {
  * - "sold": boletos en estado 'vendido' (ya pagados y confirmados)
  * - "reserved": boletos en estado 'reservado' (en orden pendiente o con comprobante)
  * 
- * OPTIMIZADO: Devuelve rangos comprimidos en lugar de arrays enormes
- * Esto reduce tamaño de respuesta en 90%+ para móviles
+ * SIN CACHE: Siempre devuelve datos frescos directamente de BD para sincronización 100%
+ * Esta es la fuente única de verdad para UI
  */
+
+/**
+ * GET /api/public/boletos/stats
+ * ⚡ ULTRA-RÁPIDO: Solo conteos, sin arrays - para cargar disponibilidad al instante
+ * Devuelve en < 50ms
+ */
+app.get('/api/public/boletos/stats', async (req, res) => {
+    try {
+        const startTime = Date.now();
+
+        // ULTRA RÁPIDO: Solo contar, no traer datos
+        const connection = await db.raw(`
+            SELECT 
+                COUNT(*) FILTER (WHERE estado = 'vendido') as vendidos,
+                COUNT(*) FILTER (WHERE estado = 'reservado') as reservados
+            FROM boletos_estado
+        `);
+        
+        const result = connection.rows && connection.rows[0] ? connection.rows[0] : { vendidos: 0, reservados: 0 };
+        const vendidos = parseInt(result.vendidos) || 0;
+        const reservados = parseInt(result.reservados) || 0;
+        const disponibles = 60000 - vendidos - reservados;
+        const queryTime = Date.now() - startTime;
+
+        return res.json({
+            success: true,
+            vendidos: vendidos,
+            reservados: reservados,
+            disponibles: disponibles,
+            total: 60000,
+            queryTime: queryTime
+        });
+
+    } catch (error) {
+        console.error('[PublicBoletoStats] Error:', error.message);
+        return res.status(500).json({
+            success: false,
+            message: 'Error al obtener estadísticas',
+            vendidos: 0,
+            reservados: 0,
+            disponibles: 60000,
+            total: 60000
+        });
+    }
+});
+
 app.get('/api/public/boletos', async (req, res) => {
     try {
         const startTime = Date.now();

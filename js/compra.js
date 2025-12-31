@@ -229,11 +229,53 @@ async function inicializarSistemaCompra() {
 
 /**
  * Fetch de boletos vendidos/apartados desde backend público
+ * OPTIMIZADO: 2-STAGE LOADING
+ * Stage 1: Ultra-rápido /api/public/boletos/stats (< 50ms) - muestra conteo
+ * Stage 2: Background /api/public/boletos - carga grid sin bloquear
+ * 
  * Sincroniza disponibilidad en tiempo real
  */
 async function cargarBoletosPublicos() {
     try {
-        // ⭐ MOSTRAR LOADING INDICATOR EN LA PRIMERA CARGA
+        let endpoint = (window.rifaplusConfig && window.rifaplusConfig.backend && window.rifaplusConfig.backend.apiBase) ? window.rifaplusConfig.backend.apiBase : 'http://localhost:3000';
+        // Normalizar endpoint para evitar segmentos duplicados como `/api/api/...`
+        endpoint = String(endpoint).replace(/\/+$/,''); // Remover slashes finales
+
+        // ⚡ STAGE 1: ULTRA-RÁPIDO STATS (< 50ms)
+        // Mostrar disponibilidad INSTANTÁNEAMENTE
+        console.debug('📊 Cargando stats de disponibilidad...');
+        
+        try {
+            const statsResponse = await fetch(`${endpoint}/api/public/boletos/stats`, {
+                signal: AbortSignal.timeout(2000) // 2 segundos timeout
+            });
+            
+            if (statsResponse.ok) {
+                const statsData = await statsResponse.json();
+                
+                if (statsData.success && statsData.data) {
+                    // ✅ Actualizar UI INMEDIATAMENTE con conteos
+                    const availabilityNote = document.getElementById('availabilityNote');
+                    if (availabilityNote) {
+                        availabilityNote.textContent = `${statsData.data.disponibles} boletos disponibles`;
+                        availabilityNote.style.display = 'inline-block';
+                        console.debug(`✅ INSTANTÁNEO: ${statsData.data.disponibles} boletos disponibles (${statsData.queryTime}ms)`);
+                    }
+                    
+                    // Actualizar estado global para mostrar porcentaje
+                    if (window.rifaplusConfig && window.rifaplusConfig.estado) {
+                        window.rifaplusConfig.estado.boletosVendidos = statsData.data.vendidos;
+                        window.rifaplusConfig.estado.boletosApartados = statsData.data.reservados;
+                        window.rifaplusConfig.estado.boletosDisponibles = statsData.data.disponibles;
+                    }
+                }
+            }
+        } catch (error) {
+            console.debug('⚠️  Error cargando stats (no crítico):', error.message);
+        }
+        
+        // 🔄 STAGE 2: BACKGROUND - Cargar datos completos SIN BLOQUEAR
+        // Si es la primera carga, mostrar loading
         if (!window.rifaplusBoletosLoaded) {
             const loadingEl = document.getElementById('loadingEstadoBoletos');
             const gridEl = document.getElementById('numerosGrid');
@@ -243,23 +285,40 @@ async function cargarBoletosPublicos() {
                 gridEl.setAttribute('data-loading', 'true');
                 gridEl.style.pointerEvents = 'none';
             }
+            
+            // ⭐ BLOQUEAR AGREGAR AL CARRITO DURANTE LA CARGA
+            window.rifaplusBoletosLoading = true;
+            if (typeof controlarEstadoBotonesLoQuiero === 'function') {
+                controlarEstadoBotonesLoQuiero();
+            }
         }
         
-        // ⭐ BLOQUEAR AGREGAR AL CARRITO DURANTE LA CARGA
-        window.rifaplusBoletosLoading = true;
-        if (typeof controlarEstadoBotonesLoQuiero === 'function') {
-            controlarEstadoBotonesLoQuiero();
-        }
+        // Cargar full data en background (baja prioridad)
+        cargarDatosCompletosEnBackground(endpoint);
+        
+        return true;
+        
+    } catch (error) {
+        console.error('Error en cargarBoletosPublicos:', error);
+        return false;
+    }
+}
 
-        let endpoint = (window.rifaplusConfig && window.rifaplusConfig.backend && window.rifaplusConfig.backend.apiBase) ? window.rifaplusConfig.backend.apiBase : 'http://localhost:3000';
-        // Normalizar endpoint para evitar segmentos duplicados como `/api/api/...`
-        endpoint = String(endpoint).replace(/\/+$/,''); // Remover slashes finales
-        // ⭐ CRITICAL: Siempre pedir lista completa para que el frontend pueda mostrar correctamente
-        const respuesta = await fetch(`${endpoint}/api/public/boletos?listCompleta=true`);
+/**
+ * Helper: Carga datos completos en background sin bloquear UI
+ * Esta función se ejecuta de forma asincrónica, puede tomar tiempo
+ */
+async function cargarDatosCompletosEnBackground(endpoint) {
+    try {
+        console.debug('📦 Iniciando carga en background de datos completos...');
+        
+        const respuesta = await fetch(`${endpoint}/api/public/boletos?listCompleta=true`, {
+            priority: 'low' // Baja prioridad en navegadores que lo soporten
+        });
 
         // Manejar códigos de estado explícitos primero
         if (respuesta.status === 429) {
-            // Rate-limited by server. Don't spam requests; schedule backoff and return
+            // Rate-limited by server
             console.warn('cargarBoletosPublicos: servidor devolvió 429 Too Many Requests');
             window.rifaplusBoletosLoaded = false;
             window.rifaplusBoletosLoading = false;
@@ -318,6 +377,8 @@ async function cargarBoletosPublicos() {
                 gridEl.style.pointerEvents = 'auto';
             }
             
+            console.debug(`✅ Datos completos cargados: ${sold.length} vendidos, ${reserved.length} reservados`);
+
             // ⭐ OPTIMIZACIÓN: En lugar de re-renderizar TODO el grid (que reinicia scroll),
             // solo actualizar los botones visibles con su nuevo estado
             actualizarEstadoBoletosVisibles();

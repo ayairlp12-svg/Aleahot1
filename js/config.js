@@ -651,8 +651,8 @@ window.rifaplusConfig.inicializar = async function() {
 
 /**
  * Sincroniza estado con el backend
- * Implementa manejo robusto de errores 429 (Too Many Requests)
- * TIMEOUT REAL con AbortController
+ * OPTIMIZADO: Usa /api/public/boletos/stats para respuesta ULTRA-RÁPIDA (< 50ms)
+ * Luego carga full data en background sin bloquear UI
  * 
  * NOTA: Esta función es NO-BLOQUEANTE
  * Si falla, el sistema sigue funcionando con último estado conocido
@@ -662,47 +662,53 @@ window.rifaplusConfig.sincronizarEstadoBackend = async function() {
     const controller = new AbortController();
     
     try {
-        // 🚨 TIMEOUT REAL: AbortController
+        // ⚡ STAGE 1: ULTRA-RÁPIDO - Solo conteos (< 50ms response)
         timeoutId = setTimeout(() => {
             controller.abort();
-        }, 5000); // 5 segundos timeout
+        }, 2000); // 2 segundos timeout para stats
         
-        // Obtener estado actual de boletos
-        const respuesta = await fetch(`${this.backend.apiBase}/api/public/boletos`, {
-            signal: controller.signal // ✅ Cancela request si timeout
+        const statsResponse = await fetch(`${this.backend.apiBase}/api/public/boletos/stats`, {
+            signal: controller.signal
         });
         
         clearTimeout(timeoutId);
         
-        // Manejar específicamente 429 (Too Many Requests)
-        if (respuesta.status === 429) {
-            console.debug('⏳ Rate limit en /api/public/boletos (429)');
-            return false;
-        }
-        
-        if (respuesta.ok) {
-            const datos = await respuesta.json();
+        if (statsResponse.ok) {
+            const statsData = await statsResponse.json();
             
-            if (datos.success) {
-                this.estado.boletosVendidos = datos.data.sold.length;
-                this.estado.boletosApartados = datos.data.reserved.length;
-                this.estado.boletosDisponibles = this.rifa.totalBoletos - (this.estado.boletosVendidos + this.estado.boletosApartados);
+            if (statsData.success) {
+                // ✅ Actualizar estado INSTANTÁNEAMENTE con conteos
+                this.estado.boletosVendidos = statsData.data.vendidos;
+                this.estado.boletosApartados = statsData.data.reservados;
+                this.estado.boletosDisponibles = statsData.data.disponibles;
                 this.estado.porcentajeVendido = (this.estado.boletosVendidos / this.rifa.totalBoletos) * 100;
                 this.estado.ultimaActualizacion = new Date();
                 
-                // Emitir evento de actualización
+                // Emitir evento de actualización INMEDIATAMENTE
                 this.emitirEvento('estadoActualizado', this.estado);
-                return true;
+                console.debug('✅ Estado actualizado RÁPIDAMENTE desde /stats:', statsData.data);
+                
+                // 🔄 STAGE 2: BACKGROUND - Cargar datos completos sin bloquear
+                // Esto es para el grid/ruletazo, pero no detiene el flujo principal
+                this._cargarDatosCompletosEnBackground();
             }
+        } else if (statsResponse.status === 429) {
+            console.debug('⏳ Rate limit en /api/public/boletos/stats (429)');
+            return false;
         } else {
-            console.debug(`ℹ️  Estado: ${respuesta.status}`);
+            console.debug(`ℹ️  Stats Estado: ${statsResponse.status}`);
+            // Fallback: intentar cargar full data
+            this._cargarDatosCompletosEnBackground();
         }
+        
+        return true;
     } catch (error) {
         // Distinguir entre timeout y otros errores
         if (error.name === 'AbortError') {
-            console.debug('⏱️  Timeout en sincronización de estado (5s). Usando local');
+            console.debug('⏱️  Timeout en /stats (2s). Intentando full data en background');
+            this._cargarDatosCompletosEnBackground();
         } else {
-            console.debug('ℹ️  Error sincronizando estado (usando local):', error.message);
+            console.debug('ℹ️  Error sincronizando estado:', error.message);
         }
     } finally {
         // Limpiar timeout si still running
@@ -712,6 +718,29 @@ window.rifaplusConfig.sincronizarEstadoBackend = async function() {
     }
     
     return false;
+};
+
+/**
+ * Helper: Carga datos completos en background sin bloquear UI
+ * Se ejecuta asincronamente, no importa si toma tiempo
+ */
+window.rifaplusConfig._cargarDatosCompletosEnBackground = async function() {
+    try {
+        const respuesta = await fetch(`${this.backend.apiBase}/api/public/boletos`, {
+            priority: 'low' // Baja prioridad en navegadores que lo soporten
+        });
+        
+        if (respuesta.ok) {
+            const datos = await respuesta.json();
+            if (datos.success && datos.data) {
+                console.debug('✅ Datos completos cargados en background');
+                // Aquí podrían almacenarse en IndexedDB o memoria local
+                // para cuando se necesite renderizar grid/ruletazo
+            }
+        }
+    } catch (error) {
+        console.debug('ℹ️  Error cargando datos en background (no crítico):', error.message);
+    }
 };
 
 /**
