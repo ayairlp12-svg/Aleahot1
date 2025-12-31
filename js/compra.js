@@ -355,14 +355,13 @@ async function cargarDatosCompletosEnBackground(endpoint) {
 
         // ⭐ CRITICAL VALIDATION: Verificar que los datos no sean arrays vacíos
         // Si la API devuelve arrays vacíos, usar datos cacheados o arrays vacíos
-        let sold = Array.isArray(json.data?.sold) ? json.data.sold.map(Number) : [];
-        let reserved = Array.isArray(json.data?.reserved) ? json.data.reserved.map(Number) : [];
+        let sold = Array.isArray(json.data?.sold) ? json.data.sold : [];
+        let reserved = Array.isArray(json.data?.reserved) ? json.data.reserved : [];
 
-        // ⭐ SIEMPRE usar datos del backend (sin failsafe que mantiene datos antiguos)
-        // Esto asegura que después de liberar boletos, se muestren correctamente
-        window.rifaplusSoldNumbers = sold;
-        window.rifaplusReservedNumbers = reserved;
+        // 🚀 OPTIMIZACIÓN MÓVIL: Procesar boletos SIN BLOQUEAR UI usando Web Worker
+        procesarBoletosEnBackground(sold, reserved);
         
+
         if (json && json.success) {
             // Indicar que los datos de disponibilidad ya se cargaron
             window.rifaplusBoletosLoaded = true;
@@ -424,6 +423,7 @@ async function cargarDatosCompletosEnBackground(endpoint) {
 /**
  * ⭐ OPTIMIZACIÓN: Actualizar SOLO los boletos visibles sin limpiar el grid
  * Esto evita que se reinicie el scroll cuando se actualiza el estado de boletos
+ * OPTIMIZADO: Solo actualiza botones visibles en pantalla usando IntersectionObserver
  */
 function actualizarEstadoBoletosVisibles() {
     requestIdleCallback(() => {
@@ -433,27 +433,39 @@ function actualizarEstadoBoletosVisibles() {
         const soldSet = new Set((window.rifaplusSoldNumbers && Array.isArray(window.rifaplusSoldNumbers)) ? window.rifaplusSoldNumbers : []);
         const reservedSet = new Set((window.rifaplusReservedNumbers && Array.isArray(window.rifaplusReservedNumbers)) ? window.rifaplusReservedNumbers : []);
         
-        // Actualizar solo los botones que existen en el DOM (sin limpiar nada)
-        const botones = grid.querySelectorAll('button[data-numero]');
-        botones.forEach(btn => {
-            const numero = parseInt(btn.getAttribute('data-numero'), 10);
-            
-            // Remover clases antiguas
-            btn.classList.remove('sold', 'reserved');
-            btn.disabled = false;
-            btn.title = '';
-            
-            // Aplicar nuevas clases según estado actual
-            if (soldSet.has(numero)) {
-                btn.classList.add('sold');
-                btn.disabled = true;
-                btn.title = 'Vendido';
-            } else if (reservedSet.has(numero)) {
-                btn.classList.add('reserved');
-                btn.disabled = true;
-                btn.title = 'Apartado';
-            }
+        // 🚀 OPTIMIZACIÓN: Usar IntersectionObserver para solo actualizar lo visible
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                const btn = entry.target;
+                if (!entry.isIntersecting) return; // Solo procesar si está visible
+                
+                const numero = parseInt(btn.getAttribute('data-numero'), 10);
+                
+                // Remover clases antiguas
+                btn.classList.remove('sold', 'reserved');
+                btn.disabled = false;
+                btn.title = '';
+                
+                // Aplicar nuevas clases según estado actual
+                if (soldSet.has(numero)) {
+                    btn.classList.add('sold');
+                    btn.disabled = true;
+                    btn.title = 'Vendido';
+                } else if (reservedSet.has(numero)) {
+                    btn.classList.add('reserved');
+                    btn.disabled = true;
+                    btn.title = 'Apartado';
+                }
+            });
+        }, { 
+            root: grid,
+            rootMargin: '100px', // Precarga 100px antes de ser visible
+            threshold: 0.1 
         });
+        
+        // Observar todos los botones
+        const botones = grid.querySelectorAll('button[data-numero]');
+        botones.forEach(btn => observer.observe(btn));
     }, { timeout: 2000 }); // Timeout para no bloquear
 }
 
@@ -1861,6 +1873,63 @@ function controlarEstadoBotonesLoQuiero() {
 
 // El carrito es inicializado y gestionado completamente por carrito-global.js
 // que se carga ANTES de compra.js en el HEAD de compra.html
+
+/**
+ * 🚀 OPTIMIZACIÓN MÓVIL: Procesar boletos en Web Worker
+ * No bloquea el main thread, permite que la UI sea responsive
+ */
+let boletosWorker = null;
+
+function procesarBoletosEnBackground(sold, reserved) {
+    // Inicializar worker solo una vez
+    if (!boletosWorker && typeof Worker !== 'undefined') {
+        try {
+            boletosWorker = new Worker('js/boletos-processor.worker.js');
+            
+            boletosWorker.onmessage = function(event) {
+                if (event.data.success) {
+                    // Worker procesó los datos, guardar en ventana global
+                    window.rifaplusSoldNumbers = event.data.soldSet;
+                    window.rifaplusReservedNumbers = event.data.reservedSet;
+                    console.debug(`✅ Web Worker: ${event.data.totalProcessed} boletos procesados sin bloquear UI`);
+                    
+                    // Actualizar grid solo los elementos visibles
+                    actualizarEstadoBoletosVisibles();
+                } else {
+                    console.warn('⚠️  Error en Web Worker:', event.data.error);
+                    // Fallback: procesar en main thread (lento pero funciona)
+                    window.rifaplusSoldNumbers = sold.map(Number);
+                    window.rifaplusReservedNumbers = reserved.map(Number);
+                }
+            };
+        } catch (error) {
+            console.warn('⚠️  Web Workers no disponibles, procesando en main thread (lento)');
+            // Fallback para navegadores sin Web Workers
+            window.rifaplusSoldNumbers = sold.map(Number);
+            window.rifaplusReservedNumbers = reserved.map(Number);
+        }
+    }
+    
+    // Enviar datos al worker
+    if (boletosWorker) {
+        try {
+            boletosWorker.postMessage({
+                action: 'process',
+                sold: sold,
+                reserved: reserved
+            });
+        } catch (error) {
+            console.warn('⚠️  Error enviando datos a worker:', error.message);
+            // Fallback inmediato
+            window.rifaplusSoldNumbers = sold.map(Number);
+            window.rifaplusReservedNumbers = reserved.map(Number);
+        }
+    } else {
+        // Si Worker no disponible, procesar aqui (pero lentamente)
+        window.rifaplusSoldNumbers = sold.map(Number);
+        window.rifaplusReservedNumbers = reserved.map(Number);
+    }
+}
 
 // Exponer funciones globalmente para que otras páginas/módulos puedan llamarlas
 window.cargarBoletosPublicos = cargarBoletosPublicos;
