@@ -239,63 +239,11 @@ function iniciarActualizacionPeriodicaBoletos() {
     // Recargar boletos cada 30 segundos (agresivo pero necesario para detectar cancelaciones)
     setInterval(async () => {
         try {
-            let endpoint = (window.rifaplusConfig?.backend?.apiBase) ? window.rifaplusConfig.backend.apiBase : 'http://localhost:3000';
-            endpoint = String(endpoint).replace(/\/+$/, '');
-
-            console.log(`🔄 [PeriodicUpdate] Recargando disponibilidad...`);
-
-            const response = await fetch(`${endpoint}/api/public/boletos?t=${Date.now()}`, {
-                priority: 'low',
-                cache: 'no-store'
-            });
-
-            if (!response.ok) {
-                console.warn(`⚠️  [PeriodicUpdate] Error: ${response.status}`);
-                return;
-            }
-
-            const json = await response.json();
-            if (!json.success || !json.data) {
-                console.warn(`⚠️  [PeriodicUpdate] Respuesta inválida`, json);
-                return;
-            }
-
-            let sold = Array.isArray(json.data.sold) ? json.data.sold : [];
-            let reserved = Array.isArray(json.data.reserved) ? json.data.reserved : [];
-
-            const soldActual = window.rifaplusSoldNumbers || [];
-            const reservadoActual = window.rifaplusReservedNumbers || [];
-
-            // COMPARAR: Si los datos cambiaron (cualquier diferencia)
-            if (JSON.stringify(sold.sort((a,b)=>a-b)) !== JSON.stringify(soldActual.sort((a,b)=>a-b)) ||
-                JSON.stringify(reserved.sort((a,b)=>a-b)) !== JSON.stringify(reservadoActual.sort((a,b)=>a-b))) {
-                
-                console.log(`✅ [PeriodicUpdate] CAMBIOS DETECTADOS`);
-                console.log(`   - Vendidos: ${soldActual.length} → ${sold.length}`);
-                console.log(`   - Reservados: ${reservadoActual.length} → ${reserved.length}`);
-
-                // ACTUALIZAR EN MEMORIA
-                window.rifaplusSoldNumbers = sold;
-                window.rifaplusReservedNumbers = reserved;
-
-                // ACTUALIZAR STATS EN CONFIG
-                if (window.rifaplusConfig?.estado) {
-                    const total = 60000;
-                    window.rifaplusConfig.estado.boletosVendidos = sold.length;
-                    window.rifaplusConfig.estado.boletosApartados = reserved.length;
-                    window.rifaplusConfig.estado.boletosDisponibles = total - sold.length - reserved.length;
-                }
-
-                // ACTUALIZAR GRID INMEDIATAMENTE
-                console.log(`🎨 [PeriodicUpdate] Re-renderizando grid...`);
-                actualizarEstadoBoletosVisibles();
-
-                // ACTUALIZAR DASHBOARD (si existe)
-                if (typeof actualizarDashboardStats === 'function') {
-                    console.log(`📊 [PeriodicUpdate] Actualizando dashboard...`);
-                    actualizarDashboardStats();
-                }
-            }
+            console.log(`🔄 [PeriodicUpdate] Recargate completo de boletos...`);
+            
+            // Simplemente llamar a cargarBoletosPublicos() que ya hace todo lo necesario
+            await cargarBoletosPublicos();
+            
         } catch (error) {
             console.error(`❌ [PeriodicUpdate] Error:`, error.message);
         }
