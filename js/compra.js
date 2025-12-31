@@ -253,13 +253,16 @@ async function cargarBoletosPublicos() {
             if (statsResponse.ok) {
                 const statsData = await statsResponse.json();
                 
-                if (statsData.success && statsData.data) {
+                if (statsData.success) {
+                    // Soportar ambos formatos: con y sin wrapper 'data'
+                    const data = statsData.data || statsData;
+                    
                     // ✅ Actualizar UI INMEDIATAMENTE con conteos
                     const availabilityNote = document.getElementById('availabilityNote');
                     if (availabilityNote) {
-                        availabilityNote.textContent = `${statsData.data.disponibles} boletos disponibles`;
+                        availabilityNote.textContent = `${data.disponibles} boletos disponibles`;
                         availabilityNote.style.display = 'inline-block';
-                        console.debug(`✅ INSTANTÁNEO: ${statsData.data.disponibles} boletos disponibles (${statsData.queryTime}ms)`);
+                        console.debug(`✅ INSTANTÁNEO: ${data.disponibles} boletos disponibles (${data.queryTime}ms)`);
                     }
                     
                     // Actualizar estado global para mostrar porcentaje

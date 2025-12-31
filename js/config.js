@@ -678,15 +678,17 @@ window.rifaplusConfig.sincronizarEstadoBackend = async function() {
             
             if (statsData.success) {
                 // ✅ Actualizar estado INSTANTÁNEAMENTE con conteos
-                this.estado.boletosVendidos = statsData.data.vendidos;
-                this.estado.boletosApartados = statsData.data.reservados;
-                this.estado.boletosDisponibles = statsData.data.disponibles;
+                // Soportar ambos formatos: con y sin wrapper 'data'
+                const data = statsData.data || statsData;
+                this.estado.boletosVendidos = data.vendidos;
+                this.estado.boletosApartados = data.reservados;
+                this.estado.boletosDisponibles = data.disponibles;
                 this.estado.porcentajeVendido = (this.estado.boletosVendidos / this.rifa.totalBoletos) * 100;
                 this.estado.ultimaActualizacion = new Date();
                 
                 // Emitir evento de actualización INMEDIATAMENTE
                 this.emitirEvento('estadoActualizado', this.estado);
-                console.debug('✅ Estado actualizado RÁPIDAMENTE desde /stats:', statsData.data);
+                console.debug('✅ Estado actualizado RÁPIDAMENTE desde /stats:', data);
                 
                 // 🔄 STAGE 2: BACKGROUND - Cargar datos completos sin bloquear
                 // Esto es para el grid/ruletazo, pero no detiene el flujo principal
