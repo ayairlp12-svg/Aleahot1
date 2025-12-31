@@ -61,45 +61,24 @@ async function sincronizarBoletoscanceladas() {
                     continue;
                 }
 
-                // Verificar estado actual de los boletos
-                const boletosActuales = await db('boletos_estado')
+                // Liberar TODOS los boletos (sin verificar estado previo)
+                // Solo actualizar los que existan en boletos_estado
+                const actualizados = await db('boletos_estado')
                     .whereIn('numero', boletos)
-                    .select('numero', 'estado', 'numero_orden');
+                    .update({
+                        estado: 'disponible',
+                        numero_orden: null,
+                        reservado_en: null,
+                        vendido_en: null,
+                        updated_at: new Date()
+                    });
 
-                const resumen = {
-                    disponible: 0,
-                    apartado: 0,
-                    vendido: 0,
-                    otros: 0
-                };
-
-                boletosActuales.forEach(b => {
-                    if (b.estado === 'disponible') resumen.disponible++;
-                    else if (b.estado === 'apartado') resumen.apartado++;
-                    else if (b.estado === 'vendido') resumen.vendido++;
-                    else resumen.otros++;
-                });
-
-                console.log(`\n📌 Orden ${orden.numero_orden} (${boletos.length} boletos)`);
-                console.log(`   Estado actual: Disponible=${resumen.disponible}, Apartado=${resumen.apartado}, Vendido=${resumen.vendido}, Otros=${resumen.otros}`);
-
-                // Si hay boletos NO disponibles, liberarlos
-                if (resumen.apartado > 0 || resumen.vendido > 0) {
-                    const actualizados = await db('boletos_estado')
-                        .whereIn('numero', boletos)
-                        .where('estado', '!=', 'disponible')
-                        .update({
-                            estado: 'disponible',
-                            numero_orden: null,
-                            reservado_en: null,
-                            vendido_en: null,
-                            updated_at: new Date()
-                        });
-
-                    console.log(`   ✅ Liberados ${actualizados} boletos de vuelta a DISPONIBLE`);
+                console.log(`\n📌 Orden ${orden.numero_orden}: ${boletos.length} boletos`);
+                if (actualizados > 0) {
+                    console.log(`   ✅ Liberados ${actualizados} boletos a DISPONIBLE`);
                     totalBoletosSincronizados += actualizados;
                 } else {
-                    console.log(`   ✓ Todos los boletos ya están en estado correcto`);
+                    console.log(`   ⊘ No se encontraron boletos para liberar`);
                 }
 
             } catch (error) {

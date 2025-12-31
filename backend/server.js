@@ -2455,7 +2455,7 @@ app.get('/api/public/ordenes-stats', async (req, res) => {
  * GET /api/public/boletos
  * ⚠️ CRÍTICO: Devuelve estado REAL DE BOLETOS directamente de boletos_estado
  * - "sold": boletos en estado 'vendido' (ya pagados y confirmados)
- * - "reserved": boletos en estado 'reservado' (en orden pendiente o con comprobante)
+ * - "reserved": boletos en estado 'apartado' (en orden pendiente o con comprobante)
  * 
  * SIN CACHE: Siempre devuelve datos frescos directamente de BD para sincronización 100%
  * Esta es la fuente única de verdad para UI
@@ -2469,17 +2469,17 @@ app.get('/api/public/boletos', async (req, res) => {
         const connection = await db.raw(`
             SELECT 
                 COUNT(*) FILTER (WHERE estado = 'vendido') as vendidos,
-                COUNT(*) FILTER (WHERE estado = 'reservado') as reservados
+                COUNT(*) FILTER (WHERE estado = 'apartado') as apartados
             FROM boletos_estado
         `);
         
-        const result = connection.rows && connection.rows[0] ? connection.rows[0] : { vendidos: 0, reservados: 0 };
+        const result = connection.rows && connection.rows[0] ? connection.rows[0] : { vendidos: 0, apartados: 0 };
         const vendidos = parseInt(result.vendidos) || 0;
-        const reservados = parseInt(result.reservados) || 0;
+        const apartados = parseInt(result.apartados) || 0;
 
         // Traer las listas reales SOLO si es crítico
         const boletosNoDisponibles = await db('boletos_estado')
-            .whereIn('estado', ['vendido', 'reservado'])
+            .whereIn('estado', ['vendido', 'apartado'])
             .select('numero', 'estado')
             .timeout(20000);
 
@@ -2489,11 +2489,11 @@ app.get('/api/public/boletos', async (req, res) => {
             .sort((a, b) => a - b);
         
         const reserved = boletosNoDisponibles
-            .filter(b => b.estado === 'reservado')
+            .filter(b => b.estado === 'apartado')
             .map(b => Number(b.numero))
             .sort((a, b) => a - b);
 
-        const disponibles = 60000 - vendidos - reservados;
+        const disponibles = 60000 - vendidos - apartados;
         const queryTime = Date.now() - startTime;
         
         const payload = {
@@ -2504,7 +2504,7 @@ app.get('/api/public/boletos', async (req, res) => {
             },
             stats: {
                 vendidos: vendidos,
-                reservados: reservados,
+                apartados: apartados,
                 disponibles: disponibles,
                 total: 60000,
                 queryTime: queryTime
@@ -2512,7 +2512,7 @@ app.get('/api/public/boletos', async (req, res) => {
         };
 
         if (queryTime > 1000 || Math.random() < 0.05) {
-            console.log(`[PublicBoletos] Sold: ${vendidos}, Reserved: ${reservados}, Time: ${queryTime}ms`);
+            console.log(`[PublicBoletos] Sold: ${vendidos}, Apartados: ${apartados}, Time: ${queryTime}ms`);
         }
 
         return res.json(payload);
@@ -2524,7 +2524,7 @@ app.get('/api/public/boletos', async (req, res) => {
             message: 'Error temporal',
             data: { sold: [], reserved: [] },
             stats: {
-                vendidos: 0, reservados: 0, disponibles: 60000, total: 60000
+                vendidos: 0, apartados: 0, disponibles: 60000, total: 60000
             }
         });
     }
