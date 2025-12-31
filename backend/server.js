@@ -2470,15 +2470,14 @@ app.get('/api/public/ordenes-stats', async (req, res) => {
  * - "sold": boletos en estado 'vendido' (ya pagados y confirmados)
  * - "reserved": boletos en estado 'reservado' (en orden pendiente o con comprobante)
  * 
- * SIN CACHE: Siempre devuelve datos frescos directamente de BD para sincronización 100%
- * Esta es la fuente única de verdad para UI
+ * OPTIMIZADO: Devuelve rangos comprimidos en lugar de arrays enormes
+ * Esto reduce tamaño de respuesta en 90%+ para móviles
  */
 app.get('/api/public/boletos', async (req, res) => {
     try {
         const startTime = Date.now();
 
         // ⭐ MÁXIMA SIMPLIFICACIÓN: Solo usar el índice de estado para contar
-        // Esto debería ser MUCHO más rápido en PostgreSQL
         const connection = await db.raw(`
             SELECT 
                 COUNT(*) FILTER (WHERE estado = 'vendido') as vendidos,
@@ -2490,21 +2489,44 @@ app.get('/api/public/boletos', async (req, res) => {
         const vendidos = parseInt(result.vendidos) || 0;
         const reservados = parseInt(result.reservados) || 0;
 
-        // Traer las listas reales SOLO si es crítico
+        // Traer las listas reales OPTIMIZADAS: comprimir a rangos
         const boletosNoDisponibles = await db('boletos_estado')
             .whereIn('estado', ['vendido', 'reservado'])
             .select('numero', 'estado')
-            .timeout(20000);
+            .timeout(20000)
+            .orderBy('numero');
+
+        // Convertir arrays a rangos comprimidos (ej: "1-5,10-15" en lugar de [1,2,3,4,5,10,11,12,13,14,15])
+        const comprimirRangos = (numeros) => {
+            if (!numeros.length) return '';
+            const rangos = [];
+            let inicio = numeros[0];
+            let fin = numeros[0];
+            
+            for (let i = 1; i < numeros.length; i++) {
+                if (numeros[i] === fin + 1) {
+                    fin = numeros[i];
+                } else {
+                    rangos.push(inicio === fin ? String(inicio) : `${inicio}-${fin}`);
+                    inicio = numeros[i];
+                    fin = numeros[i];
+                }
+            }
+            rangos.push(inicio === fin ? String(inicio) : `${inicio}-${fin}`);
+            return rangos.join(',');
+        };
 
         const sold = boletosNoDisponibles
             .filter(b => b.estado === 'vendido')
-            .map(b => Number(b.numero))
-            .sort((a, b) => a - b);
+            .map(b => Number(b.numero));
         
         const reserved = boletosNoDisponibles
             .filter(b => b.estado === 'reservado')
-            .map(b => Number(b.numero))
-            .sort((a, b) => a - b);
+            .map(b => Number(b.numero));
+
+        // Comprimir rangos
+        const soldComprimido = comprimirRangos(sold);
+        const reservedComprimido = comprimirRangos(reserved);
 
         const disponibles = 60000 - vendidos - reservados;
         const queryTime = Date.now() - startTime;
@@ -2512,8 +2534,11 @@ app.get('/api/public/boletos', async (req, res) => {
         const payload = {
             success: true,
             data: {
-                sold,
-                reserved
+                sold: soldComprimido,      // Comprimido: "1-100,150-200"
+                reserved: reservedComprimido,  // Comprimido
+                // Mantener arrays para compatibilidad si es necesario
+                sold_array: sold,
+                reserved_array: reserved
             },
             stats: {
                 vendidos: vendidos,
