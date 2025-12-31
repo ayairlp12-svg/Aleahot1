@@ -1,0 +1,2051 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' http://127.0.0.1:* http://localhost:*; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://fonts.googleapis.com https://cdn.sheetjs.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; connect-src 'self' http://127.0.0.1:* http://localhost:* https:; img-src 'self' data: https: http://127.0.0.1:* http://localhost:*;">
+    <title>Órdenes - Panel Admin</title>
+    <link rel="icon" href="images/logo.png" sizes="32x32">
+    <link rel="preload" as="image" href="images/logo.png" fetchpriority="high">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/admin-layout.css?v=20251221">
+    <link rel="stylesheet" href="css/styles.css?v=20251128">
+    <script>
+        (function limpiarCacheYFechas() {
+            ['rifaplus_fecha_sorteo','rifaplus_timestamp_sorteo','rifaplus_fecha_cierre'].forEach(k => localStorage.removeItem(k));
+        })();
+    </script>
+    <script src="js/config.js?v=20251228.15"></script>
+    <script src="js/theme-dynamic.js"></script>
+    <script src="js/admin-layout.js?v=20251228.15"></script>
+    <style>
+        :root {
+            --primary: #7C3AED;
+            --primary-dark: #5a2abf;
+            --primary-light: #F3E9FF;
+            --success: #31A24C;
+            --danger: #E4163A;
+            --warning: #B4740C;
+            --text-dark: #0A0E27;
+            --text-light: #65676B;
+            --text-lighter: #8A8D91;
+            --bg-light: #F0F2F5;
+            --bg-white: #FFFFFF;
+            --border-color: #CED0D4;
+            --divider: #E5E7EB;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', 'Ubuntu', sans-serif;
+            background: #F8F9FA;
+            color: var(--text-dark);
+            line-height: 1.5;
+            font-size: 13px;
+        }
+
+        /* ===== LOGIN ===== */
+        .login-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background: linear-gradient(135deg, #1877F2 0%, #1563DB 50%, #0A5CCC 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .login-box {
+            background: var(--bg-white);
+            padding: 2rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .login-logo {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 1rem;
+            border-radius: 0.75rem;
+            overflow: hidden;
+        }
+
+        .login-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .login-box h1 {
+            font-size: 1.75rem;
+            margin-bottom: 0.5rem;
+            text-align: center;
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        .login-subtitle {
+            text-align: center;
+            color: var(--text-light);
+            margin-bottom: 2rem;
+            font-size: 0.95rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            font-size: 0.9375rem;
+            transition: all 0.2s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(24, 119, 242, 0.1);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.9375rem;
+        }
+
+        .btn:hover:not(:disabled) {
+            background: var(--primary-dark);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .error {
+            color: var(--danger);
+            font-size: 0.9rem;
+            margin-top: 1rem;
+            padding: 0.75rem;
+            background: rgba(228, 22, 58, 0.1);
+            border-radius: 0.5rem;
+            display: none;
+            border-left: 4px solid var(--danger);
+        }
+
+        .error.show {
+            display: block;
+        }
+
+        /* ===== PAGE ===== */
+        .page {
+            display: none;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .page.active {
+            display: flex;
+        }
+
+        /* ===== HEADER ===== */
+        /* Estilos del header antiguo deshabilitados - usar admin-layout.css */
+        .header,
+        .header-content,
+        .header-left,
+        .header-right,
+        .logo-container,
+        .header-title {
+            display: none !important;
+        }
+
+        /* ===== CONTAINER ===== */
+        .container {
+            max-width: 100%;
+            margin: 0;
+            padding: 1.5rem 2rem;
+            flex: 1;
+            width: 100%;
+        }
+
+        /* ===== SEARCH & FILTERS ===== */
+        .search-filters {
+            background: var(--bg-white);
+            padding: 1rem 1.25rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border-color);
+        }
+
+        /* ===== SUMMARY BANNER ===== */
+        .summary-banner {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            margin-top: 0.75rem;
+            font-size: 0.82rem;
+            color: var(--text-light);
+        }
+        .summary-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            padding: 0.3rem 0.6rem;
+            border-radius: 0.4rem;
+            background: #f3f4f6;
+            color: var(--text-dark);
+            font-weight: 700;
+        }
+        .summary-pendiente { background: rgba(180,116,12,0.12); color: #B4740C; }
+        .summary-comprobante { background: rgba(124,58,237,0.08); color: var(--primary); }
+        .summary-confirmada { background: rgba(49,162,76,0.08); color: var(--success); }
+        .summary-cancelada { background: rgba(228,22,58,0.08); color: var(--danger); }
+
+        .search-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .search-field {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .search-field-wide {
+            grid-column: 1 / 2;
+        }
+
+        .search-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-lighter);
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        .search-input,
+        .search-select {
+            padding: 0.5rem 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.375rem;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+            background: var(--bg-white);
+            color: var(--text-dark);
+        }
+
+        .search-input:focus,
+        .search-select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(24, 119, 242, 0.1);
+        }
+
+        .buttons-row {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .btn-search {
+            padding: 0.5rem 1rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 0.375rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.85rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .btn-search:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-clear {
+            padding: 0.5rem 1rem;
+            background: var(--bg-light);
+            color: var(--text-dark);
+            border: 1px solid var(--border-color);
+            border-radius: 0.375rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.85rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .btn-clear:hover {
+            background: var(--border-color);
+        }
+
+        /* ===== ORDERS TABLE ===== */
+        .orders-container {
+            background: var(--bg-white);
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+        }
+
+        .orders-header {
+            display: grid;
+            grid-template-columns: 100px 240px 100px 110px 1fr;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            background: var(--bg-light);
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 600;
+            font-size: 0.8rem;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            align-items: center;
+            text-align: center;
+        }
+
+        .order-row {
+            display: grid;
+            grid-template-columns: 100px 240px 100px 110px 1fr;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--divider);
+            align-items: center;
+            transition: background 0.2s ease;
+            font-size: 0.8rem;
+        }
+
+        .order-row:hover {
+            background: #F8F9FA;
+        }
+
+        .order-row:last-child {
+            border-bottom: none;
+        }
+
+        .order-id {
+            font-weight: 700;
+            color: var(--primary);
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+            white-space: normal;
+            word-break: break-word;
+            overflow: visible;
+            min-width: 110px;
+            padding: 0.4rem 0.6rem;
+            background: linear-gradient(135deg, #E7F3FF 0%, #F0F6FF 100%);
+            border-radius: 0.3rem;
+            margin-right: 0.5rem;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .order-client {
+            color: var(--text-dark);
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            text-align: center;
+        }
+
+        .order-whatsapp {
+            display: none;
+        }
+
+        .order-boletos {
+            display: none;
+        }
+
+        .boletos-count {
+            display: none;
+        }
+
+        .order-total {
+            display: none;
+        }
+
+        .order-comprobante {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        .comprobante-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 0.35rem 0.65rem;
+            border-radius: 0.3rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .comprobante-yes {
+            background: rgba(49, 162, 76, 0.15);
+            color: var(--success);
+        }
+
+        .comprobante-no {
+            background: rgba(228, 22, 58, 0.1);
+            color: var(--danger);
+        }
+
+        .status-pendiente {
+            background: rgba(180, 116, 12, 0.15);
+            color: #B4740C;
+        }
+
+        .status-comprobante_recibido {
+            background: rgba(24, 119, 242, 0.15);
+            color: var(--primary);
+        }
+
+        .status-confirmada {
+            background: rgba(49, 162, 76, 0.15);
+            color: var(--success);
+        }
+
+        .status-cancelada {
+            background: rgba(228, 22, 58, 0.15);
+            color: var(--danger);
+        }
+
+        .order-actions {
+            display: flex;
+            gap: 0.4rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-view-order {
+            padding: 0.35rem 0.6rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            white-space: nowrap;
+        }
+
+        .btn-view-order:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-action-mini {
+            padding: 0.35rem 0.6rem;
+            border: none;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            white-space: nowrap;
+        }
+
+        .btn-confirm-mini {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-confirm-mini:hover {
+            background: #2a8a3d;
+        }
+
+        .btn-reject-mini {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-reject-mini:hover {
+            background: #c41230;
+        }
+
+        .btn-notify-mini {
+            background: #25D366;
+            color: white;
+        }
+
+        .btn-notify-mini:hover {
+            background: #1fab4a;
+        }
+
+        .btn-edit-mini {
+            background: #6B7280;
+            color: white;
+        }
+
+        .btn-edit-mini:hover {
+            background: #4B5563;
+        }
+
+        .order-estado {
+            display: inline-block;
+            padding: 0.3rem 0.6rem;
+            border-radius: 0.25rem;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            white-space: nowrap;
+            text-align: center;
+        }
+
+        .status-pendiente {
+            background: rgba(180, 116, 12, 0.15);
+            color: #B4740C;
+        }
+
+        .status-comprobante_recibido {
+            background: rgba(24, 119, 242, 0.15);
+            color: var(--primary);
+        }
+
+        .status-confirmada {
+            background: rgba(49, 162, 76, 0.15);
+            color: var(--success);
+        }
+
+        .status-cancelada {
+            background: rgba(228, 22, 58, 0.15);
+            color: var(--danger);
+        }
+
+        .btn-view-mini {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-view-mini:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-action-mini:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .badge-comprobante {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 0.25rem 0.5rem;
+            background: rgba(49, 162, 76, 0.1);
+            color: var(--success);
+            border-radius: 0.25rem;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-top: 0.25rem;
+        }
+
+        /* ===== EMPTY STATE ===== */
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-light);
+        }
+
+        .empty-state-icon {
+            font-size: 2rem;
+            margin-bottom: 0.75rem;
+            color: var(--text-lighter);
+        }
+
+        /* ===== PAGINATION ===== */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 1.5rem;
+            flex-wrap: wrap;
+            padding: 1rem 0;
+        }
+
+        .pagination-btn {
+            padding: 0.5rem 0.85rem;
+            border: 1px solid var(--border-color);
+            background: var(--bg-white);
+            color: var(--text-dark);
+            border-radius: 0.375rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        .pagination-btn:hover:not(:disabled) {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: var(--primary-light);
+        }
+
+        .pagination-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .pagination-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .pagination-info {
+            font-size: 0.8rem;
+            color: var(--text-light);
+            font-weight: 500;
+        }
+
+        /* ===== MODAL ===== */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1001;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-white);
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            max-width: 90%;
+            max-height: 90vh;
+            overflow: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            background: var(--bg-white);
+        }
+
+        .modal-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.25rem;
+            cursor: pointer;
+            color: var(--text-light);
+            transition: all 0.2s ease;
+        }
+
+        .modal-close:hover {
+            color: var(--text-dark);
+        }
+
+        .modal-body {
+            padding: 1rem;
+        }
+
+        .modal-image {
+            max-width: 100%;
+            height: auto;
+            border-radius: 0.375rem;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 1200px) {
+            .search-row {
+                grid-template-columns: 1fr 1fr 1fr;
+            }
+
+            .search-field-wide {
+                grid-column: 1 / 4;
+            }
+
+            .orders-header,
+            .order-row {
+                grid-template-columns: 90px 190px 90px 110px 1fr;
+            }
+
+            .order-id {
+                font-size: 0.75rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header-content {
+                padding: 0.75rem 1rem;
+                gap: 1rem;
+            }
+
+            .header-left {
+                gap: 0.5rem;
+            }
+
+            .logo-container {
+                width: 45px;
+                height: 45px;
+            }
+
+            .header-title-main {
+                font-size: 0.95rem;
+            }
+
+            .container {
+                padding: 1rem;
+            }
+
+            .search-filters {
+                padding: 0.75rem;
+            }
+
+            .search-row {
+                gap: 0.5rem;
+                grid-template-columns: 1fr;
+            }
+
+            .search-field-wide {
+                grid-column: 1;
+            }
+
+            .orders-header {
+                grid-template-columns: 80px 150px 80px 110px 1fr;
+                gap: 0.5rem;
+                padding: 0.5rem;
+                font-size: 0.7rem;
+            }
+
+            /* Hide headers for hidden columns */
+            .header-whatsapp,
+            .header-boletos,
+            .header-comprobante,
+            .header-estado {
+                display: none;
+            }
+
+            .order-row {
+                grid-template-columns: 80px 150px 80px 110px 1fr;
+                gap: 0.5rem;
+                padding: 0.5rem;
+                font-size: 0.7rem;
+            }
+
+            .order-id {
+                min-width: 80px;
+                font-size: 0.75rem;
+                padding: 0.3rem 0.4rem;
+                margin-right: 0.3rem;
+            }
+
+            .order-client {
+                font-size: 0.8rem;
+            }
+
+            /* Hide Estado column on tablet - only show on desktop */
+            .order-estado {
+                display: none;
+            }
+
+            .order-actions {
+                gap: 0.25rem;
+            }
+
+            .btn-action-mini {
+                padding: 0.3rem 0.5rem;
+                font-size: 0.7rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header-right {
+                gap: 0.5rem;
+            }
+
+            .nav-btn,
+            .logout-btn {
+                padding: 0.4rem 0.75rem;
+                font-size: 0.75rem;
+            }
+
+            .orders-header {
+                grid-template-columns: 65px 1fr 1fr;
+                gap: 0.35rem;
+                padding: 0.4rem;
+                font-size: 0.65rem;
+            }
+
+            /* Hide headers for hidden columns */
+            .header-whatsapp,
+            .header-boletos,
+            .header-comprobante,
+            .header-estado {
+                display: none;
+            }
+
+            .order-row {
+                grid-template-columns: 65px 1fr 1fr;
+                gap: 0.35rem;
+                padding: 0.4rem;
+                font-size: 0.65rem;
+            }
+
+            .order-id {
+                min-width: 65px;
+                font-size: 0.7rem;
+                padding: 0.25rem 0.35rem;
+                margin-right: 0.2rem;
+            }
+
+            .order-client {
+                font-size: 0.75rem;
+            }
+
+            .order-comprobante {
+                display: none;
+            }
+
+            .order-status {
+                font-size: 0.65rem;
+                padding: 0.25rem 0.45rem;
+            }
+
+            .search-filters {
+                padding: 0.5rem;
+            }
+
+            .search-row {
+                grid-template-columns: 1fr;
+                gap: 0.4rem;
+            }
+
+            .buttons-row {
+                flex-direction: column;
+            }
+
+            .btn-search,
+            .btn-clear {
+                width: 100%;
+            }
+
+            .btn-view-order,
+            .btn-action-mini {
+                padding: 0.25rem 0.4rem;
+                font-size: 0.6rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- LOGIN SCREEN -->
+    <div id="loginScreen" class="login-container">
+        <div class="login-box">
+            <div class="login-logo">
+                <img src="images/logo.png" alt="Logo" id="loginLogo" width="100" height="50">
+            </div>
+            <h1 id="loginTitle">Panel Admin</h1>
+            <p class="login-subtitle">Acceso para administradores</p>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="username">Usuario</label>
+                    <input type="text" id="username" required placeholder="Ingresa tu usuario">
+                </div>
+                <div class="form-group">
+                    <label for="password">Contraseña</label>
+                    <input type="password" id="password" required placeholder="Ingresa tu contraseña">
+                </div>
+                <button type="submit" class="btn" id="loginBtn">Acceder al Panel</button>
+                <div class="error" id="loginError"></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- PAGE -->
+    <div id="page" class="page">
+        <!-- ADMIN HEADER -->
+        <div class="admin-header">
+            <div class="admin-header-content">
+                <div class="admin-header-left">
+                    <div class="admin-logo-container">
+                        <img src="images/logo.png" alt="Logo" id="dashboardLogo">
+                    </div>
+                    <div class="admin-header-title">
+                        <div class="admin-header-title-main">Órdenes</div>
+                        <div class="admin-header-title-sub">SORTEOS YEPE</div>
+                    </div>
+                </div>
+                <div class="admin-header-right">
+                    <button class="admin-logout-btn" id="logoutBtn">
+                        <i class="fas fa-sign-out-alt"></i> <span>Cerrar Sesión</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ADMIN SIDEBAR -->
+        <aside class="admin-sidebar" id="adminSidebar">
+            <div class="admin-sidebar-content">
+                <div class="admin-sidebar-section">
+                    <div class="admin-sidebar-section-title">Navegación</div>
+                    <a href="admin-dashboard.html" class="admin-nav-btn" id="navDashboard">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="admin-ordenes.html" class="admin-nav-btn active" id="navOrdenes">
+                        <i class="fas fa-clipboard-list"></i>
+                        <span>Órdenes</span>
+                    </a>
+                    <a href="admin-boletos.html" class="admin-nav-btn" id="navBoletos">
+                        <i class="fas fa-ticket-alt"></i>
+                        <span>Boletos</span>
+                    </a>
+                    <a href="admin-ruletazo.html" class="admin-nav-btn" id="navRuletazo">
+                        <i class="fas fa-dharmachakra"></i>
+                        <span>Ruletazo</span>
+                    </a>
+                </div>
+                <div class="admin-sidebar-section">
+                    <div class="admin-sidebar-section-title">Sistema</div>
+                    <a href="admin-configuracion.html" class="admin-nav-btn" id="navConfig">
+                        <i class="fas fa-cog"></i>
+                        <span>Configuración</span>
+                    </a>
+                    <a href="ayuda.html" class="admin-nav-btn" id="navAyuda">
+                        <i class="fas fa-question-circle"></i>
+                        <span>Ayuda</span>
+                    </a>
+                </div>
+            </div>
+        </aside>
+
+        <!-- TOGGLE SIDEBAR BUTTON (MOBILE) -->
+        <button class="admin-sidebar-toggle" id="sidebarToggle">
+            <i class="fas fa-bars"></i>
+        </button>
+
+        <!-- MAIN CONTENT -->
+        <div class="admin-main" id="adminMain">
+            <!-- SEARCH & FILTERS -->
+            <div class="search-filters">
+                <div class="search-row">
+                    <div class="search-field">
+                        <label class="search-label">ID de Orden</label>
+                        <input type="text" id="searchId" class="search-input" placeholder="Ej. RIFA-8A3B">
+                    </div>
+                    <div class="search-field">
+                        <label class="search-label">Nombre Cliente</label>
+                        <input type="text" id="searchNombre" class="search-input" placeholder="Nombre del cliente">
+                    </div>
+                    <div class="search-field">
+                        <label class="search-label">WhatsApp</label>
+                        <input type="text" id="searchWhatsapp" class="search-input" placeholder="55 5555 5555">
+                    </div>
+                    <div class="search-field">
+                        <label class="search-label">Estado</label>
+                        <select id="filterEstado" class="search-select">
+                            <option value="">Todos</option>
+                            <option value="pendiente">Pendiente</option>
+                            <option value="comprobante_recibido">Comprobante</option>
+                            <option value="confirmada">Confirmada</option>
+                            <option value="cancelada">Cancelada</option>
+                        </select>
+                    </div>
+                    <div class="search-field">
+                        <label class="search-label">Ordenar Por</label>
+                        <select id="sortBy" class="search-select">
+                            <option value="fecha-desc">Más Recientes</option>
+                            <option value="fecha-asc">Más Antiguos</option>
+                            <option value="nombre-asc">Nombre (A-Z)</option>
+                            <option value="nombre-desc">Nombre (Z-A)</option>
+                            <option value="estado">Por Estado</option>
+                            <option value="total-desc">Mayor Total</option>
+                            <option value="total-asc">Menor Total</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="buttons-row">
+                    <button class="btn-search" id="btnSearch">
+                        <i class="fas fa-search"></i> Buscar
+                    </button>
+                    <button class="btn-clear" id="btnClear">
+                        <i class="fas fa-times"></i> Limpiar
+                    </button>
+                    <button class="btn-clear" id="btnExportExcel" style="background:var(--bg-white); border:1px solid var(--border-color);">
+                        <i class="fas fa-file-excel"></i> Exportar a Excel
+                    </button>
+                </div>
+                <div id="ordersSummary" class="summary-banner" aria-hidden="false" style="display:none">
+                    <div class="summary-item summary-pendiente" id="sumPendiente">Pendiente: 0</div>
+                    <div class="summary-item summary-comprobante" id="sumComprobante">Comprobante: 0</div>
+                    <div class="summary-item summary-confirmada" id="sumConfirmada">Confirmada: 0</div>
+                    <div class="summary-item summary-cancelada" id="sumCancelada">Cancelada: 0</div>
+                    <div style="margin-left: auto; color:var(--text-lighter); font-weight:600;" id="sumTotal">Total: 0</div>
+                </div>
+            </div>
+
+            <!-- ORDERS TABLE -->
+            <div class="orders-container">
+                <div class="orders-header">
+                    <div class="header-id">ID ORDEN</div>
+                    <div class="header-cliente">CLIENTE</div>
+                    <div class="header-comprobante">COMPROBANTE</div>
+                    <div class="header-estado">ESTADO</div>
+                    <div class="header-acciones">ACCIONES</div>
+                </div>
+                <div id="ordersTable">
+                    <div class="empty-state">
+                        <div class="empty-state-icon"><i class="fas fa-hourglass-start"></i></div>
+                        <div>Cargando órdenes...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PAGINATION -->
+            <div class="pagination" id="paginationContainer" style="display: none;">
+                <button class="pagination-btn" id="btnPrev">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <div class="pagination-info">
+                    Pág. <span id="currentPage">1</span> de <span id="totalPages">1</span>
+                </div>
+                <button class="pagination-btn" id="btnNext">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL FOR COMPROBANTE -->
+    <div id="comprobanteModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Comprobante de Pago</div>
+                <button class="modal-close" id="modalClose">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <img id="comprobanteImage" src="" alt="Comprobante" class="modal-image" crossorigin="anonymous">
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <script src="js/calculo-precios.js?v=20251230.1"></script>
+    <script src="js/carrito-global.js"></script>
+    <script>
+        // ===== CONFIG =====
+        const API_BASE = 'http://127.0.0.1:5001';
+        let token = null;
+        let currentPage = 1;
+        const ITEMS_PER_PAGE = 20;
+        let allOrdenes = [];
+        let filteredOrdenes = [];
+
+        // ===== INITIALIZE CONFIG =====
+        function initializeConfig() {
+            const config = window.rifaplusConfig || {};
+            const clienteName = config.cliente?.nombre || 'SORTEOS YEPE';
+            const clienteLogo = config.cliente?.logo || 'images/logo.png';
+
+            document.getElementById('loginTitle').textContent = `${clienteName} - Admin`;
+            document.getElementById('loginLogo').src = clienteLogo;
+            document.getElementById('dashboardLogo').src = clienteLogo;
+        }
+
+        // ===== LOGIN =====
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const loginBtn = document.getElementById('loginBtn');
+            const loginError = document.getElementById('loginError');
+
+            loginBtn.disabled = true;
+            loginError.classList.remove('show');
+
+            try {
+                const response = await fetch(`${API_BASE}/api/admin/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+                if (!data.success) throw new Error(data.message || 'Error al autenticar');
+
+                token = data.token;
+                localStorage.setItem('rifaplus_token', token);
+                localStorage.setItem('rifaplus_admin_token', token);
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('page').classList.add('active');
+                
+                // Si hay un redirect pendiente, ir a esa página
+                const redirectAfterLogin = localStorage.getItem('redirectAfterLogin');
+                if (redirectAfterLogin) {
+                    localStorage.removeItem('redirectAfterLogin');
+                    window.location.href = redirectAfterLogin;
+                    return;
+                }
+                
+                loadOrdenes();
+            } catch (error) {
+                loginError.textContent = error.message;
+                loginError.classList.add('show');
+                loginBtn.disabled = false;
+            }
+        });
+
+        // ===== LOGOUT =====
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            token = null;
+            localStorage.removeItem('rifaplus_token');
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('page').classList.remove('active');
+            document.getElementById('loginForm').reset();
+        });
+
+        // ===== LOAD ORDENES =====
+        async function loadOrdenes() {
+            try {
+                const response = await fetch(`${API_BASE}/api/ordenes?limit=1000`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await response.json();
+
+                if (!data.success) throw new Error(data.message);
+
+                // Ordenar por más reciente primero (descendente)
+                allOrdenes = (data.data || []).sort((a, b) => {
+                    const aTime = typeof a.created_at === 'number' ? a.created_at : new Date(a.created_at).getTime();
+                    const bTime = typeof b.created_at === 'number' ? b.created_at : new Date(b.created_at).getTime();
+                    return bTime - aTime;  // Más reciente primero
+                });
+
+                filteredOrdenes = [...allOrdenes];
+                currentPage = 1;
+                renderOrdenes();
+            } catch (error) {
+                console.error('Error cargando órdenes:', error);
+                showError('Error al cargar órdenes');
+            }
+        }
+
+        // ===== RENDER ORDENES =====
+        function renderOrdenes() {
+            const container = document.getElementById('ordersTable');
+
+            if (filteredOrdenes.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon"><i class="fas fa-inbox"></i></div>
+                        <div>No se encontraron órdenes</div>
+                    </div>
+                `;
+                document.getElementById('paginationContainer').style.display = 'none';
+                return;
+            }
+
+            const totalPages = Math.ceil(filteredOrdenes.length / ITEMS_PER_PAGE);
+            const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+            const endIndex = startIndex + ITEMS_PER_PAGE;
+            const pageOrdenes = filteredOrdenes.slice(startIndex, endIndex);
+
+                container.innerHTML = pageOrdenes.map(orden => {
+                const tieneComprobante = orden.comprobante_path ? true : false;
+
+                return `
+                    <div class="order-row">
+                        <div class="order-id">${orden.numero_orden}</div>
+                        <div class="order-client">${orden.nombre_cliente || '-'}</div>
+                        <div class="order-comprobante">
+                            ${tieneComprobante 
+                                ? '<span class="comprobante-badge comprobante-yes"><i class="fas fa-check-circle"></i> Sí</span>'
+                                : '<span class="comprobante-badge comprobante-no"><i class="fas fa-times-circle"></i> No</span>'
+                            }
+                        </div>
+                        <div class="order-estado">
+                            <div class="order-status status-${orden.estado}">
+                                ${formatEstado(orden.estado)}
+                            </div>
+                        </div>
+                        <div class="order-actions">
+                            <button class="btn-view-order" onclick="abrirModalOrden('${orden.numero_orden}')">
+                                <i class="fas fa-eye"></i> Ver
+                            </button>
+                            ${orden.estado !== 'confirmada' && orden.estado !== 'cancelada' ? `
+                                <button class="btn-action-mini btn-confirm-mini" onclick="confirmarOrden('${orden.numero_orden}')">
+                                    <i class="fas fa-check"></i> Confirmar
+                                </button>
+                            ` : ''}
+                            ${orden.estado === 'confirmada' ? `
+                                <button class="btn-action-mini btn-notify-mini" onclick="notificarPorWhatsapp('${orden.numero_orden}', '${orden.nombre_cliente || 'Cliente'}', '${orden.telefono_cliente || ''}', ${orden.cantidad_boletos || 0})" title="Notificar por WhatsApp">
+                                    <i class="fab fa-whatsapp"></i> Notificar
+                                </button>
+                            ` : ''}
+                            ${orden.estado === 'confirmada' || orden.estado === 'cancelada' ? `
+                                <button class="btn-action-mini btn-edit-mini" onclick="abrirModalEditar('${orden.numero_orden}')" title="Revertir estado: ${orden.estado === 'confirmada' ? 'Cancelar' : 'Confirmar'}">
+                                    <i class="fas fa-${orden.estado === 'confirmada' ? 'times' : 'check'}"></i> ${orden.estado === 'confirmada' ? 'Cancelar' : 'Confirmar'}
+                                </button>
+                            ` : ''}
+                            ${orden.estado !== 'cancelada' && orden.estado !== 'confirmada' ? `
+                                <button class="btn-action-mini btn-reject-mini" onclick="rechazarOrden('${orden.numero_orden}')">
+                                    <i class="fas fa-times"></i> Rechazar
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // Paginación
+            if (totalPages > 1) {
+                document.getElementById('paginationContainer').style.display = 'flex';
+                document.getElementById('currentPage').textContent = currentPage;
+                document.getElementById('totalPages').textContent = totalPages;
+                document.getElementById('btnPrev').disabled = currentPage === 1;
+                document.getElementById('btnNext').disabled = currentPage === totalPages;
+            } else {
+                document.getElementById('paginationContainer').style.display = 'none';
+            }
+
+            // Actualizar resumen compacto
+            if (typeof updateSummary === 'function') updateSummary(filteredOrdenes);
+        }
+
+        // ===== SEARCH & FILTERS =====
+        document.addEventListener('DOMContentLoaded', () => {
+            const btnSearch = document.getElementById('btnSearch');
+            if (btnSearch) btnSearch.addEventListener('click', aplicarFiltros);
+            
+            ['searchId','searchNombre','searchWhatsapp'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.addEventListener('keypress', (e) => { if (e.key === 'Enter') aplicarFiltros(); });
+            });
+            
+            const filterEstado = document.getElementById('filterEstado');
+            if (filterEstado) filterEstado.addEventListener('change', aplicarFiltros);
+            
+            const sortBy = document.getElementById('sortBy');
+            if (sortBy) sortBy.addEventListener('change', aplicarFiltros);
+
+            const btnExportExcel = document.getElementById('btnExportExcel');
+            if (btnExportExcel) btnExportExcel.addEventListener('click', exportFilteredToExcel);
+        });
+
+        // Summary updater
+        function updateSummary(list) {
+            const arr = list || filteredOrdenes || allOrdenes || [];
+            const counts = { pendiente:0, comprobante_recibido:0, confirmada:0, cancelada:0 };
+            let totalBoletos = 0;
+            arr.forEach(o => {
+                const st = o.estado || 'pendiente';
+                if (counts.hasOwnProperty(st)) counts[st]++;
+                totalBoletos += Number(o.cantidad_boletos || (Array.isArray(o.boletos)? o.boletos.length:0)) || 0;
+            });
+            
+            // Las órdenes pendientes incluyen: sin comprobante + con comprobante pero sin confirmar
+            const totalPendientes = counts.pendiente + counts.comprobante_recibido;
+            
+            document.getElementById('sumPendiente').textContent = `Pendiente: ${totalPendientes}`;
+            document.getElementById('sumComprobante').textContent = `Comprobante: ${counts.comprobante_recibido}`;
+            document.getElementById('sumConfirmada').textContent = `Confirmada: ${counts.confirmada}`;
+            document.getElementById('sumCancelada').textContent = `Cancelada: ${counts.cancelada}`;
+            document.getElementById('sumTotal').textContent = `Total: ${arr.length} · Boletos: ${totalBoletos}`;
+            document.getElementById('ordersSummary').style.display = arr.length > 0 ? 'flex' : 'none';
+        }
+
+        // Export filtered orders to Excel using SheetJS
+        function exportFilteredToExcel() {
+            try {
+                const data = filteredOrdenes.map(o => ({
+                    'ID de orden': o.numero_orden,
+                    'Nombre': o.nombre_cliente || '',
+                    'WhatsApp': o.telefono_cliente || '',
+                    'Boletos': Array.isArray(o.boletos) ? o.boletos.join(',') : (o.boletos || ''),
+                    'Total': Number(o.total || 0),
+                    'Estado': o.estado || '',
+                    'Fecha': formatFechaLocalConOffset(o.created_at)
+                }));
+
+                const ws = XLSX.utils.json_to_sheet(data);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, 'Órdenes');
+                XLSX.writeFile(wb, `ordenes_export_${new Date().toISOString().slice(0,10)}.xlsx`);
+            } catch (err) {
+                console.error('Export error:', err);
+                showError('Error al exportar a Excel');
+            }
+        }
+
+        function aplicarFiltros() {
+            const searchId = (document.getElementById('searchId')?.value || '').toLowerCase().trim();
+            const searchNombre = (document.getElementById('searchNombre')?.value || '').toLowerCase().trim();
+            const searchWhatsapp = (document.getElementById('searchWhatsapp')?.value || '').toLowerCase().trim();
+            const estado = document.getElementById('filterEstado')?.value || '';
+            const fechaDesde = document.getElementById('filterFechaDesde')?.value || '';
+            const fechaHasta = document.getElementById('filterFechaHasta')?.value || '';
+            const sortBy = document.getElementById('sortBy')?.value || 'fecha-desc';
+
+            // Función auxiliar para convertir cualquier fecha a timestamp
+            const toTimestamp = (dateValue) => {
+                if (!dateValue) return 0;
+                if (typeof dateValue === 'number') return dateValue;
+                return new Date(dateValue).getTime();
+            };
+
+            // Filtrar órdenes
+            filteredOrdenes = allOrdenes.filter(orden => {
+                // ID filter - búsqueda flexible
+                if (searchId && !(orden.numero_orden || '').toLowerCase().includes(searchId)) {
+                    return false;
+                }
+
+                // Nombre filter - búsqueda flexible
+                if (searchNombre && !(orden.nombre_cliente || '').toLowerCase().includes(searchNombre)) {
+                    return false;
+                }
+
+                // WhatsApp filter - buscar solo números
+                if (searchWhatsapp) {
+                    const telefonoLimpio = (orden.telefono_cliente || '').replace(/[^0-9]/g, '');
+                    const busquedaLimpia = searchWhatsapp.replace(/[^0-9]/g, '');
+                    if (!telefonoLimpio.includes(busquedaLimpia)) {
+                        return false;
+                    }
+                }
+
+                // Estado filter - solo filtrar si NO es vacío
+                if (estado && estado !== '' && orden.estado !== estado) {
+                    return false;
+                }
+
+                // Fecha desde
+                if (fechaDesde) {
+                    const desde = new Date(fechaDesde);
+                    desde.setHours(0, 0, 0, 0);
+                    if (toTimestamp(orden.created_at) < desde.getTime()) {
+                        return false;
+                    }
+                }
+
+                // Fecha hasta
+                if (fechaHasta) {
+                    const hasta = new Date(fechaHasta);
+                    hasta.setHours(23, 59, 59, 999);
+                    if (toTimestamp(orden.created_at) > hasta.getTime()) {
+                        return false;
+                    }
+                }
+
+                return true;
+            });
+
+            // Aplicar ordenamiento
+            filteredOrdenes.sort((a, b) => {
+                const aTime = toTimestamp(a.created_at);
+                const bTime = toTimestamp(b.created_at);
+                
+                switch(sortBy) {
+                    case 'fecha-asc':
+                        return aTime - bTime;  // Ascendente: antiguo primero
+                    case 'nombre-asc':
+                        return (a.nombre_cliente || '').localeCompare(b.nombre_cliente || '', 'es');
+                    case 'nombre-desc':
+                        return (b.nombre_cliente || '').localeCompare(a.nombre_cliente || '', 'es');
+                    case 'estado':
+                        return (a.estado || '').localeCompare(b.estado || '', 'es');
+                    case 'total-desc':
+                        return (b.total || 0) - (a.total || 0);
+                    case 'total-asc':
+                        return (a.total || 0) - (b.total || 0);
+                    case 'fecha-desc':
+                    default:
+                        return bTime - aTime;  // Descendente: reciente primero (DEFAULT)
+                }
+            });
+
+            currentPage = 1;
+            renderOrdenes();
+        }
+
+        // Event listener para limpiar filtros
+        document.addEventListener('DOMContentLoaded', () => {
+            const btnClear = document.getElementById('btnClear');
+            if (btnClear) {
+                btnClear.addEventListener('click', () => {
+                    const searchId = document.getElementById('searchId');
+                    const searchNombre = document.getElementById('searchNombre');
+                    const searchWhatsapp = document.getElementById('searchWhatsapp');
+                    const filterEstado = document.getElementById('filterEstado');
+                    const filterFechaDesde = document.getElementById('filterFechaDesde');
+                    const filterFechaHasta = document.getElementById('filterFechaHasta');
+                    const sortBy = document.getElementById('sortBy');
+                    
+                    if (searchId) searchId.value = '';
+                    if (searchNombre) searchNombre.value = '';
+                    if (searchWhatsapp) searchWhatsapp.value = '';
+                    if (filterEstado) filterEstado.value = '';  // Vacío = mostrar todos
+                    if (filterFechaDesde) filterFechaDesde.value = '';
+                    if (filterFechaHasta) filterFechaHasta.value = '';
+                    if (sortBy) sortBy.value = 'fecha-desc';
+                    
+                    // Reordenar por más reciente primero
+                    const toTimestamp = (dateValue) => {
+                        if (!dateValue) return 0;
+                        if (typeof dateValue === 'number') return dateValue;
+                        return new Date(dateValue).getTime();
+                    };
+                    
+                    filteredOrdenes = [...allOrdenes].sort((a, b) => {
+                        return toTimestamp(b.created_at) - toTimestamp(a.created_at);
+                    });
+                    currentPage = 1;
+                    renderOrdenes();
+                });
+            }
+        });
+
+        // ===== PAGINATION =====
+        document.addEventListener('DOMContentLoaded', () => {
+            const btnPrev = document.getElementById('btnPrev');
+            if (btnPrev) {
+                btnPrev.addEventListener('click', () => {
+                    if (currentPage > 1) {
+                        currentPage--;
+                        renderOrdenes();
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                });
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const btnNext = document.getElementById('btnNext');
+            if (btnNext) {
+                btnNext.addEventListener('click', () => {
+                    const totalPages = Math.ceil(filteredOrdenes.length / ITEMS_PER_PAGE);
+                    if (currentPage < totalPages) {
+                        currentPage++;
+                        renderOrdenes();
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                });
+            }
+        });
+
+        // ===== ACTIONS =====
+        async function confirmarOrden(ordenId) {
+            if (!confirm('¿Confirmar esta orden?')) return;
+            try {
+                const response = await fetch(`${API_BASE}/api/ordenes/${ordenId}/estado`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ estado: 'confirmada' })
+                });
+                const data = await response.json();
+                if (!data.success) throw new Error(data.message);
+                showSuccess('Orden confirmada');
+                loadOrdenes();
+            } catch (error) {
+                showError('Error: ' + error.message);
+            }
+        }
+
+        async function rechazarOrden(ordenId) {
+            if (!confirm('¿Rechazar esta orden?')) return;
+            try {
+                const response = await fetch(`${API_BASE}/api/ordenes/${ordenId}/estado`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ estado: 'cancelada' })
+                });
+                const data = await response.json();
+                if (!data.success) throw new Error(data.message);
+                showSuccess('Orden rechazada');
+                loadOrdenes();
+            } catch (error) {
+                showError('Error: ' + error.message);
+            }
+        }
+
+        function notificarPorWhatsapp(ordenId, nombreCliente, telefonoCliente, cantidadBoletos) {
+            try {
+                // Obtener fecha del sorteo desde config
+                const fechaSorteo = window.SORTEO_CONFIG?.fecha_sorteo || 'Próximamente';
+                const horaSorteo = window.SORTEO_CONFIG?.hora_sorteo || '';
+                const fechaHoraFormato = horaSorteo ? `${fechaSorteo} a las ${horaSorteo}` : fechaSorteo;
+                
+                // Limpiar teléfono (solo números)
+                const telefonoLimpio = telefonoCliente?.replace(/\D/g, '') || '';
+                if (!telefonoLimpio) {
+                    showError('No hay número de WhatsApp registrado para este cliente');
+                    return;
+                }
+
+                // Obtener los boletos de la orden
+                const orden = allOrdenes.find(o => o.numero_orden === ordenId);
+                let boletosFormato = '';
+                
+                if (orden && orden.boletos && orden.boletos.length > 0) {
+                    // Ordenar boletos de menor a mayor
+                    const boletosOrdenados = [...orden.boletos].sort((a, b) => {
+                        const numA = parseInt(a) || 0;
+                        const numB = parseInt(b) || 0;
+                        return numA - numB;
+                    });
+                    
+                    // Formatear lista de boletos (de 5 en 5 por línea para mejor lectura)
+                    const lineasBoletos = [];
+                    for (let i = 0; i < boletosOrdenados.length; i += 5) {
+                        lineasBoletos.push(boletosOrdenados.slice(i, i + 5).join(', '));
+                    }
+                    boletosFormato = '\n📌 *Tus boletos:*\n' + lineasBoletos.map(linea => '• ' + linea).join('\n');
+                }
+
+                // Construir mensaje
+                const mensaje = `Hola ${nombreCliente}! 🔥
+
+Tu pago ha sido confirmado ✓
+
+📋 *Orden:* ${ordenId}
+🎫 *Boletos comprados:* ${cantidadBoletos}${boletosFormato}
+🏆 *Fecha del Sorteo:* ${fechaHoraFormato}
+
+Puedes revisar el estado de tu orden aquí:
+${window.location.origin}/mis-boletos.html
+
+¡Muchas gracias por participar! 😎
+¡Mucha suerte! 🎱`;
+
+                // Crear URL de WhatsApp con mensaje
+                const urlWhatsapp = `https://wa.me/${telefonoLimpio}?text=${encodeURIComponent(mensaje)}`;
+                
+                // Abrir WhatsApp
+                window.open(urlWhatsapp, '_blank');
+                showSuccess('Abriendo WhatsApp...');
+            } catch (error) {
+                showError('Error al generar mensaje: ' + error.message);
+            }
+        }
+
+        function abrirModalEditar(numeroOrden) {
+            const orden = allOrdenes.find(o => o.numero_orden === numeroOrden);
+            if (!orden) {
+                showError('Orden no encontrada');
+                return;
+            }
+
+            let modal = document.getElementById('editarEstadoModal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'editarEstadoModal';
+                modal.className = 'modal';
+                modal.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0, 0, 0, 0.5);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 10000;
+                `;
+                document.body.appendChild(modal);
+            }
+
+            let mensaje = '';
+            let nuevoEstado = '';
+            let boton = '';
+            let puedeConfirmar = true;
+            let mensajeError = '';
+
+            if (orden.estado === 'confirmada') {
+                mensaje = `¿Deseas CANCELAR la orden <strong>${numeroOrden}</strong>?<br><br>
+                    <strong style="color: #E4163A;">⚠️ Esto marcará la orden como CANCELADA</strong><br>
+                    <strong style="color: #E4163A;">Los boletos volverán a estar DISPONIBLES</strong>`;
+                nuevoEstado = 'cancelada';
+                boton = 'Sí, Cancelar Orden';
+            } else if (orden.estado === 'cancelada') {
+                // Verificar si los boletos de esta orden están en otra orden activa
+                const boletosCancelada = orden.boletos || [];
+                const boletosEnOtraOrden = allOrdenes.filter(o => 
+                    o.numero_orden !== numeroOrden && 
+                    (o.estado === 'pendiente' || o.estado === 'comprobante_recibido' || o.estado === 'confirmada')
+                ).some(o => {
+                    const boletosOtra = o.boletos || [];
+                    return boletosCancelada.some(b => boletosOtra.includes(b));
+                });
+
+                if (boletosEnOtraOrden) {
+                    puedeConfirmar = false;
+                    mensajeError = `❌ No se puede confirmar esta orden<br><br>
+                        Uno o más boletos ya están asignados en otra orden activa.<br>
+                        Debes liberar los boletos de esa otra orden primero.`;
+                } else {
+                    mensaje = `¿Deseas CONFIRMAR la orden <strong>${numeroOrden}</strong>?<br><br>
+                        <strong style="color: #31A24C;">✓ Esto marcará la orden como CONFIRMADA</strong><br>
+                        <strong style="color: #31A24C;">Los boletos pasarán a estar VENDIDOS</strong>`;
+                    nuevoEstado = 'confirmada';
+                    boton = 'Sí, Confirmar Orden';
+                }
+            }
+
+            modal.innerHTML = `
+                <div style="background: white; border-radius: 0.5rem; padding: 2rem; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3); max-width: 500px; text-align: center;">
+                    <div style="font-size: 2.5rem; margin-bottom: 1rem; color: ${puedeConfirmar ? (nuevoEstado === 'confirmada' ? '#31A24C' : '#E4163A') : '#E4163A'};">
+                        <i class="fas fa-${puedeConfirmar ? (nuevoEstado === 'confirmada' ? 'check-circle' : 'times-circle') : 'exclamation-circle'}"></i>
+                    </div>
+                    <h2 style="margin: 0 0 1rem 0; color: var(--text-dark); font-size: 1.2rem; font-weight: 700;">
+                        ${puedeConfirmar ? (nuevoEstado === 'confirmada' ? 'Confirmar Orden' : 'Cancelar Orden') : 'No se puede Confirmar'}
+                    </h2>
+                    <p style="margin: 0 0 2rem 0; color: var(--text-normal); line-height: 1.7; font-size: 0.95rem;">
+                        ${puedeConfirmar ? mensaje : mensajeError}
+                    </p>
+                    <div style="display: flex; gap: 1rem; justify-content: center;">
+                        <button onclick="document.getElementById('editarEstadoModal').style.display='none'" class="btn" style="flex: 1; padding: 0.75rem 1rem; border: 1px solid var(--border-color); border-radius: 0.375rem; background: white; color: var(--text-dark); font-weight: 600; cursor: pointer; transition: all 0.2s ease; font-size: 0.9rem;">
+                            ${puedeConfirmar ? 'No, Cancelar' : 'Entendido'}
+                        </button>
+                        ${puedeConfirmar ? `
+                            <button onclick="cambiarEstadoOrden('${numeroOrden}', '${nuevoEstado}')" class="btn btn-confirm" style="flex: 1; padding: 0.75rem 1rem; border: none; border-radius: 0.375rem; background: ${nuevoEstado === 'confirmada' ? '#31A24C' : '#E4163A'}; color: white; font-weight: 600; cursor: pointer; transition: all 0.2s ease; font-size: 0.9rem;">
+                                ${boton}
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+
+            modal.style.display = 'flex';
+            
+            // Cerrar al hacer click fuera del modal
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    modal.style.display = 'none';
+                }
+            });
+        }
+
+        async function cambiarEstadoOrden(numeroOrden, nuevoEstado) {
+            try {
+                const response = await fetch(`${API_BASE}/api/ordenes/${numeroOrden}/estado`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ estado: nuevoEstado })
+                });
+                const data = await response.json();
+                if (!data.success) throw new Error(data.message);
+                
+                const estadoTexto = nuevoEstado === 'confirmada' ? 'confirmada' : 'cancelada';
+                showSuccess(`Orden ${estadoTexto} correctamente`);
+                document.getElementById('editarEstadoModal').style.display = 'none';
+                loadOrdenes();
+            } catch (error) {
+                showError('Error: ' + error.message);
+            }
+        }
+
+        function verComprobanteModal(path) {
+            const fullPath = path.startsWith('http') ? path : `${API_BASE}/public/${path}`;
+            const fileName = path.split('/').pop();
+            
+            // Crear modal si no existe
+            let modal = document.getElementById('comprobanteViewModal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'comprobanteViewModal';
+                modal.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0, 0, 0, 0.8);
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 10000;
+                    padding: 1rem;
+                `;
+                document.body.appendChild(modal);
+            }
+
+            modal.innerHTML = `
+                <div style="background: white; border-radius: 0.5rem; width: 100%; max-width: 90vw; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 1px solid #CED0D4;">
+                        <h2 style="margin: 0; font-size: 1.2rem;">Comprobante de Pago</h2>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button onclick="descargarComprobante('${fullPath}', '${fileName}')" class="btn btn-success" style="padding: 0.5rem 1rem; border: none; border-radius: 0.375rem; background: #31A24C; color: white; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; transition: all 0.2s ease;">
+                                <i class="fas fa-download"></i> Descargar
+                            </button>
+                            <button onclick="document.getElementById('comprobanteViewModal').style.display='none'" class="btn" style="padding: 0.5rem 1rem; border: 1px solid #CED0D4; border-radius: 0.375rem; background: white; color: var(--text-dark); font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; transition: all 0.2s ease;">
+                                <i class="fas fa-times"></i> Cerrar
+                            </button>
+                        </div>
+                    </div>
+                    <div style="flex: 1; overflow: auto; padding: 1rem; background: #F8F9FA; display: flex; align-items: center; justify-content: center;">
+                        ${fullPath.toLowerCase().endsWith('.pdf') 
+                            ? `<div style="text-align: center; display: flex; flex-direction: column; align-items: center; gap: 1rem;">
+                                <i class="fas fa-file-pdf" style="font-size: 4rem; color: #E4163A;"></i>
+                                <p style="color: var(--text-dark); font-weight: 500; margin: 0;">Los PDFs se abren en una nueva ventana por razones de seguridad</p>
+                                <button onclick="window.open('${fullPath}', '_blank')" class="btn btn-primary" style="padding: 0.75rem 1.5rem; border: none; border-radius: 0.375rem; background: var(--primary); color: white; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem; transition: all 0.2s ease;">
+                                    <i class="fas fa-external-link-alt"></i> Abrir en nueva ventana
+                                </button>
+                              </div>`
+                            : `<img src="${fullPath}" alt="Comprobante" crossorigin="anonymous" style="max-width: 100%; max-height: 100%; object-fit: contain;">`
+                        }
+                    </div>
+                </div>
+            `;
+
+            modal.style.display = 'flex';
+            
+            // Cerrar al hacer click fuera del modal
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    modal.style.display = 'none';
+                }
+            });
+        }
+
+        function descargarComprobante(url, nombreArchivo) {
+            // Crear un enlace temporal para descargar
+            const enlace = document.createElement('a');
+            enlace.href = url;
+            enlace.download = nombreArchivo || 'comprobante';
+            document.body.appendChild(enlace);
+            enlace.click();
+            document.body.removeChild(enlace);
+        }
+
+        function verComprobante(path) {
+            const fullPath = path.startsWith('http') ? path : `${API_BASE}/public/${path}`;
+            document.getElementById('comprobanteImage').src = fullPath;
+            document.getElementById('comprobanteModal').classList.add('active');
+        }
+
+        document.getElementById('modalClose').addEventListener('click', () => {
+            document.getElementById('comprobanteModal').classList.remove('active');
+        });
+
+        document.getElementById('comprobanteModal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('comprobanteModal')) {
+                document.getElementById('comprobanteModal').classList.remove('active');
+            }
+        });
+
+        // ===== UTILITIES =====
+        // Función robusta para convertir fechas UTC a zona horaria local
+        function formatFechaLocalConOffset(dateString) {
+            try {
+                if (!dateString) return '-';
+                
+                // Si es un número (timestamp), convertir a string ISO primero
+                if (typeof dateString === 'number') {
+                    dateString = new Date(dateString).toISOString();
+                }
+                
+                let processedDate = dateString.trim();
+                
+                // Asegurar que el string se interprete como UTC
+                // Si no tiene indicador de zona horaria, agregar Z para indicar UTC
+                if (!processedDate.includes('Z') && !processedDate.includes('+') && !processedDate.match(/-\d{2}:\d{2}$/)) {
+                    // Si termina con .nnnZ o sin nada, agregar Z
+                    processedDate = processedDate.replace(/\.\d{3}$/, '') + 'Z';
+                }
+                
+                // Parsear como UTC
+                const utcDate = new Date(processedDate);
+                
+                // Si es inválido, retornar como está
+                if (isNaN(utcDate.getTime())) {
+                    console.warn('Fecha inválida:', dateString);
+                    return dateString;
+                }
+                
+                // Convertir a hora local del navegador sin especificar timeZone
+                // para que use la zona horaria nativa del sistema
+                return utcDate.toLocaleString('es-MX', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hour12: false
+                });
+            } catch (error) {
+                console.error('Error formateando fecha:', error);
+                return dateString || '-';
+            }
+        }
+
+        function formatEstado(estado) {
+            const estados = {
+                'pendiente': 'Pendiente',
+                'comprobante_recibido': 'Comprobante',
+                'confirmada': 'Confirmada',
+                'cancelada': 'Cancelada'
+            };
+            return estados[estado] || estado;
+        }
+
+        function showSuccess(message) {
+            showNotification(message, 'success');
+        }
+
+        function showError(message) {
+            showNotification(message, 'error');
+        }
+
+        function showNotification(message, type = 'info') {
+            const feedback = document.createElement('div');
+            feedback.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 0.75rem 1.25rem;
+                border-radius: 0.5rem;
+                font-weight: 600;
+                z-index: 2000;
+                font-size: 0.85rem;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                animation: slideIn 0.3s ease;
+            `;
+
+            const colors = {
+                'success': { bg: '#31A24C', text: 'white' },
+                'error': { bg: '#E4163A', text: 'white' },
+                'info': { bg: '#1877F2', text: 'white' }
+            };
+
+            const color = colors[type] || colors['info'];
+            feedback.style.background = color.bg;
+            feedback.style.color = color.text;
+            feedback.textContent = message;
+
+            document.body.appendChild(feedback);
+
+            setTimeout(() => {
+                feedback.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => feedback.remove(), 300);
+            }, 3000);
+        }
+
+        // ===== MODAL ORDEN COMPLETA =====
+        function abrirModalOrden(numeroOrden) {
+            const orden = allOrdenes.find(o => o.numero_orden === numeroOrden);
+            if (!orden) {
+                showError('Orden no encontrada');
+                return;
+            }
+
+            let modal = document.getElementById('ordenModal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'ordenModal';
+                modal.className = 'modal';
+                modal.innerHTML = `
+                    <div class="modal-content" style="max-width: 500px;">
+                        <div class="modal-header">
+                            <h3 style="margin: 0; font-size: 1.1rem;">Información de Orden</h3>
+                            <button onclick="document.getElementById('ordenModal').style.display='none'" class="close-btn">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div id="ordenModalBody" class="modal-body"></div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+            }
+
+            const body = document.getElementById('ordenModalBody');
+            const boletosDisplay = orden.boletos && Array.isArray(orden.boletos) 
+                ? orden.boletos.join(', ') 
+                : '-';
+
+            body.innerHTML = `
+                <div style="display: grid; gap: 0.75rem; font-size: 0.9rem;">
+                    <div style="border-bottom: 1px solid #CED0D4; padding-bottom: 0.75rem;">
+                        <div style="color: var(--text-light); font-weight: 500; margin-bottom: 0.3rem;">ID de Orden</div>
+                        <div style="font-weight: 600; color: var(--primary); font-size: 1rem;">${orden.numero_orden}</div>
+                    </div>
+
+                    <div style="border-bottom: 1px solid #CED0D4; padding-bottom: 0.75rem;">
+                        <div style="color: var(--text-light); font-weight: 500; margin-bottom: 0.3rem;">Cliente</div>
+                        <div style="font-weight: 600;">${orden.nombre_cliente}</div>
+                    </div>
+
+                    <div style="border-bottom: 1px solid #CED0D4; padding-bottom: 0.75rem;">
+                        <div style="color: var(--text-light); font-weight: 500; margin-bottom: 0.3rem;">WhatsApp</div>
+                        <div>
+                            <a href="https://wa.me/${orden.telefono_cliente?.replace(/\D/g, '')}" target="_blank" style="color: var(--primary); text-decoration: none; font-weight: 600;">
+                                <i class="fab fa-whatsapp"></i> ${orden.telefono_cliente}
+                            </a>
+                        </div>
+                    </div>
+
+                    <div style="border-bottom: 1px solid #CED0D4; padding-bottom: 0.75rem;">
+                        <div style="color: var(--text-light); font-weight: 500; margin-bottom: 0.3rem;">Ubicación</div>
+                        <div>
+                            <div style="font-weight: 500;">${orden.ciudad_cliente || '-'}</div>
+                            <div style="color: var(--text-light); font-size: 0.85rem;">${orden.estado_cliente || '-'}</div>
+                        </div>
+                    </div>
+
+                    <div style="border-bottom: 1px solid #CED0D4; padding-bottom: 0.75rem;">
+                        <div style="color: var(--text-light); font-weight: 500; margin-bottom: 0.3rem;">Boletos (${orden.cantidad_boletos || orden.boletos?.length || 0})</div>
+                        <div style="font-family: 'Courier New', monospace; background: #F0F2F5; padding: 0.5rem; border-radius: 0.3rem; word-break: break-all;">
+                            ${boletosDisplay}
+                        </div>
+                    </div>
+
+                    <div style="border-bottom: 1px solid #CED0D4; padding-bottom: 0.75rem;">
+                        <div style="color: var(--text-light); font-weight: 500; margin-bottom: 0.3rem;">Total</div>
+                        <div style="font-weight: 700; color: var(--primary); font-size: 1.1rem;">$${parseFloat(orden.total || 0).toLocaleString('es-MX', { maximumFractionDigits: 0 })}</div>
+                    </div>
+
+                    <div style="border-bottom: 1px solid #CED0D4; padding-bottom: 0.75rem;">
+                        <div style="color: var(--text-light); font-weight: 500; margin-bottom: 0.3rem;">Estado</div>
+                        <div class="order-status status-${orden.estado}" style="display: inline-block;">
+                            ${formatEstado(orden.estado)}
+                        </div>
+                    </div>
+
+                    <div style="border-bottom: 1px solid #CED0D4; padding-bottom: 0.75rem;">
+                        <div style="color: var(--text-light); font-weight: 500; margin-bottom: 0.3rem;">Fecha</div>
+                        <div>${formatFechaLocalConOffset(orden.created_at)}</div>
+                    </div>
+
+                    ${orden.comprobante_path ? `
+                        <div style="border-bottom: 1px solid #CED0D4; padding-bottom: 0.75rem;">
+                            <div style="color: var(--text-light); font-weight: 500; margin-bottom: 0.3rem;">Comprobante Subido</div>
+                            <div style="font-size: 0.85rem;">${formatFechaLocalConOffset(orden.comprobante_fecha || orden.updated_at || orden.created_at)}</div>
+                        </div>
+                    ` : ''}
+
+                    ${orden.comprobante_path ? `
+                        <div style="padding-top: 0.5rem;">
+                            <button onclick="verComprobanteModal('${orden.comprobante_path}')" class="btn btn-primary" style="width: 100%; padding: 0.75rem; border: none; border-radius: 0.375rem; background: var(--primary); color: white; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem; transition: all 0.2s ease;">
+                                <i class="fas fa-file-image"></i> Ver Comprobante de Pago
+                            </button>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+
+            modal.style.display = 'flex';
+        }
+
+        // ===== ON LOAD =====
+        window.addEventListener('load', () => {
+            initializeConfig();
+            
+            // Buscar token de múltiples fuentes
+            const savedToken = localStorage.getItem('rifaplus_token') || 
+                               localStorage.getItem('rifaplus_admin_token') ||
+                               localStorage.getItem('admin_token') ||
+                               localStorage.getItem('token');
+            
+            if (savedToken) {
+                token = savedToken;
+                // Asegurar que está en todas las claves para consistencia
+                localStorage.setItem('rifaplus_token', token);
+                localStorage.setItem('rifaplus_admin_token', token);
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('page').classList.add('active');
+                loadOrdenes();
+            }
+        });
+
+        // ===== ANIMATIONS =====
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(400px); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(400px); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

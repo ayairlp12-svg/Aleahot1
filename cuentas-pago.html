@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cuentas de Pago - RifaPlus</title>
+    <link rel="stylesheet" href="css/styles.css?v=20251220.1">
+    <link rel="preload" as="image" href="images/logo.png" fetchpriority="high">
+    <link rel="icon" href="images/logo.png" sizes="32x32">
+    <link rel="apple-touch-icon" href="images/logo.png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css ">
+    <link rel="stylesheet" href="css/modal-contacto.css">
+    <link rel="stylesheet" href="css/orden-formal.css">
+    <style>
+        /* Centrar contenido - tarjetas con ancho suficiente para mostrar toda la información */
+        main.container {
+            max-width: 100%;
+            padding: 2rem 1rem;
+        }
+        
+        .payment-section {
+            margin: 0 auto;
+            width: 100%;
+        }
+        
+        .cuentas-grid,
+        .efectivo-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            justify-content: center;
+            margin: 2rem auto;
+            width: 100%;
+        }
+        
+        .cuenta-card,
+        .efectivo-card {
+            flex: 0 1 auto;
+            width: 350px;
+            min-width: 350px;
+        }
+        
+        @media (max-width: 768px) {
+            .cuenta-card,
+            .efectivo-card {
+                width: 100%;
+                min-width: auto;
+                max-width: 350px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- HEADER CON MENÚ (igual que en otras páginas) -->
+    <header class="header">
+        <div class="container">
+            <div class="header-left">
+                <button class="hamburger" id="hamburger" aria-label="Abrir menú" aria-expanded="false">
+                    <span class="hamburger-box">
+                        <span class="hamburger-inner"></span>
+                    </span>
+                </button>
+            </div>
+
+            <a href="index.html#top" class="logo" data-logo-src>
+                <div class="logo-circle">
+                    <img src="images/logo.png" alt="SORTEOS YEPE" class="logo-image" fetchpriority="high" width="320" height="137">
+                </div>
+            </a>
+    
+            <nav class="nav" aria-label="Navegación principal">
+                <a href="index.html" class="nav-link">Inicio</a>
+                <a href="compra.html" class="nav-link">Comprar boletos</a>
+                <a href="cuentas-pago.html" class="nav-link active">Cuentas de pago</a>
+                <a href="ayuda.html" class="nav-link">Ayuda</a>
+                <a href="mis-boletos.html" class="nav-link">Mis Boletos</a>
+            </nav>
+
+            <div class="header-right">
+                <div class="carrito-nav" id="carritoNav" aria-label="Carrito de compras">
+                    <span class="carrito-icon" aria-hidden="true">🛒</span>
+                    <span class="carrito-count">0</span>
+                    <span class="sr-only">0 items en el carrito</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="overlay-menu" id="overlayMenu" aria-hidden="true">
+            <div class="overlay-inner">
+                <button class="overlay-close" id="overlayClose" aria-label="Cerrar menú">×</button>
+                <a href="index.html" class="overlay-link">Inicio</a>
+                <a href="compra.html" class="overlay-link">Comprar boletos</a>
+                <a href="cuentas-pago.html" class="overlay-link">Cuentas de pago</a>
+                <a href="ayuda.html" class="overlay-link">Ayuda</a>
+                <a href="mis-boletos.html" class="overlay-link">Mis Boletos</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- CONTENT -->
+    <main class="container">
+        <h1 style="margin-bottom:0.25rem; text-align:center;">Métodos de Pago</h1>
+        <p class="cuentas-subtitle" style="text-align:center; margin-bottom: 2rem;">Selecciona el método de pago que mejor te convenga. Si una cuenta rechaza el pago, intenta con otra.</p>
+
+        <!-- SECCIÓN 1: TRANSFERENCIAS BANCARIAS -->
+        <section class="payment-section">
+            <h2 class="section-title">💳 Transferencias Bancarias</h2>
+            <p class="section-subtitle">Transferencia directa a través de tu banco</p>
+            <div id="transferenciasContainer" class="cuentas-grid"></div>
+        </section>
+
+        <!-- SECCIÓN 2: DEPÓSITOS EN EFECTIVO -->
+        <section class="payment-section">
+            <h2 class="section-title">💰 Depósitos en Efectivo</h2>
+            <p class="section-subtitle">Paga en tiendas sin necesidad de banco</p>
+            <div id="efectivoContainer" class="efectivo-grid"></div>
+        </section>
+
+        <template id="transferTemplate">
+            <div class="cuenta-card" data-bank="">
+                <div class="card-header">
+                    <div class="bank-name cuenta-bank">Banco</div>
+                    <div class="account-type-badge"><span class="cuenta-type">Tarjeta</span></div>
+                </div>
+                <div class="cuenta-number-row">
+                    <div class="account-number cuenta-number">0000-0000-0000</div>
+                    <button type="button" class="copy-icon" aria-label="copiar numero" title="copiar">📋</button>
+                </div>
+                <div class="beneficiary cuenta-beneficiary">Beneficiario</div>
+            </div>
+        </template>
+
+        <template id="efectivoTemplate">
+            <div class="efectivo-card" data-bank="">
+                <div class="efectivo-header">
+                    <div class="bank-name efectivo-banco">Tienda</div>
+                    <div class="efectivo-icon">🏪</div>
+                </div>
+                <div class="efectivo-body">
+                    <p class="efectivo-instructions"></p>
+                </div>
+                <div class="efectivo-footer">
+                    <small class="efectivo-code">Código enviado por correo</small>
+                </div>
+            </div>
+        </template>
+
+    </main>
+
+    <!-- FOOTER REDISEÑADO -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-main">
+                <!-- Columna izquierda: Logo y nombre -->
+                <div class="footer-logo-section">
+                    <div class="footer-logo-box">
+                        <img src="images/logo.png" alt="SORTEOS YEPE" class="footer-logo-img" width="200" height="100">
+                    </div>
+                    <h3 id="footerNombre" class="footer-client-name">SORTEOS YEPE</h3>
+                    <p id="footerEslogan" class="footer-eslogan">Rifas 100% Transparentes y Seguras</p>
+                </div>
+
+                <!-- Columna central: Enlaces -->
+                <div class="footer-links-section">
+                    <h4 class="footer-links-title">Enlaces</h4>
+                    <ul class="footer-links-list">
+                        <li><a href="index.html">Inicio</a></li>
+                        <li><a href="compra.html">Comprar Boletos</a></li>
+                        <li><a href="ayuda.html">Ayuda</a></li>
+                        <li><a href="mis-boletos.html">Mis Boletos</a></li>
+                    </ul>
+                </div>
+
+                <!-- Columna derecha: Contacto y redes sociales -->
+                <div class="footer-contact-section">
+                    <h4 class="footer-contact-title">Contacto</h4>
+                    <div class="footer-social-icons" id="footerSocial">
+                        <!-- Se carga dinámicamente desde config.js -->
+                    </div>
+                    <div class="footer-contact-details">
+                        <p><i class="fas fa-envelope"></i> <a id="footerEmail" href="mailto:contacto@mirifa.com">contacto@mirifa.com</a></p>
+                        <p><i class="fas fa-phone"></i> <a id="footerTelefono" href="tel:+525512345678">+52 55-1234-5678</a></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Divisor -->
+            <div class="footer-divider"></div>
+
+            <!-- Copyright -->
+            <div class="footer-bottom">
+                <p id="footerCopyright">&copy; 2025 <strong>SORTEOS YEPE</strong>. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+    // Actualizar footer dinámicamente desde config.js
+    document.addEventListener('DOMContentLoaded', function() {
+        const config = window.rifaplusConfig;
+        if (!config) return;
+
+        // Actualizar nombre en footer
+        const footerNombre = document.getElementById('footerNombre');
+        if (footerNombre) {
+            footerNombre.textContent = config.cliente.nombre;
+        }
+
+        // Actualizar eslogan en footer
+        const footerEslogan = document.getElementById('footerEslogan');
+        if (footerEslogan) {
+            footerEslogan.textContent = config.cliente.eslogan || 'Rifas 100% Transparentes y Seguras';
+        }
+
+        // Actualizar redes sociales en footer
+        const footerSocial = document.getElementById('footerSocial');
+        if (footerSocial) {
+            footerSocial.innerHTML = '';
+            if (config.cliente.redesSociales.whatsapp) {
+                const whatsappLink = document.createElement('a');
+                whatsappLink.href = `https://wa.me/${config.cliente.redesSociales.whatsapp.replace(/[^0-9]/g, '')}`;
+                whatsappLink.target = '_blank';
+                whatsappLink.title = 'WhatsApp';
+                whatsappLink.innerHTML = '<i class="fab fa-whatsapp"></i>';
+                footerSocial.appendChild(whatsappLink);
+            }
+            if (config.cliente.redesSociales.facebook) {
+                const facebookLink = document.createElement('a');
+                facebookLink.href = config.cliente.redesSociales.facebook;
+                facebookLink.target = '_blank';
+                facebookLink.title = 'Facebook';
+                facebookLink.innerHTML = '<i class="fab fa-facebook-f"></i>';
+                footerSocial.appendChild(facebookLink);
+            }
+            if (config.cliente.redesSociales.instagram) {
+                const instagramLink = document.createElement('a');
+                instagramLink.href = config.cliente.redesSociales.instagram;
+                instagramLink.target = '_blank';
+                instagramLink.title = 'Instagram';
+                instagramLink.innerHTML = '<i class="fab fa-instagram"></i>';
+                footerSocial.appendChild(instagramLink);
+            }
+        }
+
+        // Actualizar información de contacto
+        const footerEmail = document.getElementById('footerEmail');
+        if (footerEmail) {
+            footerEmail.href = `mailto:${config.cliente.email}`;
+            footerEmail.textContent = config.cliente.email;
+        }
+
+        const footerTelefono = document.getElementById('footerTelefono');
+        if (footerTelefono) {
+            footerTelefono.href = `tel:${config.cliente.telefono.replace(/[^0-9+]/g, '')}`;
+            footerTelefono.textContent = config.cliente.telefono;
+        }
+
+        // Actualizar copyright
+        const footerCopyright = document.getElementById('footerCopyright');
+        if (footerCopyright) {
+            const anio = config.cliente.anioActual || new Date().getFullYear();
+            footerCopyright.innerHTML = `&copy; ${anio} <strong>${config.cliente.nombre}</strong>. Todos los derechos reservados.`;
+        }
+    });
+    </script>
+
+    <script>
+    // Renderizar cuentas de pago desde la configuración global
+    (function() {
+        function render() {
+            const transferContainer = document.getElementById('transferenciasContainer');
+            const efectivoContainer = document.getElementById('efectivoContainer');
+            const transferTpl = document.getElementById('transferTemplate');
+            const efectivoTpl = document.getElementById('efectivoTemplate');
+            
+            transferContainer.innerHTML = '';
+            efectivoContainer.innerHTML = '';
+            
+            const cuentas = (window.rifaplusConfig && window.rifaplusConfig.bankAccounts) ? window.rifaplusConfig.bankAccounts : [];
+            if (!cuentas || cuentas.length === 0) {
+                transferContainer.innerHTML = '<p class="sin-seleccion">No hay cuentas de pago configuradas.</p>';
+                return;
+            }
+            
+            // Separar transferencias y efectivo
+            const transferencias = cuentas.filter(c => c.paymentType === 'transferencia');
+            const efectivo = cuentas.filter(c => c.paymentType === 'efectivo');
+            
+            // Renderizar transferencias
+            transferencias.forEach(c => {
+                const frag = transferTpl.content.cloneNode(true);
+                const cardDiv = frag.querySelector('.cuenta-card');
+                cardDiv.setAttribute('data-bank', (c.nombreBanco || '').toLowerCase());
+                frag.querySelector('.cuenta-bank').textContent = c.nombreBanco || 'Banco';
+                frag.querySelector('.cuenta-type').textContent = c.accountType || 'Tarjeta';
+                frag.querySelector('.cuenta-beneficiary').textContent = c.beneficiary || '';
+                frag.querySelector('.cuenta-number').textContent = c.accountNumber || '';
+                transferContainer.appendChild(frag);
+            });
+            
+            // Renderizar efectivo
+            efectivo.forEach(c => {
+                const frag = efectivoTpl.content.cloneNode(true);
+                const cardDiv = frag.querySelector('.efectivo-card');
+                cardDiv.setAttribute('data-bank', (c.nombreBanco || '').toLowerCase());
+                frag.querySelector('.efectivo-banco').textContent = c.nombreBanco || 'Tienda';
+                frag.querySelector('.efectivo-instructions').textContent = c.instructions || 'Presenta tu código de referencia en la tienda.';
+                efectivoContainer.appendChild(frag);
+            });
+        }
+
+        // Si la configuración se carga asincrónicamente, escuchar evento
+        if (window.rifaplusConfig && typeof window.rifaplusConfig.escucharEvento === 'function') {
+            window.rifaplusConfig.escucharEvento('estadoActualizado', render);
+        }
+
+        document.addEventListener('DOMContentLoaded', render);
+
+        // Delegated handler para el icono de copiar dentro de las tarjetas
+        document.addEventListener('click', function(e) {
+            const btn = e.target.closest('.btn-copy-account, .copy-icon');
+            if (!btn) return;
+            const card = btn.closest('.cuenta-card');
+            if (!card) return;
+            const numEl = card.querySelector('.cuenta-number');
+            const text = numEl ? numEl.textContent.trim() : '';
+            if (!text) return;
+
+            navigator.clipboard.writeText(text).then(() => {
+                if (window.rifaplusUtils && window.rifaplusUtils.showFeedback) {
+                    rifaplusUtils.showFeedback('Número de cuenta copiado', 'success');
+                } else {
+                    // visual feedback temporal para el icono
+                    const orig = btn.textContent;
+                    btn.textContent = '✔️';
+                    btn.disabled = true;
+                    setTimeout(() => {
+                        btn.textContent = orig || '📋';
+                        btn.disabled = false;
+                    }, 1200);
+                }
+            }).catch(() => {
+                if (window.rifaplusUtils && window.rifaplusUtils.showFeedback) rifaplusUtils.showFeedback('Error al copiar', 'error');
+                else alert('Error al copiar');
+            });
+        });
+
+    })();
+    </script>
+
+    <!-- MODAL CARRITO EXPANDIBLE -->
+    <div class="modal-carrito-overlay" id="carritoModal">
+        <div class="modal-carrito">
+            <div class="modal-carrito-header">
+                <h2>🛒 Tu Carrito</h2>
+                <button class="modal-carrito-close" id="closeCarrito" aria-label="Cerrar carrito">×</button>
+            </div>
+            
+            <div class="modal-carrito-body">
+                <!-- Mensaje si está vacío -->
+                <div class="carrito-vacio" id="carritoVacio">
+                    <div class="carrito-vacio-content">
+                        <p class="carrito-vacio-icon">🎯</p>
+                        <p class="carrito-vacio-titulo">Tu carrito está vacío</p>
+                        <p class="carrito-vacio-subtitulo">¡Comienza a seleccionar tus boletos favoritos!</p>
+                        <button class="btn btn-primary btn-carrito-comprar" id="btnIrAComprar">
+                            🎫 Ir a Comprar Boletos
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Lista de boletos seleccionados -->
+                <div class="carrito-lista" id="carritoLista" style="display: none;">
+                    <div class="carrito-items" id="carritoItems"></div>
+                </div>
+            </div>
+
+            <div class="modal-carrito-footer" id="carritoFooter">
+                <div class="carrito-resumen" id="carritoResumen">
+                    <div class="carrito-resumen-row">
+                        <div class="carrito-resumen-item">
+                            <span>Cantidad de boletos:</span>
+                            <strong id="carritoResumenCantidad">0</strong>
+                        </div>
+                        <button class="btn btn-danger btn-sm" id="btnLimpiarCarrito" title="Eliminar todos los boletos" aria-label="Eliminar todos los boletos del carrito">
+                            Limpiar carrito
+                        </button>
+                    </div>
+                    <div class="carrito-resumen-item">
+                        <span>Subtotal:</span>
+                        <strong id="carritoResumenSubtotal">$0</strong>
+                    </div>
+                    <div class="carrito-resumen-item">
+                        <span>Descuento:</span>
+                        <strong id="carritoResumenDescuento">$0</strong>
+                    </div>
+                    <div class="carrito-resumen-total">
+                        <span>Total:</span>
+                        <strong id="carritoResumenTotal">$0</strong>
+                    </div>
+                </div>
+
+                <div class="carrito-acciones carrito-acciones-bottom">
+                    <button class="btn btn-outline" id="btnSeguirComprando">Seguir comprando</button>
+                    <button class="btn btn-primary btn-lg" id="btnProcederCarrito" disabled>Proceder al pago</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL SELECCIONAR CUENTA DE PAGO -->
+    <div class="modal-overlay" id="modalSeleccionCuenta">
+        <div class="modal-contacto modal-contacto--small" role="dialog" aria-modal="true">
+            <div class="modal-header modal-header-center">
+                <h2>Selecciona la cuenta de pago de tu preferencia</h2>
+                <button class="modal-close" id="closeModalSeleccionCuenta" aria-label="Cerrar">×</button>
+            </div>
+            <div class="modal-body" style="padding:1.5rem; flex: 1; overflow-y: auto;">
+                <div id="cuentasLista">
+                    <!-- cuentas se inyectan aquí -->
+                </div>
+            </div>
+            <div class="modal-footer-contacto" style="justify-content:flex-end;">
+                <!-- Close button: use the × button in the header -->
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL LOADING -->
+    <div id="modalLoadingOrden" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; align-items: center; justify-content: center; flex-direction: column;">
+        <div style="background: white; padding: 40px; border-radius: 12px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.3);">
+            <div style="width: 60px; height: 60px; border: 4px solid #f0f0f0; border-top: 4px solid #7c3aed; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px;" id="spinnerOrden"></div>
+            <h3 style="margin: 0 0 10px 0; color: #333; font-size: 18px;">⏳ Apartando tu orden...</h3>
+            <p style="margin: 5px 0 15px 0; color: #666; font-size: 14px;">Por favor espera, esto puede tomar algunos segundos</p>
+            <p id="tiempoTranscurrido" style="margin: 0; color: #999; font-size: 12px;">Tiempo: 0s</p>
+        </div>
+        <style>
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+        </style>
+    </div>
+
+    <!-- MODAL ORDEN FORMAL -->
+    <div class="modal-orden-formal" id="modalOrdenFormal">
+        <div class="orden-formal-container">
+            <div class="orden-formal-header">
+                <h2>📄 Orden de Pago</h2>
+                <p style="font-size: 0.9rem; opacity: 0.9; margin-bottom: 8px;">✓ Te recomendamos descargar la orden de pago o tomarle captura de pantalla para tener evidencia de su compra</p>
+                <p>Después haga click en "Continuar" para guardar su orden en el sistema</p>
+                <button class="modal-close" id="closeOrdenFormal" aria-label="Cerrar">×</button>
+            </div>
+            <div class="orden-formal-content">
+                <div id="contenidoOrdenFormal">
+                    <!-- Se llena dinámicamente con JavaScript -->
+                </div>
+            </div>
+            <div class="orden-formal-footer">
+                <button class="btn btn-secondary" id="btnDescargarOrdenFormal">
+                    <i class="fas fa-download"></i> Descargar
+                </button>
+                <button class="btn btn-primary" id="btnContinuarOrdenFormal">
+                    <i class="fas fa-paper-plane"></i> Continuar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script defer src="js/theme-loader.js?v=20251216"></script>
+    <script defer>
+        (function limpiarCacheYFechas() {
+            ['rifaplus_fecha_sorteo','rifaplus_timestamp_sorteo','rifaplus_fecha_cierre'].forEach(k => localStorage.removeItem(k));
+        })();
+    </script>
+    <script defer src="js/config.js?v=1766990666"></script>
+    <script defer src="js/theme-dynamic.js"></script>
+    <script defer src="js/main.js"></script>
+    <script defer src="js/carrito-global.js?v=1766990666"></script>
+    <script defer src="js/flujo-compra.js"></script>
+    <script defer src="js/orden-formal.js"></script>
+    <script defer src="js/modal-contacto.js"></script>
+
+    <!-- Botón Flotante: Subir Comprobante -->
+    <a href="mis-boletos.html" class="btn-flotante-comprobante" title="Subir comprobante de pago">
+        <i class="fas fa-cloud-upload-alt"></i>
+        <span class="btn-flotante-texto">Subir comprobante</span>
+    </a>
+
+</body>
+</html>

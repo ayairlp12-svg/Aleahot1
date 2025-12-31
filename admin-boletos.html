@@ -1,0 +1,2469 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' http://127.0.0.1:* http://localhost:*; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://fonts.googleapis.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; connect-src 'self' http://127.0.0.1:* http://localhost:* https:; img-src 'self' data: https:;">
+    <title>Boletos - Panel Admin</title>
+    <link rel="icon" href="images/logo.png" sizes="32x32">
+    <link rel="preload" as="image" href="images/logo.png" fetchpriority="high">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/admin-layout.css?v=20251221">
+    <link rel="stylesheet" href="css/styles.css?v=20251128">
+    <script>
+        (function limpiarCacheYFechas() {
+            ['rifaplus_fecha_sorteo','rifaplus_timestamp_sorteo','rifaplus_fecha_cierre'].forEach(k => localStorage.removeItem(k));
+        })();
+    </script>
+    <script src="js/config.js?v=20251228.15"></script>
+    <script src="js/theme-dynamic.js"></script>
+    <script src="js/ganadores.js?v=20251228.15"></script>
+    <script src="js/boletos-loader.js"></script>
+    <script src="js/admin-layout.js?v=20251228.15"></script>
+    <style>
+        :root {
+            --primary: #7C3AED;
+            --primary-dark: #5a2abf;
+            --primary-light: #F3E9FF;
+            --success: #31A24C;
+            --danger: #E4163A;
+            --warning: #B4740C;
+            --text-dark: #0A0E27;
+            --text-light: #65676B;
+            --text-lighter: #8A8D91;
+            --bg-light: #F0F2F5;
+            --bg-white: #FFFFFF;
+            --border-color: #CED0D4;
+            --divider: #E5E7EB;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', 'Ubuntu', sans-serif;
+            background: #F8F9FA;
+            color: var(--text-dark);
+            line-height: 1.5;
+            font-size: 13px;
+        }
+
+        /* ===== HEADER ===== */
+        .header {
+            background: var(--bg-white);
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo-container {
+            width: 60px;
+            height: 60px;
+            border-radius: 0.75rem;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .logo-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .header-title {
+            display: flex;
+            flex-direction: column;
+            gap: 0.15rem;
+        }
+
+        .header-title-main {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .header-title-sub {
+            font-size: 0.8rem;
+            font-weight: 400;
+            color: var(--text-light);
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-left: auto;
+        }
+
+        .btn-export, .btn-panel, .btn-logout {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border-color);
+            background: var(--bg-white);
+            color: var(--text-dark);
+            border-radius: 0.375rem;
+            font-weight: 500;
+            cursor: pointer;
+            font-size: 0.85rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            transition: all 0.2s ease;
+        }
+
+        .btn-export:hover, .btn-panel:hover {
+            background: var(--bg-light);
+            border-color: var(--primary);
+        }
+
+        .btn-logout {
+            background: var(--danger);
+            color: white;
+            border-color: var(--danger);
+        }
+
+        .btn-logout:hover {
+            background: #c91230;
+        }
+
+        /* ===== MAIN CONTAINER ===== */
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .search-container {
+            background: var(--bg-white);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            margin-bottom: 2rem;
+        }
+
+        .search-input-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .search-input-group input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.375rem;
+            font-size: 0.85rem;
+        }
+
+        .search-input-group button {
+            padding: 0.75rem 1.5rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 0.375rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .search-input-group button:hover {
+            background: var(--primary-dark);
+        }
+
+        /* ===== TICKET CARD ===== */
+        .ticket-result {
+            display: none;
+        }
+
+        .ticket-result.active {
+            display: block;
+            margin-top: 2rem;
+        }
+
+        /* ===== VARIABLES DE TEMA ===== */
+        :root {
+            --card-max-width: 600px;
+            --card-min-width: 280px;
+            --spacing-xs: 0.25rem;
+            --spacing-sm: 0.5rem;
+            --spacing-md: 1rem;
+            --spacing-lg: 1.5rem;
+            --spacing-xl: 2rem;
+            --border-radius: 0.75rem;
+            --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.15);
+            --logo-max-height: 50px;
+            --image-max-height: 280px;
+        }
+
+        /* ===== TICKET CARD ===== */
+        .ticket-card {
+            max-width: var(--card-max-width);
+            min-width: var(--card-min-width);
+            background: white;
+            border: 2px solid var(--primary);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--shadow-md);
+            line-height: 1.5;
+        }
+
+        /* ===== HEADER SUPERIOR ===== */
+        .orden-header-top {
+            background: white;
+            padding: var(--spacing-md);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 2px solid var(--divider);
+            gap: var(--spacing-md);
+            flex-wrap: wrap;
+            min-height: 60px;
+        }
+
+        .orden-header-top-left {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            flex: 1 1 auto;
+            min-width: 150px;
+        }
+
+        .orden-header-logo {
+            max-height: var(--logo-max-height);
+            max-width: 120px;
+            width: auto;
+            object-fit: contain;
+            flex-shrink: 0;
+        }
+
+        .orden-estado-badge {
+            padding: var(--spacing-xs) var(--spacing-sm);
+            font-size: 0.65rem;
+            font-weight: 700;
+            border-radius: 0.25rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            min-width: 75px;
+            text-align: center;
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+
+        .orden-estado-badge.vendido {
+            background: #10b981;
+            color: white;
+        }
+
+        .orden-estado-badge.apartado {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .orden-estado-badge.disponible {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .orden-header-top-right {
+            text-align: right;
+            flex: 1 1 auto;
+            min-width: 150px;
+        }
+
+        .orden-id-numero {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary);
+            font-family: 'Courier New', monospace;
+            margin-bottom: var(--spacing-xs);
+            word-break: break-all;
+        }
+
+        .orden-fecha-hora {
+            font-size: 0.75rem;
+            color: var(--text-light);
+            white-space: nowrap;
+        }
+
+        /* ===== NOMBRE DEL SORTEO ===== */
+        .orden-nombre-sorteo {
+            padding: var(--spacing-sm) var(--spacing-md);
+            background: var(--primary-light);
+            color: var(--primary);
+            font-weight: 600;
+            text-align: center;
+            font-size: 0.85rem;
+            border-bottom: 1px solid var(--divider);
+            word-break: break-word;
+            overflow-wrap: break-word;
+        }
+
+        /* ===== IMAGEN PRINCIPAL ===== */
+        .orden-imagen-principal {
+            text-align: center;
+            padding: var(--spacing-md);
+            background: white;
+            border-bottom: 2px solid var(--divider);
+            min-height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .orden-imagen-principal img {
+            max-width: 100%;
+            max-height: var(--image-max-height);
+            width: auto;
+            height: auto;
+            object-fit: contain;
+            border-radius: 0.5rem;
+        }
+
+        /* ===== SECCIONES DE DATOS ===== */
+        .orden-seccion {
+            padding: var(--spacing-md);
+            border-bottom: 2px solid var(--divider);
+        }
+
+        .orden-seccion:last-child {
+            border-bottom: none;
+        }
+
+        .orden-seccion-titulo {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--primary);
+            letter-spacing: 0.05em;
+            margin-bottom: var(--spacing-sm);
+        }
+
+        /* ===== GRID DE DATOS ===== */
+        .orden-datos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: var(--spacing-md);
+        }
+
+        .orden-dato {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-xs);
+        }
+
+        .orden-dato-full {
+            grid-column: 1 / -1;
+        }
+
+        .orden-dato-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--text-light);
+            letter-spacing: 0.05em;
+        }
+
+        .orden-dato-valor {
+            font-size: 0.9rem;
+            color: var(--text-dark);
+            font-weight: 500;
+            word-break: break-word;
+            overflow-wrap: break-word;
+        }
+
+        /* ===== MENSAJE DE DISPONIBLE ===== */
+        .orden-disponible-message {
+            padding: var(--spacing-lg) var(--spacing-md);
+            margin: var(--spacing-md);
+            text-align: center;
+            background: #f0f9ff;
+            border: 2px solid #0ea5e9;
+            border-radius: 0.5rem;
+        }
+
+        .orden-disponible-message p {
+            margin: 0;
+            font-size: 1.05rem;
+            color: #0284c7;
+            font-weight: 600;
+        }
+
+        /* ===== RESPONSIVIDAD ===== */
+        @media (max-width: 768px) {
+            :root {
+                --card-max-width: 95vw;
+                --spacing-md: 0.75rem;
+                --spacing-lg: 1.25rem;
+                --logo-max-height: 40px;
+                --image-max-height: 200px;
+            }
+
+            .ticket-card {
+                border-radius: 0.5rem;
+            }
+
+            .orden-header-top {
+                padding: var(--spacing-sm);
+                gap: var(--spacing-sm);
+                flex-direction: column;
+            }
+
+            .orden-header-top-left,
+            .orden-header-top-right {
+                min-width: auto;
+                width: 100%;
+            }
+
+            .orden-header-top-right {
+                text-align: left;
+            }
+
+            .orden-datos-grid {
+                grid-template-columns: 1fr;
+                gap: var(--spacing-sm);
+            }
+
+            .orden-id-numero {
+                font-size: 1.1rem;
+            }
+
+            .orden-fecha-hora {
+                font-size: 0.7rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            :root {
+                --spacing-md: 0.5rem;
+                --logo-max-height: 35px;
+                --image-max-height: 150px;
+            }
+
+            .ticket-card {
+                min-width: 100%;
+            }
+
+            .orden-header-logo {
+                max-width: 80px;
+            }
+
+            .orden-estado-badge {
+                padding: var(--spacing-xs) 0.25rem;
+                font-size: 0.6rem;
+                min-width: 60px;
+            }
+
+            .orden-id-numero {
+                font-size: 1rem;
+            }
+
+            .orden-seccion {
+                padding: var(--spacing-sm);
+            }
+
+            .orden-dato-label {
+                font-size: 0.65rem;
+            }
+
+            .orden-dato-valor {
+                font-size: 0.85rem;
+            }
+        }
+        .ticket-divider {
+            height: 1px;
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        .ticket-actions {
+            padding-top: 1.5rem;
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn-action {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: none;
+            border-radius: 0.375rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-ganador {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-ganador:hover {
+            background: #28872f;
+        }
+
+        .btn-liberar {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-liberar:hover {
+            background: #c91230;
+        }
+
+        /* ===== ESTILOS PARA TICKET CON LAYOUT ORDENES-LISTA ===== */
+        .orden-header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 1rem;
+            background: linear-gradient(135deg, var(--primary-light) 0%, #f0f2f5 100%);
+            border-bottom: 2px solid var(--primary);
+            gap: 1rem;
+        }
+
+        .orden-header-top-left {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex: 1;
+        }
+
+        .orden-header-top-left img {
+            max-height: 50px;
+            max-width: 50px;
+            object-fit: contain;
+            border-radius: 4px;
+        }
+
+        .orden-estado-badge {
+            background: var(--primary);
+            color: white;
+            padding: 0.4rem 0.8rem;
+            border-radius: 0.375rem;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            white-space: nowrap;
+        }
+
+        .orden-header-top-right {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 0.25rem;
+        }
+
+        .orden-id-numero {
+            font-size: 1.5rem;
+            font-weight: 900;
+            color: var(--primary);
+        }
+
+        .orden-fecha-hora {
+            font-size: 0.75rem;
+            color: var(--text-light);
+            font-weight: 500;
+        }
+
+        .orden-imagen-principal {
+            position: relative;
+            width: 100%;
+            background: linear-gradient(135deg, #f8fafc 0%, #f0f2f5 100%);
+            padding: 1.5rem;
+            text-align: center;
+            border-bottom: 1px solid var(--divider);
+        }
+
+        .orden-imagen-principal-titulo {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .orden-imagen-principal img {
+            max-width: 100%;
+            max-height: 250px;
+            object-fit: contain;
+            border-radius: 0.5rem;
+        }
+
+        .orden-body {
+            padding: 1.5rem;
+            background: white;
+        }
+
+        .orden-seccion {
+            margin-bottom: 1.5rem;
+        }
+
+        .orden-seccion:last-of-type {
+            margin-bottom: 0;
+        }
+
+        .orden-seccion-titulo {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .orden-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .orden-info-item {
+            padding: 0.75rem;
+            background: #f9fafb;
+            border-radius: 0.5rem;
+            border-left: 3px solid var(--primary);
+        }
+
+        .orden-info-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.25rem;
+        }
+
+        .orden-info-value {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            word-break: break-word;
+        }
+
+        .error-message {
+            background: #ffe0e0;
+            color: var(--danger);
+            padding: 1rem;
+            border-radius: 0.375rem;
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .success-message {
+            background: #e0f8e0;
+            color: var(--success);
+            padding: 1rem;
+            border-radius: 0.375rem;
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .success-message.show {
+            display: block;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .badge-vendido {
+            background: var(--vendido-20);
+            color: var(--vendido);
+        }
+
+        .badge-apartado {
+            background: var(--apartado-20);
+            color: var(--primary);
+        }
+
+        .badge-disponible {
+            background: rgba(250, 250, 250, 0.5);
+            color: #6B7280;
+        }
+
+        /* ===== STATS SECTION ===== */
+        .stats-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--bg-white);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            border-left: 4px solid var(--primary);
+        }
+
+        .stat-card.pendiente {
+            border-left-color: #6B7280;
+        }
+
+        .stat-card.comprobante {
+            border-left-color: var(--warning);
+        }
+
+        .stat-card.confirmada {
+            border-left-color: var(--success);
+        }
+
+        .stat-card.cancelada {
+            border-left-color: var(--danger);
+        }
+
+        .stat-card.sorteo-name {
+            border-left-color: var(--primary);
+        }
+
+        .stat-card.total-boletos {
+            border-left-color: #3B82F6;
+        }
+
+        .stat-card.vendidos {
+            border-left-color: var(--success);
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .stat-toggle-visibility {
+            background: none;
+            border: none;
+            color: var(--text-light);
+            cursor: pointer;
+            font-size: 0.9rem;
+            padding: 0.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.2s ease;
+        }
+
+        .stat-toggle-visibility:hover {
+            color: var(--primary);
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        html[data-boletos-sold-hidden="true"] .vendidos .stat-number {
+            color: transparent;
+            background: linear-gradient(135deg, #f0f0f0, #e0e0e0);
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 1.5rem;
+            user-select: none;
+        }
+
+        /* ===== MODAL BASE STYLES ===== */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 9999;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 0;
+        }
+
+        .modal-content {
+            position: relative;
+            z-index: 1;
+            background: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 90vw;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .modal-header-center {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            width: 100%;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 1.25rem;
+            color: var(--text-dark);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text-light);
+            cursor: pointer;
+            padding: 0;
+            width: 2rem;
+            height: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.25rem;
+            transition: all 0.2s ease;
+            position: absolute;
+            right: 1.5rem;
+            top: 1.5rem;
+        }
+
+        .modal-close:hover {
+            background: var(--bg-light);
+            color: var(--primary);
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .modal-footer {
+            padding: 1.5rem;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+        }
+
+        .modal-footer-ganador {
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.375rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.85rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-outline {
+            background: white;
+            border: 2px solid var(--border-color);
+            color: var(--text-dark);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--primary);
+            background: var(--primary-light);
+            color: var(--primary);
+        }
+
+        /* ===== MODAL GANADOR STYLES ===== */
+        .modal-ganador {
+            max-width: 500px;
+        }
+
+        .tipos-ganadores-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+
+        .tipo-ganador-card {
+            padding: 1.25rem;
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            text-align: center;
+            background: white;
+        }
+
+        .tipo-ganador-card:hover {
+            border-color: var(--primary);
+            background: rgba(124, 58, 237, 0.05);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(124, 58, 237, 0.15);
+        }
+
+        .tipo-ganador-card.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .tipo-ganador-icono {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .tipo-ganador-nombre {
+            font-weight: 700;
+            color: var(--text-dark);
+            font-size: 0.95rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .tipo-ganador-contador {
+            font-size: 0.8rem;
+            color: var(--text-light);
+        }
+
+        .tipo-ganador-contador span {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        @media (max-width: 480px) {
+            .tipos-ganadores-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .tipo-ganador-card {
+                padding: 1rem;
+            }
+
+            .tipo-ganador-icono {
+                font-size: 2rem;
+            }
+
+            .tipo-ganador-nombre {
+                font-size: 0.9rem;
+            }
+        }
+
+        /* ===== MODAL DE LUGAR ===== */
+        .lugares-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 0.75rem;
+        }
+
+        .lugar-btn {
+            padding: 1rem;
+            border: 2px solid var(--border-color);
+            background: white;
+            color: var(--text-dark);
+            border-radius: 0.5rem;
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            text-align: center;
+        }
+
+        .lugar-btn:hover:not(:disabled) {
+            border-color: var(--primary);
+            background: rgba(124, 58, 237, 0.05);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(124, 58, 237, 0.15);
+        }
+
+        .lugar-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+    </style>
+    <script>
+        // Apply boletos sold visibility state before DOM renders to prevent flash
+        const boletosSoldHidden = localStorage.getItem('rifaplus_boletos_sold_hidden') === 'true';
+        if (boletosSoldHidden) {
+            document.documentElement.setAttribute('data-boletos-sold-hidden', 'true');
+        }
+    </script>
+</head>
+<body>
+    <!-- ADMIN HEADER -->
+    <div class="admin-header">
+        <div class="admin-header-content">
+            <div class="admin-header-left">
+                <div class="admin-logo-container">
+                    <img src="images/logo.png" alt="SORTEOS YEPE" class="admin-logo-img">
+                </div>
+                <div class="admin-header-title">
+                    <div class="admin-header-title-main">Panel Administrativo</div>
+                    <div class="admin-header-title-sub">SORTEOS YEPE</div>
+                </div>
+            </div>
+            <div class="admin-header-right">
+                <button class="admin-logout-btn" title="Cerrar sesión">
+                    <i class="fas fa-sign-out-alt"></i> <span>Cerrar Sesión</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADMIN SIDEBAR -->
+    <aside class="admin-sidebar" id="adminSidebar">
+        <div class="admin-sidebar-content">
+            <div class="admin-sidebar-section">
+                <div class="admin-sidebar-section-title">Navegación</div>
+                <a href="admin-dashboard.html" class="admin-nav-btn">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="admin-ordenes.html" class="admin-nav-btn">
+                    <i class="fas fa-clipboard-list"></i>
+                    <span>Órdenes</span>
+                </a>
+                <a href="admin-boletos.html" class="admin-nav-btn active">
+                    <i class="fas fa-ticket-alt"></i>
+                    <span>Boletos</span>
+                </a>
+                <a href="admin-ruletazo.html" class="admin-nav-btn">
+                    <i class="fas fa-dharmachakra"></i>
+                    <span>Ruletazo</span>
+                </a>
+            </div>
+            <div class="admin-sidebar-section">
+                <div class="admin-sidebar-section-title">Sistema</div>
+                <a href="admin-configuracion.html" class="admin-nav-btn">
+                    <i class="fas fa-cog"></i>
+                    <span>Configuración</span>
+                </a>
+                <a href="ayuda.html" class="admin-nav-btn">
+                    <i class="fas fa-question-circle"></i>
+                    <span>Ayuda</span>
+                </a>
+            </div>
+        </div>
+    </aside>
+
+    <!-- TOGGLE SIDEBAR BUTTON (MOBILE) -->
+    <button class="admin-sidebar-toggle" id="sidebarToggle">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- MAIN CONTENT -->
+    <div class="admin-main" id="adminMain">
+        <div class="container">
+        <!-- STATS SECTION -->
+        <div class="stats-section" id="statsSection">
+            <div class="stat-card sorteo-name">
+                <div class="stat-label">Sorteo</div>
+                <div class="stat-number" id="statSorteoNombre">-</div>
+            </div>
+            <div class="stat-card total-boletos">
+                <div class="stat-label">Total Boletos</div>
+                <div class="stat-number" id="statTotalBoletos">0</div>
+            </div>
+            <div class="stat-card vendidos">
+                <div class="stat-label">
+                    Boletos Vendidos
+                    <button class="stat-toggle-visibility" id="toggleBoletosSoldVisibility" title="Mostrar/Ocultar" style="margin-left: auto;">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+                <div class="stat-number" id="statBoletosSold">0</div>
+            </div>
+        </div>
+
+        <!-- MODAL SELECCIONAR TIPO DE GANADOR -->
+        <div class="modal" id="modalSeleccionarGanador">
+            <div class="modal-overlay" onclick="if(event.target === this) window.cerrarModalSeleccionarGanador()"></div>
+            <div class="modal-content modal-ganador">
+                <div class="modal-header modal-header-center">
+                    <h2>🏆 ¿Qué tipo de ganador es?</h2>
+                    <button class="modal-close" id="closeModalGanador" aria-label="Cerrar" onclick="window.cerrarModalSeleccionarGanador()">×</button>
+                </div>
+                
+                <div class="modal-body">
+                    <div id="ganadesoresInfo" style="margin-bottom: 1.5rem; padding: 1rem; background: rgba(124, 58, 237, 0.1); border-radius: var(--radius-md);">
+                        <p style="margin: 0; font-weight: 600; color: var(--text-dark);">
+                            Boleto: <span id="ganadesoresNumero" style="color: var(--primary); font-size: 1.2rem;">-</span>
+                        </p>
+                    </div>
+
+                    <div id="tiposGanadores" class="tipos-ganadores-grid" style="display: grid; gap: 1rem;">
+                        <!-- Se genera dinámicamente con JavaScript -->
+                    </div>
+                </div>
+
+                <div class="modal-footer modal-footer-ganador">
+                    <button class="btn btn-outline" id="btnCancelarGanador">Cancelar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL SELECCIONAR LUGAR DEL GANADOR -->
+        <div class="modal" id="modalSeleccionarLugar">
+            <div class="modal-overlay" onclick="if(event.target === this) window.cerrarModalSeleccionarLugar()"></div>
+            <div class="modal-content modal-ganador">
+                <div class="modal-header modal-header-center">
+                    <h2>🥇 ¿Qué lugar ganó?</h2>
+                    <button class="modal-close" id="closeModalLugar" aria-label="Cerrar" onclick="window.cerrarModalSeleccionarLugar()">×</button>
+                </div>
+                
+                <div class="modal-body">
+                    <div id="lugarInfo" style="margin-bottom: 1.5rem; padding: 1rem; background: rgba(124, 58, 237, 0.1); border-radius: var(--radius-md);">
+                        <p style="margin: 0; font-weight: 600; color: var(--text-dark);">
+                            Boleto: <span id="lugarNumero" style="color: var(--primary); font-size: 1.2rem;">-</span>
+                            <br>
+                            Tipo: <span id="lugarTipo" style="color: var(--primary); font-weight: 700;">-</span>
+                        </p>
+                    </div>
+
+                    <div id="lugaresDisponibles" class="lugares-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 0.75rem;">
+                        <!-- Se genera dinámicamente con JavaScript -->
+                    </div>
+                </div>
+
+                <div class="modal-footer modal-footer-ganador">
+                    <button class="btn btn-outline" id="btnCancelarLugar">Cancelar</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="search-container">
+            <div class="search-input-group">
+                <input 
+                    type="number" 
+                    id="searchBoleto" 
+                    placeholder="Ingresa número de boleto..."
+                    onkeypress="if(event.key === 'Enter') buscarBoleto()"
+                >
+                <button onclick="buscarBoleto()">
+                    <i class="fas fa-search"></i> Buscar
+                </button>
+            </div>
+        </div>
+
+        <div class="ticket-result" id="ticketResult">
+            <div class="error-message" id="errorMessage"></div>
+            <div class="success-message" id="successMessage"></div>
+            <div class="ticket-card" id="ticketCard"></div>
+            <div class="ticket-actions"></div>
+        </div>
+    </div>
+
+    <script>
+        // ===== CONFIG =====
+        // Obtener URL de API desde config si está disponible, sino usar default
+        const API_BASE = (window.rifaplusConfig && window.rifaplusConfig.backend) 
+            ? window.rifaplusConfig.backend.apiBase 
+            : 'http://127.0.0.1:5001';
+        
+        let allBoletos = [];
+        let allOrdenes = [];
+        let currentBoleto = null;
+
+        // ===== AUTH =====
+        function getToken() {
+            return localStorage.getItem('rifaplus_token') ||
+                   localStorage.getItem('rifaplus_admin_token') || 
+                   localStorage.getItem('admin_token') || 
+                   localStorage.getItem('token');
+        }
+
+        function verificarAutenticacion() {
+            const token = getToken();
+            if (!token) {
+                // Guardar que venía de boletos para redirigir después del login
+                localStorage.setItem('redirectAfterLogin', 'admin-boletos.html');
+                window.location.href = 'admin-dashboard.html';
+                return false;
+            }
+            return true;
+        }
+
+        function logout() {
+            localStorage.removeItem('rifaplus_admin_token');
+            localStorage.removeItem('admin_token');
+            localStorage.removeItem('token');
+            window.location.href = 'admin-dashboard.html';
+        }
+
+        function goToPanel() {
+            window.location.href = 'admin-dashboard.html';
+        }
+
+        // ===== INIT CONFIG =====
+        function initializeConfig() {
+            try {
+                const config = window.rifaplusConfig || {};
+                const clienteLogo = config.cliente?.logo || 'images/logo.png';
+                
+                // Actualizar logo del header - con verificación de nulidad
+                const headerLogo = document.getElementById('headerLogo');
+                if (headerLogo) {
+                    headerLogo.src = clienteLogo;
+                }
+                
+                // Actualizar logo alternativo en sidebar si existe
+                const sidebarLogo = document.querySelector('.admin-logo-img');
+                if (sidebarLogo) {
+                    sidebarLogo.src = clienteLogo;
+                }
+                
+                // Actualizar logo en dashboard si existe
+                const dashboardLogo = document.getElementById('dashboardLogo');
+                if (dashboardLogo) {
+                    dashboardLogo.src = clienteLogo;
+                }
+            } catch (error) {
+                console.warn('⚠️ Error al inicializar configuración:', error);
+                // No lanzar error, continuar con valores por defecto
+            }
+        }
+
+        // ===== FETCH WITH AUTH =====
+        async function fetchWithAuth(url, opts = {}) {
+            const token = getToken();
+            opts.headers = opts.headers || {};
+            opts.headers['Content-Type'] = 'application/json';
+            if (token) opts.headers['Authorization'] = 'Bearer ' + token;
+            
+            const res = await fetch(url, opts);
+            
+            if (res.status === 401 || res.status === 403) {
+                logout();
+                return null;
+            }
+            return res;
+        }
+
+        // ===== LOAD ALL BOLETOS =====
+        async function cargarBoletos() {
+            try {
+                // Cargar órdenes para estadísticas y búsqueda
+                try {
+                    const resOrdenes = await fetchWithAuth(`${API_BASE}/api/ordenes?limit=1000`);
+                    if (resOrdenes && resOrdenes.ok) {
+                        const jsonOrdenes = await resOrdenes.json();
+                        allOrdenes = (jsonOrdenes.data || []);
+                        console.log(`✅ Órdenes cargadas: ${allOrdenes.length}`);
+                    } else {
+                        console.warn('Error al obtener respuesta de órdenes:', resOrdenes?.status);
+                        allOrdenes = [];
+                    }
+                } catch (err) {
+                    console.error('❌ Error cargando órdenes:', err);
+                    allOrdenes = [];
+                }
+                
+                actualizarEstadisticas();
+            } catch (err) {
+                console.error('Error cargando datos:', err);
+                showError('Error al cargar datos');
+            }
+        }
+
+        // ===== ACTUALIZAR ESTADÍSTICAS =====
+        function actualizarEstadisticas() {
+            // Card 1: Nombre del sorteo desde config
+            if (window.rifaplusConfig?.rifa?.titulo) {
+                document.getElementById('statSorteoNombre').textContent = window.rifaplusConfig.rifa.titulo;
+            }
+
+            // Card 2: Total de boletos desde config
+            if (window.rifaplusConfig?.rifa?.totalBoletos) {
+                document.getElementById('statTotalBoletos').textContent = window.rifaplusConfig.rifa.totalBoletos;
+            }
+
+            // Card 3: Boletos vendidos (confirmados) - contar desde las órdenes confirmadas
+            let boletosSold = 0;
+            allOrdenes.forEach(orden => {
+                if (orden.estado?.toLowerCase() === 'confirmada') {
+                    // Contar la cantidad de boletos en esta orden
+                    if (orden.cantidad_boletos) {
+                        boletosSold += orden.cantidad_boletos;
+                    }
+                }
+            });
+            document.getElementById('statBoletosSold').textContent = boletosSold;
+        }
+
+        // ===== BUSCAR BOLETO =====
+        async function buscarBoleto() {
+            const input = document.getElementById('searchBoleto').value.trim();
+            
+            if (!input) {
+                showError('Ingresa un número de boleto');
+                return;
+            }
+
+            // Validar que sea un número válido
+            const num = Number(input);
+            if (isNaN(num) || num <= 0) {
+                showError('Ingresa un número válido');
+                return;
+            }
+
+            hideMessages();
+
+            // Buscar el boleto directamente en el backend
+            try {
+                const resBoleto = await fetchWithAuth(`${API_BASE}/api/admin/boleto-simple/${num}`);
+                
+                if (!resBoleto || !resBoleto.ok) {
+                    showError(`Boleto #${num} no encontrado`);
+                    document.getElementById('ticketResult').classList.remove('active');
+                    return;
+                }
+                
+                const dataBoleto = await resBoleto.json();
+                
+                if (!dataBoleto.success || !dataBoleto.data) {
+                    showError(`Boleto #${num} no encontrado`);
+                    document.getElementById('ticketResult').classList.remove('active');
+                    return;
+                }
+                
+                const boleto = dataBoleto.data;
+                console.log('Boleto encontrado:', boleto);
+                
+                currentBoleto = boleto;
+                renderTicket(boleto);
+                document.getElementById('ticketResult').classList.add('active');
+            } catch (err) {
+                console.error('Error buscando boleto:', err);
+                showError('Error al buscar boleto');
+            }
+        }
+
+        // ===== RENDER TICKET =====
+        function renderTicket(boleto) {
+            try {
+                // Validar que el boleto existe
+                if (!boleto || typeof boleto !== 'object') {
+                    console.error('❌ Boleto inválido:', boleto);
+                    showError('Error: Datos de boleto inválidos');
+                    return;
+                }
+
+                // Extraer y validar datos con fallbacks
+                const numeroFormato = String(boleto.numero || '0').padStart(5, '0');
+                
+                // ✅ ARREGLADO: Determinar estado correctamente
+                // El estado viene de estado_orden (pendiente, comprobante_recibido, confirmada, etc)
+                const estadoOrden = (boleto.estado_orden || '').toLowerCase().trim();
+
+                // IMPORTANTE: usar el valor CRUDO de numero_orden para la lógica
+                // porque `sanitizeText` devuelve 'N/A' para valores vacíos y rompe la comprobación.
+                const numeroOrdenRaw = boleto.numero_orden || null; // null si no existe
+                const numeroOrdenDisplay = sanitizeText(boleto.numero_orden || ''); // para mostrar en UI
+
+                let estadoBoleto = 'disponible'; // Por defecto
+
+                if (numeroOrdenRaw) {
+                    // El boleto está asociado a una orden
+                    if (estadoOrden === 'pendiente' || estadoOrden === 'comprobante_recibido') {
+                        estadoBoleto = 'apartado';
+                    } else if (estadoOrden === 'confirmada' || estadoOrden === 'completada') {
+                        estadoBoleto = 'vendido';
+                    } else if (estadoOrden === 'cancelada') {
+                        estadoBoleto = 'disponible'; // Si fue cancelado, está disponible de nuevo
+                    }
+                }
+                
+                // Determinar estado
+                const esVendido = estadoBoleto === 'vendido';
+                const esApartado = estadoBoleto === 'apartado';
+                const esDisponible = estadoBoleto === 'disponible';
+                
+                console.log(`✅ Renderizando boleto #${numeroFormato}`);
+                console.log(`   Orden: ${numeroOrdenRaw || '—'}, Estado Orden: ${estadoOrden || '—'}`);
+                console.log(`   Estado Boleto: ${estadoBoleto} (vendido:${esVendido}, apartado:${esApartado}, disponible:${esDisponible})`);
+                
+                // Datos del cliente con validación - USAR SIEMPRE LOS CAMPOS DEL BOLETO
+                const nombreCliente = sanitizeText(boleto.nombre_cliente || 'Sin especificar');
+                const apellidoCliente = sanitizeText(boleto.apellido_cliente || 'Sin especificar');
+                const estadoCliente = sanitizeText(boleto.estado_cliente || 'N/A');
+                const ciudadCliente = sanitizeText(boleto.ciudad_cliente || 'N/A');
+                const cantidadBoletos = Math.max(1, parseInt(boleto.cantidad_boletos) || 1);
+                const totalPago = Math.max(0, parseFloat(boleto.total) || 0);
+                
+                // Procesar fechas de forma segura
+                const fechaCreacion = formatearFecha(boleto.created_at) || '-----';
+                const horaCreacion = formatearHora(boleto.created_at) || '-----';
+                // Mostrar la fecha/hora de subida del comprobante.
+                // Fallbacks: comprobante_fecha -> comprobante_pagado_at -> updated_at -> created_at
+                const comprobanteTimestamp = boleto.comprobante_fecha || boleto.comprobante_pagado_at || boleto.updated_at || boleto.created_at;
+                const fechaComprobante = formatearFecha(comprobanteTimestamp) || '-----';
+                const horaComprobante = formatearHora(comprobanteTimestamp) || '-----';
+                
+                // Obtener configuración con fallbacks
+                const config = window.rifaplusConfig || {};
+                const logoOrganizador = config.cliente?.logo || 'images/logo.png';
+                const nombreSorteo = sanitizeText(config.rifa?.titulo || 'Sorteo');
+                const imagenPrincipal = config.rifa?.premios?.[0]?.imagenes?.[0] || 'images/ImagenPrincipal.jpg';
+                
+                // Determinar estado badge
+                const { estadoBadgeClass, estadoBadgeText } = getEstadoInfo(estadoBoleto);
+                
+                // Generar HTML
+                let html = construirHeaderBoleto(logoOrganizador, numeroFormato, fechaCreacion, horaCreacion, estadoBadgeClass, estadoBadgeText);
+                html += construirNombreSorteo(nombreSorteo);
+                html += construirImagenPrincipal(imagenPrincipal);
+                
+                if (!esDisponible) {
+                    html += construirDatosCliente(nombreCliente, apellidoCliente, estadoCliente, ciudadCliente);
+                    html += construirDatosOrden(numeroOrdenDisplay, cantidadBoletos, fechaComprobante, horaComprobante);
+                } else {
+                    html += construirMensajeDisponible();
+                }
+                
+                // Renderizar
+                const ticketCard = document.getElementById('ticketCard');
+                if (ticketCard) {
+                    ticketCard.innerHTML = html;
+                } else {
+                    console.error('❌ Elemento ticketCard no encontrado');
+                    showError('Error al renderizar boleto');
+                    return;
+                }
+                
+                // Agregar botones de acción
+                agregarBotonesAccion(boleto.numero, esVendido || esApartado);
+                
+            } catch (error) {
+                console.error('❌ Error en renderTicket:', error);
+                showError('Error al mostrar boleto: ' + error.message);
+            }
+        }
+
+        // FUNCIONES HELPER - Validación y Formatting
+        function sanitizeText(text) {
+            if (!text) return 'N/A';
+            return String(text).trim().substring(0, 100);
+        }
+
+        function formatearFecha(dateString) {
+            try {
+                if (!dateString) return null;
+                const date = new Date(dateString);
+                if (isNaN(date.getTime())) return null;
+                return date.toLocaleDateString('es-ES', { 
+                    year: 'numeric', 
+                    month: '2-digit', 
+                    day: '2-digit' 
+                });
+            } catch (e) {
+                console.warn('Error formateando fecha:', dateString, e);
+                return null;
+            }
+        }
+
+        function formatearHora(dateString) {
+            try {
+                if (!dateString) return null;
+                const date = new Date(dateString);
+                if (isNaN(date.getTime())) return null;
+                return date.toLocaleTimeString('es-ES', { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                });
+            } catch (e) {
+                console.warn('Error formateando hora:', dateString, e);
+                return null;
+            }
+        }
+
+        function getEstadoInfo(estado) {
+            const estados = {
+                'vendido': { clase: 'vendido', texto: 'VENDIDO' },
+                'apartado': { clase: 'apartado', texto: 'APARTADO' },
+                'disponible': { clase: 'disponible', texto: 'DISPONIBLE' }
+            };
+            const info = estados[estado] || estados['disponible'];
+            return { 
+                estadoBadgeClass: info.clase, 
+                estadoBadgeText: info.texto 
+            };
+        }
+
+        // FUNCIONES CONSTRUCTORAS - HTML
+        function construirHeaderBoleto(logo, numero, fecha, hora, estadoClase, estadoTexto) {
+            return `
+                <div class="orden-header-top">
+                    <div class="orden-header-top-left">
+                        <img 
+                            src="${encodeURI(logo)}" 
+                            alt="Logo Organizador" 
+                            onerror="this.src='images/logo.png'"
+                            class="orden-header-logo"
+                            loading="lazy"
+                        >
+                        <div class="orden-estado-badge ${estadoClase}">
+                            ${estadoTexto}
+                        </div>
+                    </div>
+                    <div class="orden-header-top-right">
+                        <div class="orden-id-numero">#${numero}</div>
+                        <div class="orden-fecha-hora">${fecha} ${hora}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function construirNombreSorteo(nombre) {
+            return `
+                <div class="orden-nombre-sorteo">${nombre}</div>
+            `;
+        }
+
+        function construirImagenPrincipal(imagen) {
+            return `
+                <div class="orden-imagen-principal">
+                    <img 
+                        src="${encodeURI(imagen)}" 
+                        alt="Producto Principal"
+                        onerror="this.src='images/ImagenPrincipal.jpg'"
+                        loading="lazy"
+                    >
+                </div>
+            `;
+        }
+
+        function construirDatosCliente(nombre, apellido, estado, ciudad) {
+            return `
+                <div class="orden-seccion">
+                    <div class="orden-seccion-titulo">👤 Cliente</div>
+                    <div class="orden-datos-grid">
+                        <div class="orden-dato">
+                            <span class="orden-dato-label">Nombre:</span>
+                            <span class="orden-dato-valor">${nombre}</span>
+                        </div>
+                        <div class="orden-dato">
+                            <span class="orden-dato-label">Estado:</span>
+                            <span class="orden-dato-valor">${estado}</span>
+                        </div>
+                        <div class="orden-dato">
+                            <span class="orden-dato-label">Ciudad:</span>
+                            <span class="orden-dato-valor">${ciudad}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function construirDatosOrden(id, cantidad, fecha, hora) {
+            const fechaComprobante = fecha === '-----' ? '-----' : `${fecha} ${hora}`;
+            return `
+                <div class="orden-seccion">
+                    <div class="orden-seccion-titulo">📋 Orden</div>
+                    <div class="orden-datos-grid">
+                        <div class="orden-dato">
+                            <span class="orden-dato-label">ID Orden:</span>
+                            <span class="orden-dato-valor">${id}</span>
+                        </div>
+                        <div class="orden-dato orden-dato-full">
+                            <span class="orden-dato-label">Comprobante Recibido:</span>
+                            <span class="orden-dato-valor">${fechaComprobante}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function construirMensajeDisponible() {
+            return `
+                <div class="orden-disponible-message">
+                    <p>✓ Este boleto está DISPONIBLE</p>
+                </div>
+            `;
+        }
+
+        function agregarBotonesAccion(numero, mostrar) {
+            const btnContainer = document.querySelector('.ticket-actions');
+            if (!btnContainer) {
+                console.warn('⚠️ Contenedor de botones no encontrado');
+                return;
+            }
+            
+            // Mostrar botones SIEMPRE para boletos vendidos/apartados
+            // (no mostrar para boletos disponibles)
+            if (mostrar && typeof numero !== 'undefined') {
+                // Verificar si el boleto ya es ganador
+                const ganador = window.GanadoresManager?.verificarGanador(String(numero));
+                
+                if (ganador) {
+                    // Si es ganador, mostrar botón de desmarcar
+                    btnContainer.innerHTML = `
+                        <button class="btn btn-ganador" style="background-color: #10b981;" onclick="try{window.unmarkAsWinner(${numero})}catch(e){alert('Error: ' + e.message)}" type="button">
+                            ✅ Desmarcar Ganador (${ganador.tipo})
+                        </button>
+                        <button class="btn btn-liberar" onclick="try{window.releaseTicket(${numero})}catch(e){alert('Error: ' + e.message)}" type="button">
+                            🔓 Liberar Boleto
+                        </button>
+                    `;
+                } else {
+                    // Si no es ganador, mostrar botón de marcar
+                    btnContainer.innerHTML = `
+                        <button class="btn btn-ganador" onclick="try{window.markAsWinner(${numero})}catch(e){alert('Error: ' + e.message)}" type="button">
+                            ⭐ Marcar como Ganador
+                        </button>
+                        <button class="btn btn-liberar" onclick="try{window.releaseTicket(${numero})}catch(e){alert('Error: ' + e.message)}" type="button">
+                            🔓 Liberar Boleto
+                        </button>
+                    `;
+                }
+            } else {
+                btnContainer.innerHTML = '';
+            }
+        }
+
+        // ===== GET ESTADO BADGE =====
+        function getEstadoBadge(estado) {
+            if (estado.includes('vend') || estado === 'completada') {
+                return '<span class="badge badge-vendido"><i class="fas fa-check"></i> Vendido</span>';
+            } else if (estado.includes('apart') || estado.includes('pendiente')) {
+                return '<span class="badge badge-apartado"><i class="fas fa-hourglass-half"></i> Apartado</span>';
+            }
+            return '<span class="badge badge-disponible"><i class="fas fa-circle"></i> Disponible</span>';
+        }
+
+        // ===== GET ESTADO BADGE TEXT =====
+        function getEstadoBadgeText(estado) {
+            if (estado.includes('vend') || estado === 'completada') {
+                return 'VENDIDO';
+            } else if (estado.includes('apart') || estado.includes('pendiente')) {
+                return 'APARTADO';
+            }
+            return 'DISPONIBLE';
+        }
+
+        // ===== DECLARAR GANADOR =====
+        async function declararGanador() {
+            if (!currentBoleto) return;
+
+            const confirmar = confirm(`¿Declarar boleto #${currentBoleto.numero} como ganador?`);
+            if (!confirmar) return;
+
+            try {
+                const res = await fetchWithAuth(`${API_BASE}/api/admin/declarar-ganador`, {
+                    method: 'POST',
+                    body: JSON.stringify({ numero: currentBoleto.numero })
+                });
+
+                if (!res || !res.ok) throw new Error('Error al declarar ganador');
+
+                const json = await res.json();
+                showSuccess(`¡Boleto #${currentBoleto.numero} declarado como ganador!`);
+            } catch (err) {
+                console.error('Error:', err);
+                showError('Error al declarar ganador');
+            }
+        }
+
+        // ===== LIBERAR BOLETO =====
+        async function liberarBoleto() {
+            if (!currentBoleto) return;
+
+            const confirmar = confirm(`¿Liberar boleto #${currentBoleto.numero}?`);
+            if (!confirmar) return;
+
+            try {
+                const res = await fetchWithAuth(`${API_BASE}/api/admin/boletos/${currentBoleto.numero}/liberar`, {
+                    method: 'PATCH'
+                });
+
+                if (!res || !res.ok) throw new Error('Error al liberar boleto');
+
+                const json = await res.json();
+                showSuccess(`¡Boleto #${currentBoleto.numero} liberado correctamente!`);
+                
+                // Recargar boletos y limpiar búsqueda
+                await cargarBoletos();
+                setTimeout(() => {
+                    document.getElementById('searchBoleto').value = '';
+                    document.getElementById('ticketResult').classList.remove('active');
+                }, 1500);
+            } catch (err) {
+                console.error('Error:', err);
+                showError('Error al liberar boleto');
+            }
+        }
+
+        // ===== MESSAGES =====
+        function showError(msg) {
+            const el = document.getElementById('errorMessage');
+            if (el) {
+                el.textContent = msg;
+                el.classList.add('show');
+            }
+            hideSuccessAfterDelay();
+        }
+
+        function showSuccess(msg) {
+            const el = document.getElementById('successMessage');
+            if (el) {
+                el.textContent = msg;
+                el.classList.add('show');
+            }
+            hideSuccessAfterDelay();
+        }
+
+        function hideMessages() {
+            const errorMsg = document.getElementById('errorMessage');
+            const successMsg = document.getElementById('successMessage');
+            if (errorMsg) errorMsg.classList.remove('show');
+            if (successMsg) successMsg.classList.remove('show');
+        }
+
+        function hideSuccessAfterDelay() {
+            setTimeout(() => {
+                const errorMsg = document.getElementById('errorMessage');
+                const successMsg = document.getElementById('successMessage');
+                if (errorMsg) errorMsg.classList.remove('show');
+                if (successMsg) successMsg.classList.remove('show');
+            }, 4000);
+        }
+
+        // ===== TOGGLE VISIBILIDAD BOLETOS VENDIDOS =====
+        function configurarToggleBoletosSoldVisibility() {
+            const toggleBtn = document.getElementById('toggleBoletosSoldVisibility');
+            if (!toggleBtn) return;
+
+            const updateIcon = () => {
+                const isHidden = localStorage.getItem('rifaplus_boletos_sold_hidden') === 'true';
+                toggleBtn.innerHTML = isHidden ? '<i class="fas fa-eye-slash"></i>' : '<i class="fas fa-eye"></i>';
+            };
+
+            updateIcon();
+
+            toggleBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const isHidden = localStorage.getItem('rifaplus_boletos_sold_hidden') === 'true';
+                const newState = !isHidden;
+                
+                localStorage.setItem('rifaplus_boletos_sold_hidden', newState ? 'true' : 'false');
+                
+                if (newState) {
+                    document.documentElement.setAttribute('data-boletos-sold-hidden', 'true');
+                } else {
+                    document.documentElement.removeAttribute('data-boletos-sold-hidden');
+                }
+
+                updateIcon();
+            });
+        }
+
+        // ===== INIT =====
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                // Inicializar configuración - debe ser lo primero
+                try {
+                    initializeConfig();
+                } catch (error) {
+                    console.warn('⚠️ Error al inicializar configuración:', error);
+                    // Continuar aunque falle la configuración
+                }
+                
+                // Verificar autenticación
+                if (!verificarAutenticacion()) {
+                    // Si no hay token, esperar a que localStorage se sincronice desde otras pestañas
+                    let intentos = 0;
+                    const checkToken = setInterval(() => {
+                        try {
+                            if (getToken()) {
+                                clearInterval(checkToken);
+                                cargarBoletos();
+                                configurarToggleBoletosSoldVisibility();
+                                const searchInput = document.getElementById('searchBoleto');
+                                if (searchInput) {
+                                    searchInput.focus();
+                                }
+                            } else if (intentos++ > 10) {
+                                clearInterval(checkToken);
+                                // No hay token después de varios intentos, redirigir
+                                localStorage.setItem('redirectAfterLogin', 'admin-boletos.html');
+                                window.location.href = 'admin-dashboard.html';
+                            }
+                        } catch (error) {
+                            console.error('Error en checkToken:', error);
+                            clearInterval(checkToken);
+                        }
+                    }, 100);
+                return;
+            }
+            
+            try {
+                await cargarBoletos();
+                configurarToggleBoletosSoldVisibility();
+                const searchInput = document.getElementById('searchBoleto');
+                if (searchInput) {
+                    searchInput.focus();
+                }
+            } catch (error) {
+                console.error('❌ Error al cargar boletos:', error);
+                const errorDiv = document.getElementById('errorMessage');
+                if (errorDiv) {
+                    errorDiv.textContent = '❌ Error al cargar los boletos. Por favor, recarga la página.';
+                    errorDiv.classList.add('show');
+                }
+            }
+        } catch (error) {
+            console.error('❌ Error fatal durante inicialización:', error);
+        }
+
+        // ===== FUNCIONES PARA GANADORES =====
+        /**
+         * Marcar boleto como ganador
+         * @param {Number} numero - Número del boleto
+         */
+        window.markAsWinner = function(numero) {
+            console.log('🔴 markAsWinner llamado con número:', numero);
+            
+            if (!window.GanadoresManager) {
+                alert('❌ Sistema de ganadores no disponible');
+                console.error('GanadoresManager no cargado');
+                return;
+            }
+
+            // Validar número
+            numero = String(numero).trim();
+            if (!numero || isNaN(numero)) {
+                alert('❌ Número de boleto inválido');
+                return;
+            }
+
+            // Obtener datos del cliente del boleto actual si existe
+            let datosCliente = {};
+            if (currentBoleto) {
+                datosCliente = {
+                    nombre: currentBoleto.nombre_cliente || '',
+                    apellido: currentBoleto.apellido_cliente || '',
+                    ciudad: currentBoleto.ciudad || '',
+                    estado_cliente: currentBoleto.estado_cliente || ''
+                };
+                console.log('📋 Datos del cliente obtenidos:', datosCliente);
+            }
+
+            // Abrir modal para seleccionar tipo de ganador
+            window.abrirModalSeleccionarGanador(numero, datosCliente, function(numeroGanador, tipoGanador, exito) {
+                if (exito) {
+                    console.log(`✅ ${numeroGanador} marcado como ${tipoGanador}`);
+                    // Opcionalmente, refrescar búsqueda
+                    setTimeout(() => {
+                        buscarBoleto();
+                    }, 500);
+                }
+            });
+        };
+
+        /**
+         * Liberar boleto (remover de venta)
+         * @param {Number} numero - Número del boleto
+         */
+        window.unmarkAsWinner = function(numero) {
+            console.log('🔴 unmarkAsWinner llamado con número:', numero);
+            
+            if (!window.GanadoresManager) {
+                alert('❌ Sistema de ganadores no disponible');
+                console.error('GanadoresManager no cargado');
+                return;
+            }
+
+            // Validar número
+            numero = String(numero).trim();
+            if (!numero || isNaN(numero)) {
+                alert('❌ Número de boleto inválido');
+                return;
+            }
+
+            // Verificar si es ganador
+            const ganador = window.GanadoresManager.verificarGanador(numero);
+            if (!ganador) {
+                alert('⚠️  Este boleto no está marcado como ganador');
+                return;
+            }
+
+            // Confirmar
+            if (!confirm(`¿Desmarcar boleto #${numero} como ganador de ${ganador.tipo}?`)) {
+                return;
+            }
+
+            // Eliminar ganador
+            const resultado = window.GanadoresManager.eliminarGanador(numero, ganador.tipo);
+
+            if (resultado) {
+                alert(`✅ Boleto #${numero} desmarcado como ganador`);
+                console.log(`✅ ${numero} desmarcado de ${ganador.tipo}`);
+                
+                // Refrescar búsqueda para actualizar botones
+                setTimeout(() => {
+                    buscarBoleto();
+                }, 500);
+            } else {
+                alert('❌ Error al desmarcar ganador');
+                console.error('Error eliminando ganador:', numero, ganador.tipo);
+            }
+        };
+
+        /**
+         * Liberar boleto (remover de venta)
+         * @param {Number} numero - Número del boleto
+         */
+        window.releaseTicket = function(numero) {
+            if (!confirm(`¿Liberar boleto #${numero}?`)) {
+                return;
+            }
+
+            console.log(`Liberando boleto #${numero}`);
+            alert('Función de liberar boleto en desarrollo');
+        };
+        });
+    </script>
+    </div>
+    </div>
+
+    <style>
+        .modal-ganador {
+            max-width: 500px;
+        }
+
+        .tipos-ganadores-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+
+        .tipo-ganador-card {
+            padding: 1.25rem;
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            text-align: center;
+            background: white;
+        }
+
+        .tipo-ganador-card:hover {
+            border-color: var(--primary);
+            background: rgba(124, 58, 237, 0.05);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(124, 58, 237, 0.15);
+        }
+
+        .tipo-ganador-card.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .tipo-ganador-icono {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .tipo-ganador-nombre {
+            font-weight: 700;
+            color: var(--text-dark);
+            font-size: 0.95rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .tipo-ganador-contador {
+            font-size: 0.8rem;
+            color: var(--text-light);
+        }
+
+        .tipo-ganador-contador span {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        @media (max-width: 480px) {
+            .tipos-ganadores-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .tipo-ganador-card {
+                padding: 1rem;
+            }
+
+            .tipo-ganador-icono {
+                font-size: 2rem;
+            }
+
+            .tipo-ganador-nombre {
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+
+    <!-- SCRIPT CRÍTICO: Inicializar funciones globales antes del resto -->
+    <script>
+        console.log('🚀 Inicializando sistema de ganadores...');
+        
+        // Variables globales del modal
+        let ganadesoresModalNumero = null;
+        let ganadesoresModalCallback = null;
+        
+        // Variables para modal de lugar
+        let lugarModalNumero = null;
+        let lugarModalTipo = null;
+        let lugarModalDatosCliente = null;
+        let lugarModalCallback = null;
+
+        /**
+         * Abrir modal para seleccionar tipo de ganador
+         * @param {Number} numero - Número del boleto ganador
+         * @param {Object} datosCliente - Datos del cliente {nombre, apellido, ciudad, estado_cliente}
+         * @param {Function} callback - Función a ejecutar cuando se selecciona tipo
+         */
+        window.abrirModalSeleccionarGanador = function(numero, datosCliente = {}, callback = null) {
+            console.log('🔴 abrirModalSeleccionarGanador llamado con:', numero);
+            
+            // Si el segundo parámetro es función, es el callback (backwards compatibility)
+            if (typeof datosCliente === 'function') {
+                callback = datosCliente;
+                datosCliente = {};
+            }
+            
+            // Validar parámetros
+            numero = String(numero).trim();
+            if (!numero || isNaN(numero)) {
+                console.error('❌ Número inválido');
+                alert('❌ Número de boleto inválido');
+                return;
+            }
+
+            // Verificar si GanadoresManager está disponible
+            if (!window.GanadoresManager) {
+                console.error('❌ GanadoresManager no está cargado');
+                alert('❌ Sistema de ganadores no cargado. Por favor, recarga la página.');
+                return;
+            }
+
+            // Guardar estado
+            ganadesoresModalNumero = numero;
+            ganadesoresModalCallback = callback;
+            window.ganadesoresModalDatosCliente = datosCliente || {};
+
+            // Verificar si el número ya es ganador
+            const ganadorExistente = window.GanadoresManager.verificarGanador(numero);
+            if (ganadorExistente) {
+                alert(`⚠️  El número ${numero} ya es ganador de tipo "${ganadorExistente.tipo}"`);
+                return;
+            }
+
+            // Actualizar UI
+            const numElement = document.getElementById('ganadesoresNumero');
+            if (numElement) {
+                numElement.textContent = numero;
+            } else {
+                console.error('❌ No se encontró #ganadesoresNumero');
+            }
+
+            // Generar opciones de tipos
+            generarOpciones();
+
+            // Mostrar modal
+            const modal = document.getElementById('modalSeleccionarGanador');
+            if (modal) {
+                modal.classList.add('active');
+                console.log('✅ Modal abierto');
+            } else {
+                console.error('❌ Modal no encontrado');
+                alert('❌ Modal no encontrado en la página');
+            }
+        };
+
+        /**
+         * Generar tarjetas con tipos de ganadores disponibles
+         */
+        function generarOpciones() {
+            console.log('📋 Generando opciones de ganadores...');
+            const contenedor = document.getElementById('tiposGanadores');
+            if (!contenedor) {
+                console.error('❌ No se encontró contenedor tiposGanadores');
+                alert('Error: No se encontró contenedor de opciones');
+                return;
+            }
+            contenedor.innerHTML = '';
+
+            if (!window.GanadoresManager) {
+                console.error('❌ GanadoresManager no está disponible');
+                contenedor.innerHTML = '<p style="color: red;">❌ Sistema de ganadores no cargado</p>';
+                alert('❌ GanadoresManager no disponible');
+                return;
+            }
+
+            const config = window.GanadoresManager.getConfig();
+            console.log('Config:', config);
+            
+            const ganadores = window.GanadoresManager.cargarGanadores();
+            console.log('Ganadores actuales:', ganadores);
+            
+            const tipos = ['sorteo', 'presorteo', 'ruletazos'];
+
+            tipos.forEach(tipo => {
+                const cantidad = config[tipo];
+                if (cantidad <= 0) {
+                    console.log(`⏭️  Saltando tipo ${tipo} (cantidad: ${cantidad})`);
+                    return; // Saltar tipos deshabilitados
+                }
+                
+                const registrados = ganadores[tipo] ? ganadores[tipo].length : 0;
+                const completo = registrados >= cantidad;
+
+                console.log(`📊 Tipo: ${tipo}, Registrados: ${registrados}, Máximo: ${cantidad}, Completo: ${completo}`);
+
+                const card = document.createElement('div');
+                card.className = `tipo-ganador-card ${completo ? 'disabled' : ''}`;
+                card.innerHTML = `
+                    <span class="tipo-ganador-icono">${window.GanadoresManager.getIconoTipo(tipo)}</span>
+                    <div class="tipo-ganador-nombre">${window.GanadoresManager.getEtiquetaTipo(tipo).split(' ')[1] || 'Ganador'}</div>
+                    <div class="tipo-ganador-contador"><span>${registrados}</span>/${cantidad}</div>
+                `;
+
+                if (!completo) {
+                    card.addEventListener('click', () => {
+                        console.log('Seleccionando tipo:', tipo);
+                        seleccionarTipo(tipo);
+                    });
+                }
+
+                contenedor.appendChild(card);
+            });
+            
+            console.log('✅ Opciones generadas');
+        }
+
+        /**
+         * Procesar selección de tipo de ganador
+         * @param {String} tipo - Tipo seleccionado
+         */
+        function seleccionarTipo(tipo) {
+            console.log('🎯 Seleccionando tipo:', tipo);
+            
+            if (!ganadesoresModalNumero || !tipo) {
+                console.error('❌ Datos inválidos');
+                alert('Error: Datos inválidos');
+                return;
+            }
+
+            // Guardar info en variables globales para el modal de lugar
+            lugarModalNumero = ganadesoresModalNumero;
+            lugarModalTipo = tipo;
+            lugarModalDatosCliente = window.ganadesoresModalDatosCliente || {};
+            lugarModalCallback = ganadesoresModalCallback;
+
+            // Cerrar modal de tipo
+            window.cerrarModalSeleccionarGanador();
+
+            // Abrir modal de lugar
+            generarOpcionesLugar(tipo);
+            const modalLugar = document.getElementById('modalSeleccionarLugar');
+            if (modalLugar) {
+                modalLugar.classList.add('active');
+                console.log('✅ Modal de lugar abierto');
+            }
+        }
+
+        /**
+         * Cerrar modal
+         */
+        window.cerrarModalSeleccionarGanador = function() {
+            console.log('❌ Cerrando modal...');
+            const modal = document.getElementById('modalSeleccionarGanador');
+            if (modal) {
+                modal.classList.remove('active');
+            }
+            ganadesoresModalNumero = null;
+            ganadesoresModalCallback = null;
+        };
+
+        /**
+         * Generar opciones de lugares disponibles
+         */
+        function generarOpcionesLugar(tipo) {
+            console.log('📋 Generando opciones de lugares...');
+            const contenedor = document.getElementById('lugaresDisponibles');
+            if (!contenedor) {
+                console.error('❌ No se encontró contenedor lugaresDisponibles');
+                return;
+            }
+            contenedor.innerHTML = '';
+
+            if (!window.GanadoresManager) {
+                console.error('❌ GanadoresManager no está disponible');
+                return;
+            }
+
+            // Actualizar info del modal
+            document.getElementById('lugarNumero').textContent = lugarModalNumero;
+            document.getElementById('lugarTipo').textContent = window.GanadoresManager.getEtiquetaTipo(tipo);
+
+            // Obtener config para saber cuántos lugares hay
+            const config = window.GanadoresManager.getConfig();
+            const maxLugares = config[tipo] || 1;
+
+            // Obtener ganadores actuales del tipo para saber qué lugares están ocupados
+            const ganadores = window.GanadoresManager.cargarGanadores();
+            const lugaresOcupados = (ganadores[tipo] || []).map(g => g.lugarGanado).filter(Boolean);
+
+            console.log(`📊 Tipo: ${tipo}, Max lugares: ${maxLugares}, Lugares ocupados:`, lugaresOcupados);
+
+            // Generar botones para cada lugar
+            for (let lugar = 1; lugar <= maxLugares; lugar++) {
+                const ocupado = lugaresOcupados.includes(lugar);
+                const btn = document.createElement('button');
+                btn.className = `btn lugar-btn ${ocupado ? 'disabled' : ''}`;
+                btn.textContent = formatarLugarOrdenal(lugar);
+                btn.style.cssText = `
+                    padding: 1rem;
+                    border-radius: 0.5rem;
+                    font-weight: 700;
+                    font-size: 0.95rem;
+                    cursor: ${ocupado ? 'not-allowed' : 'pointer'};
+                    opacity: ${ocupado ? '0.5' : '1'};
+                    transition: all 0.2s ease;
+                `;
+
+                if (!ocupado) {
+                    btn.addEventListener('click', () => {
+                        console.log('🥇 Seleccionando lugar:', lugar);
+                        seleccionarLugar(lugar);
+                    });
+                } else {
+                    btn.disabled = true;
+                }
+
+                contenedor.appendChild(btn);
+            }
+
+            console.log('✅ Opciones de lugares generadas');
+        }
+
+        /**
+         * Formatear número a ordinal (1er, 2do, 3er, etc)
+         */
+        function formatarLugarOrdenal(num) {
+            const sufijos = {
+                1: 'er',
+                2: 'do',
+                3: 'er',
+                4: 'to',
+                5: 'to',
+                6: 'to',
+                7: 'mo',
+                8: 'vo',
+                9: 'no',
+                10: 'mo'
+            };
+            
+            if (num <= 10) {
+                return `${num}${sufijos[num] || 'o'} 🥇`;
+            } else {
+                return `${num}° 🥇`;
+            }
+        }
+
+        /**
+         * Procesar selección de lugar
+         * @param {Number} lugar - Lugar seleccionado
+         */
+        function seleccionarLugar(lugar) {
+            console.log('🎯 Seleccionando lugar:', lugar);
+
+            if (!lugarModalNumero || !lugarModalTipo || isNaN(lugar)) {
+                console.error('❌ Datos inválidos');
+                alert('Error: Datos inválidos');
+                return;
+            }
+
+            // Agregar ganador con lugar
+            const resultado = window.GanadoresManager.agregarGanador(
+                lugarModalNumero,
+                lugarModalTipo,
+                lugarModalDatosCliente,
+                lugar
+            );
+
+            if (resultado.exito) {
+                console.log('✅', resultado.mensaje);
+
+                // Ejecutar callback si existe
+                if (typeof lugarModalCallback === 'function') {
+                    lugarModalCallback(lugarModalNumero, lugarModalTipo, true);
+                }
+
+                // Mostrar feedback
+                alert('✅ ' + resultado.mensaje);
+
+                // Cerrar modal
+                window.cerrarModalSeleccionarLugar();
+            } else {
+                console.error('❌', resultado.mensaje);
+                alert('❌ ' + resultado.mensaje);
+            }
+        }
+
+        /**
+         * Cerrar modal de lugar
+         */
+        window.cerrarModalSeleccionarLugar = function() {
+            console.log('❌ Cerrando modal de lugar...');
+            const modal = document.getElementById('modalSeleccionarLugar');
+            if (modal) {
+                modal.classList.remove('active');
+            }
+            lugarModalNumero = null;
+            lugarModalTipo = null;
+            lugarModalDatosCliente = null;
+            lugarModalCallback = null;
+        };
+
+        // Event listeners del modal
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('✅ DOMContentLoaded - Configurando event listeners...');
+            
+            const closeBtn = document.getElementById('closeModalGanador');
+            const cancelBtn = document.getElementById('btnCancelarGanador');
+            const modal = document.getElementById('modalSeleccionarGanador');
+
+            if (closeBtn) {
+                closeBtn.addEventListener('click', window.cerrarModalSeleccionarGanador);
+                console.log('✅ closeBtn listener agregado');
+            }
+
+            if (cancelBtn) {
+                cancelBtn.addEventListener('click', window.cerrarModalSeleccionarGanador);
+                console.log('✅ cancelBtn listener agregado');
+            }
+
+            if (modal) {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === modal) {
+                        cerrarModalSeleccionarGanador();
+                    }
+                });
+                console.log('✅ modal click listener agregado');
+            }
+
+            // Event listeners del modal de lugar
+            const closeLugarBtn = document.getElementById('closeModalLugar');
+            const cancelLugarBtn = document.getElementById('btnCancelarLugar');
+            const modalLugar = document.getElementById('modalSeleccionarLugar');
+
+            if (closeLugarBtn) {
+                closeLugarBtn.addEventListener('click', window.cerrarModalSeleccionarLugar);
+                console.log('✅ closeLugarBtn listener agregado');
+            }
+
+            if (cancelLugarBtn) {
+                cancelLugarBtn.addEventListener('click', window.cerrarModalSeleccionarLugar);
+                console.log('✅ cancelLugarBtn listener agregado');
+            }
+
+            if (modalLugar) {
+                modalLugar.addEventListener('click', function(e) {
+                    if (e.target === modalLugar) {
+                        window.cerrarModalSeleccionarLugar();
+                    }
+                });
+                console.log('✅ modalLugar click listener agregado');
+            }
+
+            // Cerrar con ESC
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    if (modal && modal.classList.contains('active')) {
+                        cerrarModalSeleccionarGanador();
+                    }
+                    if (modalLugar && modalLugar.classList.contains('active')) {
+                        window.cerrarModalSeleccionarLugar();
+                    }
+                }
+            });
+        });
+
+        console.log('✅ Sistema de ganadores inicializado');
+    </script>
+
+</body>
+</html>

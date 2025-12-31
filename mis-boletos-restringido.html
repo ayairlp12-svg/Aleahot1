@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verificar Mis Boletos - SORTEOS YEPE</title>
+    <link rel="stylesheet" href="css/styles.css?v=20251220.5">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="js/config.js?v=1766990666"></script>
+    <script src="js/theme-dynamic.js"></script>
+    <script src="js/theme-loader.js?v=20251220.2"></script>
+    <style>
+        /* ===== PÁGINA RESTRINGIDA MIS BOLETOS ===== */
+        body.sorteo-finalizado-restricted {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #f8f9fa 0%, #f0f0f0 100%);
+            overflow-x: hidden;
+        }
+
+        .restricted-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .restricted-header {
+            text-align: center;
+            margin-bottom: 30px;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .restricted-logo {
+            width: 120px;
+            height: auto;
+            margin-bottom: 20px;
+        }
+
+        .restricted-titulo {
+            font-size: 2rem;
+            color: #0F3A7D;
+            margin: 0 0 10px 0;
+            font-weight: 700;
+        }
+
+        .restricted-subtitulo {
+            color: #6B7280;
+            font-size: 1.1rem;
+            margin: 0;
+        }
+
+        .restricted-content {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .verificacion-seccion {
+            margin-bottom: 30px;
+        }
+
+        .seccion-titulo {
+            font-size: 1.2rem;
+            color: #1F2937;
+            margin: 0 0 20px 0;
+            font-weight: 600;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #1F2937;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+            box-sizing: border-box;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #0F3A7D;
+            box-shadow: 0 0 0 3px rgba(15, 58, 125, 0.1);
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 30px;
+        }
+
+        .btn-verificar-restricted {
+            flex: 1;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #0F3A7D 0%, #1B5FB8 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn-verificar-restricted:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(15, 58, 125, 0.3);
+        }
+
+        .btn-verificar-restricted:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-volver {
+            padding: 12px 24px;
+            background: white;
+            color: #0F3A7D;
+            border: 2px solid #0F3A7D;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-volver:hover {
+            background: #0F3A7D;
+            color: white;
+        }
+
+        .resultado {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #0F3A7D;
+        }
+
+        .resultado.ganador {
+            background: #d1fae5;
+            border-left-color: #10B981;
+        }
+
+        .resultado.no-ganador {
+            background: #fee2e2;
+            border-left-color: #EF4444;
+        }
+
+        .resultado-titulo {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin: 0 0 10px 0;
+        }
+
+        .resultado.ganador .resultado-titulo {
+            color: #059669;
+        }
+
+        .resultado.no-ganador .resultado-titulo {
+            color: #DC2626;
+        }
+
+        .resultado-contenido {
+            color: #1F2937;
+            line-height: 1.6;
+        }
+
+        .resultado-item {
+            margin: 10px 0;
+        }
+
+        .resultado-label {
+            font-weight: 600;
+            color: #6B7280;
+        }
+
+        .resultado-valor {
+            color: #1F2937;
+            margin-left: 10px;
+        }
+
+        .alerta {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .alerta.show {
+            display: block;
+        }
+
+        .alerta.error {
+            background: #fee2e2;
+            color: #DC2626;
+            border: 1px solid #fecaca;
+        }
+
+        .alerta.success {
+            background: #d1fae5;
+            color: #059669;
+            border: 1px solid #a7f3d0;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f0f0f0;
+            border-top: 4px solid #0F3A7D;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .restricted-footer {
+            margin-top: 30px;
+            text-align: center;
+            color: #6B7280;
+            font-size: 0.9rem;
+        }
+
+        .modo-restringido-badge {
+            display: inline-block;
+            background: #FCD34D;
+            color: #856404;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            text-align: center;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        @media (max-width: 768px) {
+            .restricted-content {
+                padding: 25px;
+            }
+
+            .restricted-titulo {
+                font-size: 1.5rem;
+            }
+
+            .form-actions {
+                flex-direction: column;
+            }
+
+            .btn-verificar-restricted,
+            .btn-volver {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body class="sorteo-finalizado-restricted">
+    <div class="restricted-container">
+        <div class="restricted-header">
+            <img src="images/logo.png" alt="SORTEOS YEPE" class="restricted-logo">
+            <h1 class="restricted-titulo">🔍 Verificar Mis Boletos</h1>
+            <p class="restricted-subtitulo">Ingresa tus datos para verificar si ganaste</p>
+        </div>
+
+        <div class="restricted-content">
+            <!-- BADGE DE MODO RESTRINGIDO -->
+            <div class="modo-restringido-badge">Modo Sorteo Finalizado - Acceso Restringido</div>
+
+            <!-- ALERTA -->
+            <div id="alerta" class="alerta"></div>
+
+            <!-- BUSCADOR SIMPLIFICADO (WhatsApp solamente) -->
+            <div class="busqueda-ordenes busqueda-destacada">
+                <div class="busqueda-form">
+                    <div class="busqueda-header">
+                        <h2 class="busqueda-titulo">Verifica tu orden</h2>
+                        <p class="busqueda-subtitulo">Ingresa tu número de WhatsApp para ver tu orden</p>
+                    </div>
+                    <div class="busqueda-input-group">
+                        <input 
+                            type="text" 
+                            id="whatsappInputRestricted" 
+                            placeholder="5512345678" 
+                            maxlength="10" 
+                            inputmode="numeric"
+                            pattern="[0-9]{10}"
+                            class="busqueda-input"
+                        >
+                        <button id="btnBuscarRestricted" class="btn btn-secondary btn-buscar" style="background: var(--secondary); color: white; border: none;">
+                            <i class="fas fa-search"></i> Buscar
+                        </button>
+                    </div>
+                    <p class="busqueda-hint">10 dígitos sin espacios ni símbolos</p>
+                    <div id="validacionWhatsapp" class="validacion-error" style="display: none;"></div>
+                </div>
+            </div>
+
+            <!-- ESTADO DE CARGA Y RESULTADOS -->
+            <div id="estadoCarga" class="estado-carga" style="display: none; text-align: center; padding: 2rem;">
+                <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: var(--primary);"></i>
+                <p style="margin-top: 1rem;">Buscando tus órdenes...</p>
+            </div>
+
+            <div id="listaOrdenes" class="ordenes-lista" style="display: none;"></div>
+
+                    <div id="sinOrdenes" class="sin-ordenes" style="display: none;">
+                <div class="sin-ordenes-content">
+                    <i class="fas fa-inbox" style="font-size: 3rem; color: var(--primary); margin-bottom: 1rem;"></i>
+                    <h3>No se encontraron órdenes</h3>
+                    <p id="mensajeSinOrdenes">No se encontraron órdenes con ese WhatsApp.</p>
+                </div>
+            </div>
+
+            <!-- FOOTER -->
+            <div class="restricted-footer">
+                <p>Esta página solo está disponible durante el cierre del sorteo.</p>
+                <p>Por tu seguridad, no puedes navegar a otras secciones del sitio.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simplified restricted search script
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.location.pathname && window.location.pathname.includes('mis-boletos-restringido')) {
+                setupRestrictedSearcher();
+            }
+        });
+
+        function setupRestrictedSearcher() {
+            const whatsappInput = document.getElementById('whatsappInputRestricted');
+            const btnBuscar = document.getElementById('btnBuscarRestricted');
+            const estadoCarga = document.getElementById('estadoCarga');
+            const listaOrdenes = document.getElementById('listaOrdenes');
+            const sinOrdenes = document.getElementById('sinOrdenes');
+            const validacionWhatsapp = document.getElementById('validacionWhatsapp');
+
+            function validarWhatsappLocal(w) { return w && /^\d{10}$/.test(w); }
+
+            async function buscar() {
+                const whatsapp = (whatsappInput.value || '').trim();
+                validacionWhatsapp.style.display = 'none';
+                listaOrdenes.style.display = 'none';
+                sinOrdenes.style.display = 'none';
+
+                if (!validarWhatsappLocal(whatsapp)) {
+                    validacionWhatsapp.textContent = 'Ingresa un número de WhatsApp válido (10 dígitos)';
+                    validacionWhatsapp.style.display = 'block';
+                    return;
+                }
+
+                try { sessionStorage.setItem('misBoletosWhatsapp', whatsapp); } catch (e) {}
+
+                estadoCarga.style.display = 'block';
+                btnBuscar.disabled = true;
+                whatsappInput.value = whatsapp.replace(/[^0-9]/g, '').slice(0,10);
+
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+                try {
+                    const res = await fetch(`http://127.0.0.1:5001/api/public/ordenes-cliente?whatsapp=${encodeURIComponent(whatsapp)}`, { signal: controller.signal });
+                    clearTimeout(timeoutId);
+
+                    if (res.status === 403) {
+                        sinOrdenes.style.display = 'block';
+                        return;
+                    }
+
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+                    const data = await res.json();
+
+                    // Accept multiple shapes: array directly, { data: { ordenes: [] } }, or { ordenes: [] }
+                    let ordenes = [];
+                    if (Array.isArray(data)) ordenes = data;
+                    else if (data && Array.isArray(data.data && data.data.ordenes ? data.data.ordenes : data.ordenes)) ordenes = data.data ? data.data.ordenes : data.ordenes;
+
+                    if (!ordenes || ordenes.length === 0) {
+                        sinOrdenes.style.display = 'block';
+                    } else {
+                        // Filtrar solo órdenes confirmadas
+                        const confirmedStatuses = ['confirmada','confirmado','confirmed','paid','pagada','pagado','completed'];
+                        const canceledStatuses = ['cancelada','cancelado','canceled','cancelled'];
+
+                        const ordenesConfirmadas = ordenes.filter(o => {
+                            const s = (o.estado || o.status || o.state || '').toString().toLowerCase();
+                            if (!s) return false;
+                            if (canceledStatuses.includes(s)) return false;
+                            return confirmedStatuses.includes(s);
+                        });
+
+                        if (!ordenesConfirmadas || ordenesConfirmadas.length === 0) {
+                            sinOrdenes.style.display = 'block';
+                            return;
+                        }
+
+                        // Ordenar por fecha (más reciente primero)
+                        function extractTime(o) {
+                            const candidates = [o.fecha, o.fecha_creacion, o.fechaCreacion, o.created_at, o.createdAt, o.timestamp, o.tiempo, o.date];
+                            for (const c of candidates) {
+                                if (!c) continue;
+                                const t = Date.parse(c);
+                                if (!isNaN(t)) return t;
+                                const n = Number(c);
+                                if (!isNaN(n) && n > 0) return n;
+                            }
+                            const nid = Number(o.id || o.orderId || o.numeroOrden || o.numero);
+                            if (!isNaN(nid)) return nid;
+                            return 0;
+                        }
+
+                        ordenesConfirmadas.sort((a,b) => extractTime(b) - extractTime(a));
+
+                        listaOrdenes.innerHTML = '';
+                        ordenesConfirmadas.forEach(o => {
+                            const ordenId = o.id || o.numeroOrden || o.numero || o.orderId || '-';
+                            const estadoText = o.estado || o.status || o.state || 'N/A';
+                            const div = document.createElement('div');
+                            div.className = 'orden-item';
+                            div.style.border = '1px solid #e5e7eb';
+                            div.style.padding = '12px';
+                            div.style.marginBottom = '8px';
+                            div.style.borderRadius = '8px';
+
+                            // Cliente
+                            const clienteNombre = o.nombre_cliente || (o.cliente && (o.cliente.nombre || o.cliente.name)) || o.customerName || o.buyer_name || o.nombre || o.client_name || 'Cliente desconocido';
+
+                            // Extraer boletos de múltiples posibles campos
+                            let boletosArr = o.boletos || o.tickets || o.items || o.detalle || o.order_items || o.purchasedTickets || null;
+                            if (!Array.isArray(boletosArr)) {
+                                if (o.numeros && typeof o.numeros === 'string') boletosArr = o.numeros.split(/[,;\s]+/).filter(Boolean);
+                                else if (o.numero_boleto || o.boleto_numero || o.numeroBoleto) boletosArr = [o.numero_boleto || o.boleto_numero || o.numeroBoleto];
+                                else if (typeof o.cantidad === 'number' && o.cantidad > 0) boletosArr = null;
+                                else boletosArr = null;
+                            }
+
+                            let boletosHtml = '';
+                            if (Array.isArray(boletosArr) && boletosArr.length > 0) {
+                                const items = boletosArr.map(b => {
+                                    if (b == null) return null;
+                                    if (typeof b === 'object') return b.numero || b.numero_boleto || b.id || b.n || b.name || JSON.stringify(b);
+                                    return String(b);
+                                }).filter(Boolean);
+
+                                const ticketsHtml = items.map(x => `
+                                    <div style="display:inline-block;background:var(--primary,#0F3A7D);color:#fff;padding:8px 12px;border-radius:8px;margin-right:8px;margin-bottom:8px;font-weight:700;min-width:48px;text-align:center;">${x}</div>
+                                `).join('');
+
+                                boletosHtml = `<div style="font-weight:600;margin-top:8px;">Boletos:</div><div style="margin-top:6px;">${ticketsHtml}</div>`;
+                            } else if (typeof o.cantidad === 'number') {
+                                boletosHtml = `<div style="margin-top:8px;">Cantidad de boletos: <span style="background:var(--primary,#0F3A7D);color:#fff;padding:6px 10px;border-radius:8px;font-weight:700">${o.cantidad}</span></div>`;
+                            } else {
+                                boletosHtml = `<div style="margin-top:8px;color:#6B7280;">No hay detalle de boletos disponible para esta orden.</div>`;
+                            }
+
+                            div.innerHTML = `
+                                <div>
+                                    <div style="font-weight:700;color:#0F3A7D;">Orden: ${ordenId}</div>
+                                    <div style="color:#374151;font-size:0.95rem;margin-top:6px;">Cliente: ${clienteNombre}</div>
+                                    <div style="color:#6B7280;font-size:0.95rem;margin-top:6px;">Estado: ${estadoText}</div>
+                                    <div style="margin-top:8px;">${boletosHtml}</div>
+                                </div>
+                            `;
+
+                            listaOrdenes.appendChild(div);
+                        });
+                        listaOrdenes.style.display = 'block';
+                    }
+                } catch (err) {
+                    console.error('Error buscando órdenes:', err);
+                    sinOrdenes.style.display = 'block';
+                } finally {
+                    clearTimeout(timeoutId);
+                    estadoCarga.style.display = 'none';
+                    btnBuscar.disabled = false;
+                }
+            }
+
+            if (btnBuscar) btnBuscar.addEventListener('click', buscar);
+            if (whatsappInput) {
+                whatsappInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') buscar(); });
+                whatsappInput.addEventListener('input', function() { this.value = this.value.replace(/[^0-9]/g, '').slice(0,10); });
+            }
+
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const fromUrl = urlParams.get('whatsapp');
+                const fromSession = sessionStorage.getItem('misBoletosWhatsapp');
+                if (fromUrl && /^\d{10}$/.test(fromUrl)) {
+                    whatsappInput.value = fromUrl;
+                    buscar();
+                } else if (fromSession && /^\d{10}$/.test(fromSession)) {
+                    whatsappInput.value = fromSession;
+                }
+            } catch (e) {}
+
+            // Agregar botón 'Volver al modal' que quita la supresión y vuelve a index
+            try {
+                const volverBtn = document.createElement('button');
+                volverBtn.type = 'button';
+                volverBtn.id = 'btnVolverModalRestricted';
+                volverBtn.textContent = '← Volver';
+                volverBtn.style.background = 'var(--primary, #0F3A7D)';
+                volverBtn.style.color = '#fff';
+                volverBtn.style.border = 'none';
+                volverBtn.style.padding = '6px 10px';
+                volverBtn.style.borderRadius = '6px';
+                volverBtn.style.cursor = 'pointer';
+                volverBtn.style.marginBottom = '12px';
+                volverBtn.style.display = 'inline-flex';
+                volverBtn.style.alignItems = 'center';
+                volverBtn.style.gap = '8px';
+
+                volverBtn.addEventListener('click', () => {
+                    try {
+                        sessionStorage.setItem('rifaplus_allow_restricted', '1');
+                        sessionStorage.removeItem('rifaplus_modal_suppressed_until');
+                    } catch (e) {}
+                    window.location.href = 'index.html';
+                });
+
+                if (listaOrdenes && listaOrdenes.parentNode) listaOrdenes.parentNode.insertBefore(volverBtn, listaOrdenes);
+                else document.body.insertBefore(volverBtn, document.body.firstChild);
+            } catch (e) { console.warn('No se pudo agregar boton Volver al modal', e); }
+        }
+    </script>
+</body>
+</html>

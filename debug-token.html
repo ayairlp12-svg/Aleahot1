@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Token JWT</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #0066cc;
+            padding-bottom: 10px;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f9f9f9;
+            border-left: 4px solid #0066cc;
+            border-radius: 4px;
+        }
+        button {
+            background: #0066cc;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0052a3;
+        }
+        .output {
+            background: #000;
+            color: #0f0;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 10px;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .success {
+            color: #0f0;
+            font-weight: bold;
+        }
+        .error {
+            color: #f00;
+            font-weight: bold;
+        }
+        .warning {
+            color: #ff0;
+            font-weight: bold;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Debugger de Token JWT - RifaPlus</h1>
+        
+        <div class="section">
+            <h2>1️⃣ Token en LocalStorage</h2>
+            <button onclick="mostrarTokens()">Ver Tokens</button>
+            <button onclick="limpiarTokens()">Limpiar LocalStorage</button>
+            <div id="output-tokens" class="output"></div>
+        </div>
+
+        <div class="section">
+            <h2>2️⃣ Decodificar Token</h2>
+            <p>Pega tu token aquí para decodificarlo:</p>
+            <input type="text" id="token-input" placeholder="Pega el token JWT aquí">
+            <button onclick="decodificarToken()">Decodificar</button>
+            <div id="output-decode" class="output"></div>
+        </div>
+
+        <div class="section">
+            <h2>3️⃣ Verificar Token en Backend</h2>
+            <p>Selecciona dónde está corriendo tu backend:</p>
+            <input type="text" id="backend-url" placeholder="http://127.0.0.1:5001" value="http://127.0.0.1:5001">
+            <button onclick="verificarToken()">Verificar Token</button>
+            <button onclick="testearConexion()">Probar Conexión</button>
+            <div id="output-verify" class="output"></div>
+        </div>
+
+        <div class="section">
+            <h2>4️⃣ Probar Endpoints Protegidos</h2>
+            <button onclick="probarStats()">GET /api/admin/stats</button>
+            <button onclick="probarSalesStats()">GET /api/admin/sales-stats?range=7</button>
+            <button onclick="probarOrdenes()">GET /api/ordenes</button>
+            <div id="output-endpoints" class="output"></div>
+        </div>
+
+        <div class="section">
+            <h2>5️⃣ Info de Configuración</h2>
+            <button onclick="mostrarConfig()">Ver Configuración</button>
+            <div id="output-config" class="output"></div>
+        </div>
+    </div>
+
+    <script>
+        const log = (outputId, ...args) => {
+            const output = document.getElementById(outputId);
+            const timestamp = new Date().toLocaleTimeString();
+            const message = args.map(arg => {
+                if (typeof arg === 'object') return JSON.stringify(arg, null, 2);
+                return String(arg);
+            }).join(' ');
+            output.textContent += `[${timestamp}] ${message}\n`;
+            output.scrollTop = output.scrollHeight;
+        };
+
+        const clear = (outputId) => {
+            document.getElementById(outputId).textContent = '';
+        };
+
+        function mostrarTokens() {
+            clear('output-tokens');
+            log('output-tokens', '🔍 Buscando tokens en localStorage...\n');
+            
+            const keys = Object.keys(localStorage);
+            const tokenKeys = keys.filter(k => k.includes('token') || k.includes('admin'));
+            
+            if (tokenKeys.length === 0) {
+                log('output-tokens', '❌ No se encontraron tokens en localStorage');
+                return;
+            }
+
+            tokenKeys.forEach(key => {
+                const value = localStorage.getItem(key);
+                log('output-tokens', `✅ ${key}: ${value.substring(0, 50)}...`);
+                log('output-tokens', `   Longitud: ${value.length} caracteres\n`);
+            });
+        }
+
+        function limpiarTokens() {
+            if (confirm('¿Estás seguro de que quieres limpiar localStorage?')) {
+                localStorage.clear();
+                clear('output-tokens');
+                log('output-tokens', '✅ LocalStorage limpiado');
+            }
+        }
+
+        function decodificarToken() {
+            clear('output-decode');
+            const token = document.getElementById('token-input').value.trim();
+            
+            if (!token) {
+                log('output-decode', '❌ Por favor, pega un token');
+                return;
+            }
+
+            try {
+                const parts = token.split('.');
+                if (parts.length !== 3) {
+                    log('output-decode', '❌ Token inválido: debe tener 3 partes separadas por .');
+                    return;
+                }
+
+                // Decodificar header
+                const header = JSON.parse(atob(parts[0]));
+                log('output-decode', '📋 HEADER:\n' + JSON.stringify(header, null, 2) + '\n');
+
+                // Decodificar payload
+                const payload = JSON.parse(atob(parts[1]));
+                log('output-decode', '📦 PAYLOAD:\n' + JSON.stringify(payload, null, 2) + '\n');
+
+                // Verificar expiración
+                if (payload.exp) {
+                    const expDate = new Date(payload.exp * 1000);
+                    const now = new Date();
+                    const isExpired = now > expDate;
+                    
+                    log('output-decode', `⏰ EXPIRACIÓN:\n`);
+                    log('output-decode', `   Expira en: ${expDate.toLocaleString()}`);
+                    log('output-decode', `   Estado: ${isExpired ? '❌ EXPIRADO' : '✅ VÁLIDO'}\n`);
+                }
+            } catch (error) {
+                log('output-decode', `❌ Error decodificando: ${error.message}`);
+            }
+        }
+
+        function obtenerTokenActual() {
+            return localStorage.getItem('rifaplus_token') || 
+                   localStorage.getItem('rifaplus_admin_token') ||
+                   localStorage.getItem('admin_token') ||
+                   localStorage.getItem('token') ||
+                   null;
+        }
+
+        async function testearConexion() {
+            clear('output-verify');
+            const backendUrl = document.getElementById('backend-url').value.trim();
+            
+            log('output-verify', `🔌 Intentando conectar a ${backendUrl}...`);
+            
+            try {
+                const response = await fetch(`${backendUrl}/api/cliente`);
+                const data = await response.json();
+                log('output-verify', `✅ Conexión exitosa\n`);
+                log('output-verify', `Respuesta: ${JSON.stringify(data, null, 2)}`);
+            } catch (error) {
+                log('output-verify', `❌ Error de conexión: ${error.message}`);
+                log('output-verify', `   Verifica que el backend esté corriendo en ${backendUrl}`);
+            }
+        }
+
+        async function verificarToken() {
+            clear('output-verify');
+            const token = obtenerTokenActual();
+            const backendUrl = document.getElementById('backend-url').value.trim();
+            
+            if (!token) {
+                log('output-verify', '❌ No hay token en localStorage');
+                log('output-verify', 'Haz login primero en admin-dashboard.html');
+                return;
+            }
+
+            log('output-verify', `🔐 Verificando token...\n`);
+            log('output-verify', `Token: ${token.substring(0, 30)}...`);
+            log('output-verify', `Backend: ${backendUrl}\n`);
+
+            try {
+                const response = await fetch(`${backendUrl}/api/admin/verify-token`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                const data = await response.json();
+                
+                if (response.status === 200 && data.success) {
+                    log('output-verify', `✅ Token válido\n`);
+                    log('output-verify', `Usuario: ${JSON.stringify(data.usuario, null, 2)}`);
+                } else {
+                    log('output-verify', `❌ Token rechazado\n`);
+                    log('output-verify', `Respuesta: ${JSON.stringify(data, null, 2)}`);
+                }
+            } catch (error) {
+                log('output-verify', `❌ Error: ${error.message}`);
+            }
+        }
+
+        async function probarStats() {
+            clear('output-endpoints');
+            const token = obtenerTokenActual();
+            const backendUrl = document.getElementById('backend-url').value.trim();
+            
+            if (!token) {
+                log('output-endpoints', '❌ No hay token');
+                return;
+            }
+
+            log('output-endpoints', `📊 GET ${backendUrl}/api/admin/stats\n`);
+
+            try {
+                const response = await fetch(`${backendUrl}/api/admin/stats`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                log('output-endpoints', `Status: ${response.status}\n`);
+                const data = await response.json();
+                log('output-endpoints', JSON.stringify(data, null, 2));
+            } catch (error) {
+                log('output-endpoints', `❌ Error: ${error.message}`);
+            }
+        }
+
+        async function probarSalesStats() {
+            clear('output-endpoints');
+            const token = obtenerTokenActual();
+            const backendUrl = document.getElementById('backend-url').value.trim();
+            
+            if (!token) {
+                log('output-endpoints', '❌ No hay token');
+                return;
+            }
+
+            log('output-endpoints', `📈 GET ${backendUrl}/api/admin/sales-stats?range=7\n`);
+
+            try {
+                const response = await fetch(`${backendUrl}/api/admin/sales-stats?range=7`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                log('output-endpoints', `Status: ${response.status}\n`);
+                const data = await response.json();
+                log('output-endpoints', JSON.stringify(data, null, 2));
+            } catch (error) {
+                log('output-endpoints', `❌ Error: ${error.message}`);
+            }
+        }
+
+        async function probarOrdenes() {
+            clear('output-endpoints');
+            const token = obtenerTokenActual();
+            const backendUrl = document.getElementById('backend-url').value.trim();
+            
+            if (!token) {
+                log('output-endpoints', '❌ No hay token');
+                return;
+            }
+
+            log('output-endpoints', `📋 GET ${backendUrl}/api/ordenes?limit=10\n`);
+
+            try {
+                const response = await fetch(`${backendUrl}/api/ordenes?limit=10`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                log('output-endpoints', `Status: ${response.status}\n`);
+                const data = await response.json();
+                log('output-endpoints', JSON.stringify(data, null, 2));
+            } catch (error) {
+                log('output-endpoints', `❌ Error: ${error.message}`);
+            }
+        }
+
+        function mostrarConfig() {
+            clear('output-config');
+            
+            if (!window.rifaplusConfig) {
+                log('output-config', '❌ window.rifaplusConfig no está disponible');
+                return;
+            }
+
+            const config = window.rifaplusConfig;
+            log('output-config', `📋 Configuración Global:\n`);
+            log('output-config', `Cliente: ${config.cliente?.nombre}`);
+            log('output-config', `Backend API Base: ${config.backend?.apiBase}`);
+            log('output-config', `Puerto: ${config.backend?.puerto}`);
+            log('output-config', `Sorteo: ${config.rifa?.nombre_sorteo}`);
+            log('output-config', `Total Boletos: ${config.rifa?.totalBoletos}`);
+        }
+
+        // Auto-mostrar tokens al cargar
+        window.addEventListener('load', () => {
+            log('output-tokens', 'Cargador iniciado. Abre las secciones arriba para debuggear.\n');
+        });
+    </script>
+</body>
+</html>

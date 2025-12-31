@@ -1,0 +1,46 @@
+# Node.js
+node_modules/
+npm-debug.log
+yarn-error.log
+package-lock.json
+yarn.lock
+
+# Backend Database
+backend/db/rifaplus.db
+backend/db/*.db
+backend/.env
+backend/.env.local
+backend/.env.*.local
+
+# Backend Logs
+backend/*.log
+backend/*.pid
+
+# Uploaded Files
+backend/public/comprobantes/*
+backend/public/ordenes/*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Cache
+.cache/
+dist/
+build/
+
+# Test Results
+test-results/
+coverage/
+
+# Temporary Files
+*.tmp
+*.bak
+*.save

@@ -1,0 +1,55 @@
+/**
+ * CSS Optimization for Rango Rendering
+ * Agregado a styles.css para optimizar performance de cambio de rango
+ */
+
+/* Optimizar repaints en grid de números durante renderización */
+#numerosGrid {
+    contain: layout style;
+    will-change: contents;
+}
+
+/* Remover transiciones costosas durante cambio de rango */
+#numerosGrid.rendering {
+    pointer-events: none;
+}
+
+#numerosGrid.rendering .numero-btn {
+    transition: none !important;
+    animation: none !important;
+}
+
+/* Después de renderizar, restaurar transiciones (optional) */
+#numerosGrid:not(.rendering) .numero-btn {
+    transition: background-color 150ms ease, border-color 150ms ease;
+}
+
+/* Optimizar botones de rango */
+.rango-boxes {
+    contain: layout style;
+}
+
+/* Remover shadow costoso durante click en rango */
+.rango-btn {
+    will-change: auto;
+}
+
+.rango-btn:active {
+    will-change: transform;
+}
+
+/* Optimizar filtro */
+.numero-btn.filtrado {
+    display: none;
+    visibility: hidden;
+}
+
+/* GPU acceleration para mejor performance */
+.numero-btn {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+}
+
+.numero-btn.selected {
+    z-index: 10;
+}

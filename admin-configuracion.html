@@ -1,0 +1,3230 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' http://127.0.0.1:* http://localhost:*; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://fonts.googleapis.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; connect-src 'self' http://127.0.0.1:* http://localhost:* https:; img-src 'self' data: https:;">
+    <title>Configuración - Panel Admin</title>
+    <link rel="icon" href="images/logo.png" sizes="32x32">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/admin-layout.css?v=20251224">
+    <link rel="stylesheet" href="css/styles.css?v=20251128">
+    <script>
+        (function limpiarCacheYFechas() {
+            ['rifaplus_fecha_sorteo','rifaplus_timestamp_sorteo','rifaplus_fecha_cierre'].forEach(k => localStorage.removeItem(k));
+        })();
+    </script>
+    <script src="js/config.js?v=20251228.15"></script>
+    <script src="js/theme-dynamic.js"></script>
+    <script src="js/admin-layout.js?v=20251228.15"></script>
+    <style>
+        /* ========================================================== */
+        /* ARCHIVO: admin-configuracion.html - ESTILOS PROPIOS        */
+        /* DESCRIPCIÓN: Página de configuración completa de rifas      */
+        /* ÚLTIMA ACTUALIZACIÓN: 2025-12-24                           */
+        /* ========================================================== */
+
+        :root {
+            --primary: #1877F2;
+            --primary-dark: #0A5CCC;
+            --primary-light: #E7F3FF;
+            --success: #31A24C;
+            --danger: #E4163A;
+            --warning: #B4740C;
+            --text-dark: #0A0E27;
+            --text-light: #65676B;
+            --text-lighter: #8A8D91;
+            --bg-light: #F0F2F5;
+            --bg-white: #FFFFFF;
+            --border-color: #CED0D4;
+            --divider: #E5E7EB;
+            
+            --spacing-xs: 0.25rem;
+            --spacing-sm: 0.5rem;
+            --spacing-md: 1rem;
+            --spacing-lg: 1.5rem;
+            --spacing-xl: 2rem;
+            --spacing-2xl: 3rem;
+            
+            --radius-sm: 0.375rem;
+            --radius-md: 0.5rem;
+            --radius-lg: 0.75rem;
+        }
+
+        /* ========================================================== */
+        /* LAYOUT PRINCIPAL                                           */
+        /* ========================================================== */
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', 'Ubuntu', sans-serif;
+            background: #F8F9FA;
+            color: var(--text-dark);
+            line-height: 1.5;
+            font-size: 13px;
+        }
+
+        .container {
+            max-width: 100%;
+            margin: 0;
+            padding: 2rem 3rem;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        .admin-main .container {
+            margin: 0;
+            padding: 2rem 3rem 2rem 3rem;
+            width: 100%;
+        }
+
+        /* ========================================================== */
+        /* TABS                                                       */
+        /* ========================================================== */
+
+        .config-tabs {
+            display: flex;
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-2xl);
+            border-bottom: 1px solid var(--divider);
+            background: var(--bg-white);
+            padding: 0 var(--spacing-lg);
+            border-radius: var(--radius-md);
+            box-shadow: var(--sombra-media);
+            flex-wrap: wrap;
+        }
+
+        .config-tab {
+            padding: var(--spacing-md) var(--spacing-lg);
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            color: var(--text-light);
+            font-weight: 600;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            white-space: nowrap;
+        }
+
+        .config-tab:hover {
+            color: var(--primary);
+        }
+
+        .config-tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        /* ========================================================== */
+        /* SECCIONES                                                  */
+        /* ========================================================== */
+
+        .config-section {
+            display: none;
+            background: var(--bg-white);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--sombra-media);
+            padding: var(--spacing-2xl);
+            animation: fadeIn 0.3s ease;
+            width: 100%;
+            box-sizing: border-box;
+            margin: 0;
+        }
+
+        .config-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .section-header {
+            margin-bottom: var(--spacing-2xl);
+            padding-bottom: var(--spacing-xl);
+            border-bottom: 2px solid var(--divider);
+        }
+
+        .section-header h1 {
+            font-size: 1.75rem;
+            color: var(--text-dark);
+            margin-bottom: var(--spacing-md);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+        }
+
+        .section-header h1 i {
+            color: var(--primary);
+            font-size: 2rem;
+        }
+
+        .section-header p {
+            color: var(--text-light);
+            font-size: 0.95rem;
+        }
+
+        .section-subheader {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: var(--spacing-lg);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+        }
+
+        .config-card {
+            background: var(--bg-light);
+            border: 1px solid var(--divider);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-xl);
+            margin-bottom: var(--spacing-xl);
+        }
+
+        /* ========================================================== */
+        /* FORMULARIOS                                                */
+        /* ========================================================== */
+
+        .form-group {
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .form-group-single {
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: var(--spacing-sm);
+            font-size: 0.9rem;
+        }
+
+        .required {
+            color: var(--danger);
+            margin-left: 0.25rem;
+        }
+
+        .form-input,
+        .form-textarea {
+            width: 100%;
+            padding: var(--spacing-md);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            font-size: 0.9rem;
+            font-family: inherit;
+            transition: all 0.2s ease;
+            background: var(--bg-white);
+            color: var(--text-dark);
+        }
+
+        .form-input:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(24, 119, 242, 0.1);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .form-helper {
+            font-size: 0.8rem;
+            color: var(--text-lighter);
+            margin-top: var(--spacing-sm);
+        }
+
+        .input-with-icon {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-icon-btn {
+            position: absolute;
+            right: var(--spacing-md);
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-light);
+            padding: var(--spacing-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            transition: color 0.2s ease;
+        }
+
+        .input-icon-btn:hover {
+            color: var(--primary);
+        }
+
+        .password-strength {
+            height: 4px;
+            background: var(--divider);
+            border-radius: 2px;
+            margin-top: var(--spacing-sm);
+            overflow: hidden;
+        }
+
+        .password-strength.weak {
+            background: var(--danger);
+        }
+
+        .password-strength.medium {
+            background: var(--warning);
+        }
+
+        .password-strength.strong {
+            background: var(--success);
+        }
+
+        /* ========================================================== */
+        /* TOGGLES                                                    */
+        /* ========================================================== */
+
+        .form-toggle {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+            cursor: pointer;
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 44px;
+            height: 24px;
+            background: var(--divider);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            border: none;
+            padding: 0;
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: left 0.3s ease;
+            box-shadow: var(--sombra-pequena);
+        }
+
+        .toggle-switch.active {
+            background: var(--success);
+        }
+
+        .toggle-switch.active::after {
+            left: 22px;
+        }
+
+        /* ========================================================== */
+        /* GANADORES ESPECÍFICO                                       */
+        /* ========================================================== */
+
+        .ganadores-tipos {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .tipo-sorteo-btn {
+            padding: var(--spacing-lg);
+            border: 2px solid var(--divider);
+            border-radius: var(--radius-md);
+            background: var(--bg-white);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+            color: var(--text-normal);
+            font-weight: 600;
+            font-size: 0.85rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+
+        .tipo-sorteo-btn i {
+            font-size: 1.5rem;
+            color: var(--text-light);
+        }
+
+        .tipo-sorteo-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .tipo-sorteo-btn:hover i {
+            color: var(--primary);
+        }
+
+        .tipo-sorteo-btn.active {
+            background: var(--primary-light);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .tipo-sorteo-btn.active i {
+            color: var(--primary);
+        }
+
+        .ganadores-seccion {
+            display: none;
+            padding: var(--spacing-lg);
+            background: var(--bg-light);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--spacing-xl);
+            border-left: 4px solid var(--divider);
+        }
+
+        .ganadores-seccion.show {
+            display: block;
+        }
+
+        .premios-ruletazo-lista {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-md);
+        }
+
+        .premio-item {
+            display: flex;
+            gap: var(--spacing-md);
+            padding: var(--spacing-md);
+            background: var(--bg-white);
+            border: 1px solid var(--divider);
+            border-radius: var(--radius-md);
+            align-items: flex-end;
+        }
+
+        .premio-item input {
+            flex: 1;
+            padding: var(--spacing-md);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            font-size: 0.9rem;
+        }
+
+        .premio-item-actions {
+            display: flex;
+            gap: var(--spacing-sm);
+        }
+
+        /* ========================================================== */
+        /* TABLA DE USUARIOS                                          */
+        /* ========================================================== */
+
+        .usuarios-tabla-container {
+            overflow-x: auto;
+        }
+
+        .usuarios-tabla {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--bg-white);
+        }
+
+        .usuarios-tabla thead th {
+            background: var(--bg-light);
+            border: 1px solid var(--divider);
+            padding: var(--spacing-md);
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-dark);
+            font-size: 0.85rem;
+        }
+
+        .usuarios-tabla tbody td {
+            border: 1px solid var(--divider);
+            padding: var(--spacing-md);
+            color: var(--text-normal);
+            font-size: 0.85rem;
+        }
+
+        .usuarios-tabla tbody tr:hover {
+            background: var(--bg-light);
+        }
+
+        /* ========================================================== */
+        /* VISTA PREVIA                                               */
+        /* ========================================================== */
+
+        .config-preview {
+            background: var(--primary-light);
+            border: 1px solid var(--primary);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-lg);
+            margin: var(--spacing-xl) 0;
+        }
+
+        .preview-title {
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: var(--spacing-md);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+
+        .preview-content {
+            font-size: 0.85rem;
+            color: var(--text-dark);
+            line-height: 1.7;
+            white-space: pre-line;
+            font-family: 'Monaco', monospace;
+        }
+
+        /* ========================================================== */
+        /* BOTONES                                                    */
+        /* ========================================================== */
+
+        .btn {
+            padding: var(--spacing-md) var(--spacing-lg);
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            box-shadow: var(--sombra-media);
+        }
+
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
+
+        .btn-secondary {
+            background: var(--bg-light);
+            color: var(--text-dark);
+            border: 1px solid var(--divider);
+        }
+
+        .btn-secondary:hover {
+            background: var(--divider);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c91230;
+        }
+
+        .btn-small {
+            padding: var(--spacing-sm) var(--spacing-md);
+            font-size: 0.75rem;
+        }
+
+        .btn:disabled,
+        .btn.loading {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: var(--spacing-md);
+            margin-top: var(--spacing-2xl);
+            padding-top: var(--spacing-xl);
+            border-top: 1px solid var(--divider);
+        }
+
+        /* ========================================================== */
+        /* MODAL                                                      */
+        /* ========================================================== */
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--sombra-grande);
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--spacing-lg);
+            border-bottom: 1px solid var(--divider);
+        }
+
+        .modal-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text-lighter);
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .modal-close:hover {
+            color: var(--text-dark);
+            background: var(--bg-light);
+            border-radius: var(--radius-md);
+        }
+
+        .modal-body {
+            padding: var(--spacing-lg);
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: var(--spacing-md);
+            padding: var(--spacing-lg);
+            border-top: 1px solid var(--divider);
+            justify-content: flex-end;
+        }
+
+        /* ========================================================== */
+        /* ALERTAS                                                    */
+        /* ========================================================== */
+
+        .alert {
+            padding: var(--spacing-md) var(--spacing-lg);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--spacing-lg);
+            display: none;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .alert.show {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border-left: 4px solid var(--success);
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid var(--danger);
+        }
+
+        /* ========================================================== */
+        /* RESPONSIVE                                                 */
+        /* ========================================================== */
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .config-tabs {
+                padding: 0.5rem;
+            }
+
+            .config-tab {
+                padding: 0.75rem 1rem;
+                font-size: 0.75rem;
+            }
+
+            .config-tab span {
+                display: none;
+            }
+
+            .section-header h1 {
+                font-size: 1.3rem;
+            }
+
+            .ganadores-tipos {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .form-actions {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        /* ========================================================== */
+        /* BRANDING SECTION - MODERN DESIGN                           */
+        /* ========================================================== */
+
+        .logo-upload-area {
+            border: 2px dashed var(--divider);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            text-align: center;
+            background: var(--bg-light);
+            transition: all 0.3s ease;
+        }
+
+        .logo-upload-area:hover {
+            border-color: var(--primary);
+            background: rgba(45, 106, 79, 0.05);
+        }
+
+        .logo-preview, .favicon-preview {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: var(--spacing-md);
+            min-height: 120px;
+            background: white;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--divider);
+        }
+
+        .color-group {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-sm);
+        }
+
+        .color-picker-wrapper {
+            display: flex;
+            gap: var(--spacing-sm);
+            align-items: center;
+        }
+
+        .color-picker {
+            width: 80px;
+            height: 40px;
+            border: 1px solid var(--divider);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+        }
+
+        .color-hex {
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 0.9rem;
+            color: var(--text-light);
+            font-weight: 600;
+        }
+
+        .theme-selector {
+            display: flex;
+            gap: var(--spacing-md);
+            flex-wrap: wrap;
+        }
+
+        .theme-btn {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            padding: var(--spacing-md) var(--spacing-lg);
+            border: 2px solid var(--divider);
+            background: white;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            color: var(--text-light);
+        }
+
+        .theme-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .theme-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        .branding-preview {
+            border: 2px solid var(--divider);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            background: white;
+        }
+
+        .preview-header {
+            padding: var(--spacing-lg);
+            color: white;
+            text-align: center;
+        }
+
+        .preview-header h3 {
+            margin: 0 0 var(--spacing-sm) 0;
+            font-size: 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .preview-header p {
+            margin: 0;
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .preview-content {
+            padding: var(--spacing-lg);
+            color: var(--text-light);
+            text-align: center;
+        }
+
+        /* ========================================================== */
+        /* SORTEO SECTION - STATS AND TABLES                          */
+        /* ========================================================== */
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .stat-card {
+            padding: var(--spacing-lg);
+            background: linear-gradient(135deg, #2D6A4F 0%, #1B4332 100%);
+            border-radius: var(--radius-lg);
+            color: white;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(45, 106, 79, 0.15);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(45, 106, 79, 0.25);
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            opacity: 0.9;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* ========================================================== */
+        /* PROMOCIONES SECTION                                        */
+        /* ========================================================== */
+
+        .promo-card {
+            transition: all 0.3s ease;
+            border-left: 4px solid var(--primary) !important;
+        }
+
+        .promo-card:hover {
+            box-shadow: 0 6px 20px rgba(24, 119, 242, 0.15);
+            transform: translateY(-2px);
+        }
+
+        #promociones-container {
+            display: grid;
+            gap: var(--spacing-lg);
+        }
+
+        .sorteos-tabla-wrapper {
+            overflow-x: auto;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--divider);
+        }
+
+        .sorteos-tabla {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .sorteos-tabla thead {
+            background: var(--bg-light);
+            border-bottom: 2px solid var(--divider);
+        }
+
+        .sorteos-tabla th {
+            padding: var(--spacing-md) var(--spacing-lg);
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-dark);
+            font-size: 0.9rem;
+        }
+
+        .sorteos-tabla td {
+            padding: var(--spacing-md) var(--spacing-lg);
+            border-bottom: 1px solid var(--divider);
+            color: var(--text-light);
+        }
+
+        .sorteos-tabla tbody tr:hover {
+            background: var(--bg-light);
+        }
+
+        /* ========================================================== */
+        /* PREMIOS DINÁMICOS                                          */
+        /* ========================================================== */
+
+        .premio-item {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: var(--spacing-md);
+            padding: var(--spacing-md);
+            background: var(--bg-light);
+            border-radius: var(--radius-md);
+            border-left: 4px solid var(--primary);
+        }
+
+        .premio-info {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-sm);
+        }
+
+        .premio-nombre {
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .premio-valor {
+            color: var(--primary);
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .btn-eliminar-premio {
+            align-self: center;
+            padding: var(--spacing-sm) var(--spacing-md);
+            background: #f5222d;
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-eliminar-premio:hover {
+            background: #ff4d4f;
+            transform: scale(1.05);
+        }
+
+        @media (max-width: 768px) {
+            .color-picker-wrapper {
+                flex-wrap: wrap;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .theme-selector {
+                flex-direction: column;
+            }
+
+            .theme-btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+
+</head>
+<body>
+    <!-- ADMIN HEADER -->
+    <div class="admin-header">
+        <div class="admin-header-content">
+            <div class="admin-header-left">
+                <div class="admin-logo-container">
+                    <img src="images/logo.png" alt="Logo" class="admin-logo-img">
+                </div>
+                <div class="admin-header-title">
+                    <div class="admin-header-title-main">Panel Administrativo</div>
+                    <div class="admin-header-title-sub">SORTEOS YEPE</div>
+                </div>
+            </div>
+            <div class="admin-header-right">
+                <button class="admin-logout-btn" title="Cerrar sesión">
+                    <i class="fas fa-sign-out-alt"></i> <span>Cerrar Sesión</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADMIN SIDEBAR -->
+    <aside class="admin-sidebar" id="adminSidebar">
+        <div class="admin-sidebar-content">
+            <div class="admin-sidebar-section">
+                <div class="admin-sidebar-section-title">Navegación</div>
+                <a href="admin-dashboard.html" class="admin-nav-btn">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="admin-ordenes.html" class="admin-nav-btn">
+                    <i class="fas fa-clipboard-list"></i>
+                    <span>Órdenes</span>
+                </a>
+                <a href="admin-boletos.html" class="admin-nav-btn">
+                    <i class="fas fa-ticket-alt"></i>
+                    <span>Boletos</span>
+                </a>
+                <a href="admin-ruletazo.html" class="admin-nav-btn">
+                    <i class="fas fa-dharmachakra"></i>
+                    <span>Ruletazo</span>
+                </a>
+            </div>
+            <div class="admin-sidebar-section">
+                <div class="admin-sidebar-section-title">Sistema</div>
+                <a href="admin-configuracion.html" class="admin-nav-btn active">
+                    <i class="fas fa-cog"></i>
+                    <span>Configuración</span>
+                </a>
+                <a href="ayuda.html" class="admin-nav-btn">
+                    <i class="fas fa-question-circle"></i>
+                    <span>Ayuda</span>
+                </a>
+            </div>
+        </div>
+    </aside>
+
+    <!-- TOGGLE SIDEBAR BUTTON (MOBILE) -->
+    <button class="admin-sidebar-toggle" id="sidebarToggle">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- MAIN CONTENT -->
+    <div class="admin-main" id="adminMain">
+        <div class="container">
+            <!-- ALERTAS -->
+            <div id="alertContainer"></div>
+
+            <!-- TABS DE SECCIONES -->
+            <div class="config-tabs">
+                <button class="config-tab active" data-tab="ganadores">
+                    <i class="fas fa-trophy"></i> Ganadores
+                </button>
+                <button class="config-tab" data-tab="seguridad">
+                    <i class="fas fa-lock"></i> Seguridad
+                </button>
+                <button class="config-tab" data-tab="branding">
+                    <i class="fas fa-palette"></i> Branding
+                </button>
+                <button class="config-tab" data-tab="sorteo">
+                    <i class="fas fa-dice"></i> Sorteo
+                </button>
+                <button class="config-tab" data-tab="cliente">
+                    <i class="fas fa-building"></i> Datos del Cliente
+                </button>
+                <button class="config-tab" data-tab="promociones">
+                    <i class="fas fa-tag"></i> Promociones
+                </button>
+            </div>
+
+            <!-- TAB: GANADORES -->
+            <section class="config-section active" id="tab-ganadores">
+                <div class="section-header">
+                    <h1><i class="fas fa-trophy"></i> Ganadores y Modalidades</h1>
+                    <p>Configura cuántos ganadores tendrá tu sorteo y qué tipo de modalidad</p>
+                </div>
+
+                <!-- SELECCIÓN DE TIPO -->
+                <div class="form-group">
+                    <label class="form-label">Tipo de Sorteo</label>
+                    <div class="ganadores-tipos">
+                        <button class="tipo-sorteo-btn active" data-tipo="Simple">
+                            <i class="fas fa-star"></i><br>Simple
+                        </button>
+                        <button class="tipo-sorteo-btn" data-tipo="Presorteo">
+                            <i class="fas fa-list-check"></i><br>Presorteo
+                        </button>
+                        <button class="tipo-sorteo-btn" data-tipo="Ruletazo">
+                            <i class="fas fa-circle-notch"></i><br>Ruletazo
+                        </button>
+                        <button class="tipo-sorteo-btn" data-tipo="Combinado">
+                            <i class="fas fa-layer-group"></i><br>Combinado
+                        </button>
+                    </div>
+                </div>
+
+                <!-- GANADOR PRINCIPAL -->
+                <div class="ganadores-seccion show" id="sec-principal">
+                    <div class="section-subheader">
+                        <i class="fas fa-crown"></i> Ganador Principal
+                    </div>
+                    <div class="form-group-single">
+                        <label class="form-label">Número de Ganadores Principales <span class="required">*</span></label>
+                        <input type="number" class="form-input" id="ganadores-principales" min="1" max="100" value="1">
+                        <div class="form-helper">Mínimo 1, máximo 100</div>
+                    </div>
+                </div>
+
+                <!-- PRESORTEO -->
+                <div class="ganadores-seccion" id="sec-presorteo">
+                    <div class="section-subheader">
+                        <i class="fas fa-list-check"></i> Presorteo
+                    </div>
+                    <div class="form-toggle">
+                        <button class="toggle-switch" id="toggle-presorteo"></button>
+                        <label class="form-label">Incluir Presorteo</label>
+                    </div>
+
+                    <div id="presorteo-campos" style="display: none;">
+                        <div class="form-group-single">
+                            <label class="form-label">Ganadores Presorteo <span class="required">*</span></label>
+                            <input type="number" class="form-input" id="ganadores-presorteo" min="1" max="50" value="5">
+                        </div>
+                        <div class="form-group-single">
+                            <label class="form-label">Fecha del Presorteo <span class="required">*</span></label>
+                            <input type="datetime-local" class="form-input" id="fecha-presorteo">
+                        </div>
+                        <div class="form-group-single">
+                            <label class="form-label">Descripción</label>
+                            <textarea class="form-input" id="desc-presorteo" rows="2" placeholder="Ej: 5 ganadores a los 3 días"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RULETAZO -->
+                <div class="ganadores-seccion" id="sec-ruletazo">
+                    <div class="section-subheader">
+                        <i class="fas fa-circle-notch"></i> Ruletazo
+                    </div>
+                    <div class="form-toggle">
+                        <button class="toggle-switch" id="toggle-ruletazo"></button>
+                        <label class="form-label">Incluir Ruletazos</label>
+                    </div>
+
+                    <div id="ruletazo-campos" style="display: none;">
+                        <div class="form-group-single">
+                            <label class="form-label">Número de Ruletazos <span class="required">*</span></label>
+                            <input type="number" class="form-input" id="ganadores-ruletazo" min="1" max="50" value="3">
+                        </div>
+                        <div class="form-group-single">
+                            <label class="form-label">Premios del Ruletazo</label>
+                            <div class="premios-ruletazo-lista" id="premios-lista"></div>
+                            <button class="btn btn-secondary btn-small" id="btn-agregar-premio" style="margin-top: var(--spacing-md);">
+                                <i class="fas fa-plus"></i> Agregar Premio
+                            </button>
+                        </div>
+                        <div class="form-group-single">
+                            <label class="form-label">Descripción</label>
+                            <textarea class="form-input" id="desc-ruletazo" rows="2" placeholder="Ej: Ruletazos de premios sorpresa"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VISTA PREVIA -->
+                <div class="config-preview">
+                    <div class="preview-title">
+                        <i class="fas fa-eye"></i> Vista Previa
+                    </div>
+                    <div class="preview-content" id="preview-ganadores">Selecciona opciones para ver el resumen</div>
+                </div>
+
+                <!-- BOTONES -->
+                <div class="form-actions">
+                    <button class="btn btn-primary" id="btn-guardar-ganadores">
+                        <i class="fas fa-save"></i> Guardar Configuración
+                    </button>
+                    <button class="btn btn-secondary" id="btn-resetear-ganadores">
+                        <i class="fas fa-undo"></i> Restaurar
+                    </button>
+                </div>
+            </section>
+
+            <!-- TAB: SEGURIDAD -->
+            <section class="config-section" id="tab-seguridad">
+                <div class="section-header">
+                    <h1><i class="fas fa-lock"></i> Seguridad y Usuarios</h1>
+                    <p>Gestiona usuarios administrativos y credenciales de acceso</p>
+                </div>
+
+                <!-- CAMBIAR CONTRASEÑA -->
+                <div class="config-card">
+                    <div class="section-subheader">
+                        <i class="fas fa-key"></i> Cambiar Contraseña
+                    </div>
+                    <div class="form-group-single">
+                        <label class="form-label">Contraseña Actual <span class="required">*</span></label>
+                        <div class="input-with-icon">
+                            <input type="password" class="form-input" id="current-password" placeholder="••••••••">
+                            <button class="input-icon-btn" data-toggle="current-password">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="form-group-single">
+                        <label class="form-label">Nueva Contraseña <span class="required">*</span></label>
+                        <div class="input-with-icon">
+                            <input type="password" class="form-input" id="new-password" placeholder="••••••••">
+                            <button class="input-icon-btn" data-toggle="new-password">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        <div class="password-strength" id="password-strength"></div>
+                    </div>
+                    <div class="form-group-single">
+                        <label class="form-label">Confirmar Contraseña <span class="required">*</span></label>
+                        <div class="input-with-icon">
+                            <input type="password" class="form-input" id="confirm-password" placeholder="••••••••">
+                            <button class="input-icon-btn" data-toggle="confirm-password">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button class="btn btn-primary" id="btn-cambiar-password">
+                            <i class="fas fa-key"></i> Cambiar Contraseña
+                        </button>
+                    </div>
+                </div>
+
+                <!-- GESTIÓN DE USUARIOS -->
+                <div class="config-card" style="margin-top: var(--spacing-2xl);">
+                    <div class="section-subheader">
+                        <i class="fas fa-users"></i> Usuarios Administrativos
+                    </div>
+                    <p style="color: var(--text-light); font-size: 0.9rem; margin-bottom: var(--spacing-lg);">
+                        Crea y gestiona usuarios con acceso al panel administrativo
+                    </p>
+
+                    <!-- TABLA DE USUARIOS -->
+                    <div class="usuarios-tabla-container">
+                        <table class="usuarios-tabla" id="usuarios-tabla">
+                            <thead>
+                                <tr>
+                                    <th>Usuario</th>
+                                    <th>Email</th>
+                                    <th>Rol</th>
+                                    <th>Creado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usuarios-tbody">
+                                <tr><td colspan="5" style="text-align: center; padding: var(--spacing-lg); color: var(--text-lighter);">Cargando usuarios...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- BOTÓN CREAR USUARIO -->
+                    <button class="btn btn-primary" id="btn-crear-usuario" style="margin-top: var(--spacing-lg);">
+                        <i class="fas fa-user-plus"></i> Crear Nuevo Usuario
+                    </button>
+                </div>
+            </section>
+
+            <!-- TAB: BRANDING -->
+            <section class="config-section" id="tab-branding">
+                <div class="section-header">
+                    <h1><i class="fas fa-palette"></i> Branding y Diseño</h1>
+                    <p>Personaliza la identidad visual de tu plataforma de rifas</p>
+                </div>
+
+                <!-- INFORMACIÓN CLIENTE -->
+                <div class="config-card">
+                    <div class="section-subheader">
+                        <i class="fas fa-building"></i> Información de Negocio
+                    </div>
+                    <div class="form-group-row">
+                        <div class="form-group-single">
+                            <label class="form-label">Nombre del Negocio <span class="required">*</span></label>
+                            <input type="text" class="form-input" id="branding-nombre" placeholder="Ej: Sorteos Yepe" value="SORTEOS YEPE">
+                            <div class="form-helper">Este nombre aparecerá en el header y título del sitio</div>
+                        </div>
+                        <div class="form-group-single">
+                            <label class="form-label">Slogan <span class="required">*</span></label>
+                            <input type="text" class="form-input" id="branding-slogan" placeholder="Ej: Tu oportunidad de ganar" value="Tu oportunidad de ganar grande">
+                        </div>
+                    </div>
+                    <div class="form-group-single">
+                        <label class="form-label">Descripción Breve</label>
+                        <textarea class="form-input" id="branding-descripcion" rows="2" placeholder="Describe tu negocio en pocas palabras"></textarea>
+                    </div>
+                </div>
+
+                <!-- LOGO Y FAVICON -->
+                <div class="config-card">
+                    <div class="section-subheader">
+                        <i class="fas fa-image"></i> Logo y Favicon
+                    </div>
+                    <div class="form-group-row">
+                        <div class="form-group-single">
+                            <label class="form-label">Logo del Negocio</label>
+                            <div class="logo-upload-area" id="logo-upload-area">
+                                <div class="logo-preview" id="logo-preview">
+                                    <img src="images/logo.png" alt="Logo" id="logo-img" style="max-width: 150px; max-height: 100px;">
+                                </div>
+                                <input type="file" class="logo-input" id="logo-input" accept="image/*" style="display: none;">
+                                <button class="btn btn-secondary btn-small" id="btn-cambiar-logo">
+                                    <i class="fas fa-cloud-upload-alt"></i> Cambiar Logo
+                                </button>
+                            </div>
+                            <div class="form-helper">Recomendado: PNG o WebP, máximo 500KB, mínimo 200x200px</div>
+                        </div>
+                        <div class="form-group-single">
+                            <label class="form-label">Favicon (Ícono de Pestaña)</label>
+                            <div class="favicon-preview" id="favicon-preview">
+                                <img src="images/logo.png" alt="Favicon" style="width: 64px; height: 64px; border-radius: 8px;">
+                            </div>
+                            <input type="file" class="favicon-input" id="favicon-input" accept="image/*" style="display: none;">
+                            <button class="btn btn-secondary btn-small" id="btn-cambiar-favicon">
+                                <i class="fas fa-cloud-upload-alt"></i> Cambiar Favicon
+                            </button>
+                            <div class="form-helper">Recomendado: ICO o PNG cuadrado 64x64px</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PALETA DE COLORES -->
+                <div class="config-card">
+                    <div class="section-subheader">
+                        <i class="fas fa-swatchbook"></i> Paleta de Colores
+                    </div>
+                    <p style="color: var(--text-light); margin-bottom: var(--spacing-md);">Personaliza los colores principales de tu interfaz</p>
+                    <div class="form-group-row">
+                        <div class="color-group">
+                            <label class="form-label">Color Primario <span class="required">*</span></label>
+                            <div class="color-picker-wrapper">
+                                <input type="color" class="color-picker" id="color-primary" value="#2D6A4F">
+                                <span class="color-hex" id="color-primary-hex">#2D6A4F</span>
+                            </div>
+                            <div class="color-preview" style="background-color: #2D6A4F; border-radius: 8px; height: 40px; margin-top: 8px;"></div>
+                        </div>
+                        <div class="color-group">
+                            <label class="form-label">Color Secundario</label>
+                            <div class="color-picker-wrapper">
+                                <input type="color" class="color-picker" id="color-secondary" value="#1B4332">
+                                <span class="color-hex" id="color-secondary-hex">#1B4332</span>
+                            </div>
+                            <div class="color-preview" style="background-color: #1B4332; border-radius: 8px; height: 40px; margin-top: 8px;"></div>
+                        </div>
+                        <div class="color-group">
+                            <label class="form-label">Color de Acento</label>
+                            <div class="color-picker-wrapper">
+                                <input type="color" class="color-picker" id="color-accent" value="#D62828">
+                                <span class="color-hex" id="color-accent-hex">#D62828</span>
+                            </div>
+                            <div class="color-preview" style="background-color: #D62828; border-radius: 8px; height: 40px; margin-top: 8px;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TIPOGRAFÍA -->
+                <div class="config-card">
+                    <div class="section-subheader">
+                        <i class="fas fa-font"></i> Tipografía
+                    </div>
+                    <div class="form-group-row">
+                        <div class="form-group-single">
+                            <label class="form-label">Fuente Principal</label>
+                            <select class="form-input" id="branding-font-main">
+                                <option value="inter">Inter (Recomendado)</option>
+                                <option value="roboto">Roboto</option>
+                                <option value="poppins">Poppins</option>
+                                <option value="opensans">Open Sans</option>
+                                <option value="lato">Lato</option>
+                            </select>
+                        </div>
+                        <div class="form-group-single">
+                            <label class="form-label">Fuente de Títulos</label>
+                            <select class="form-input" id="branding-font-title">
+                                <option value="inter">Inter</option>
+                                <option value="montserrat">Montserrat</option>
+                                <option value="playfair">Playfair Display</option>
+                                <option value="raleway">Raleway</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CONFIGURACIÓN DE TEMA -->
+                <div class="config-card">
+                    <div class="section-subheader">
+                        <i class="fas fa-moon"></i> Tema y Apariencia
+                    </div>
+                    <div class="form-group-single">
+                        <label class="form-label">Modo de Tema</label>
+                        <div class="theme-selector">
+                            <button class="theme-btn active" data-theme="light">
+                                <i class="fas fa-sun"></i> Claro
+                            </button>
+                            <button class="theme-btn" data-theme="dark">
+                                <i class="fas fa-moon"></i> Oscuro
+                            </button>
+                            <button class="theme-btn" data-theme="auto">
+                                <i class="fas fa-circle-half-stroke"></i> Automático
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VISTA PREVIA -->
+                <div class="config-card">
+                    <div class="section-subheader">
+                        <i class="fas fa-eye"></i> Vista Previa
+                    </div>
+                    <div class="branding-preview" id="branding-preview">
+                        <div class="preview-header" style="background: linear-gradient(135deg, #2D6A4F 0%, #1B4332 100%);">
+                            <h3 id="preview-nombre">SORTEOS YEPE</h3>
+                            <p id="preview-slogan">Tu oportunidad de ganar grande</p>
+                        </div>
+                        <div class="preview-content">
+                            <p>La vista previa se actualiza en tiempo real con tus cambios</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BOTONES DE ACCIÓN -->
+                <div class="form-actions">
+                    <button class="btn btn-primary" id="btn-guardar-branding">
+                        <i class="fas fa-save"></i> Guardar Branding
+                    </button>
+                    <button class="btn btn-secondary" id="btn-resetear-branding">
+                        <i class="fas fa-undo"></i> Restaurar Valores Predeterminados
+                    </button>
+                </div>
+            </section>
+
+            <!-- TAB: SORTEO -->
+            <section class="config-section" id="tab-sorteo">
+                <div class="section-header">
+                    <h1><i class="fas fa-dice"></i> Configuración del Sorteo</h1>
+                    <p>Gestiona todos los parámetros y detalles de tus sorteos</p>
+                </div>
+
+                <!-- INFORMACIÓN GENERAL -->
+                <div class="config-card">
+                    <div class="section-subheader">
+                        <i class="fas fa-info-circle"></i> Información General
+                    </div>
+                    <div class="form-group-row">
+                        <div class="form-group-single">
+                            <label class="form-label">Nombre del Sorteo <span class="required">*</span></label>
+                            <input type="text" class="form-input" id="sorteo-nombre" placeholder="Ej: Sorteo Navidad 2025">
+                        </div>
+                        <div class="form-group-single">
+                            <label class="form-label">Estado <span class="required">*</span></label>
+                            <select class="form-input" id="sorteo-estado">
+                                <option value="preparacion">En Preparación</option>
+                                <option value="activo">Activo</option>
+                                <option value="pausado">Pausado</option>
+                                <option value="cerrado">Cerrado</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group-single">
+                        <label class="form-label">Descripción del Sorteo</label>
+                        <textarea class="form-input" id="sorteo-descripcion" rows="3" placeholder="Describe los detalles del sorteo, premios, reglas, etc."></textarea>
+                    </div>
+                </div>
+
+                <!-- FECHAS Y HORARIOS -->
+                <div class="config-card">
+                    <div class="section-subheader">
+                        <i class="fas fa-calendar-alt"></i> Fechas y Horarios
+                    </div>
+                    <div class="form-group-row">
+                        <div class="form-group-single">
+                            <label class="form-label">Fecha de Inicio <span class="required">*</span></label>
+                            <input type="datetime-local" class="form-input" id="sorteo-fecha-inicio">
+                        </div>
+                        <div class="form-group-single">
+                            <label class="form-label">Fecha de Cierre <span class="required">*</span></label>
+                            <input type="datetime-local" class="form-input" id="sorteo-fecha-cierre">
+                        </div>
+                    </div>
+                    <div class="form-group-row">
+                        <div class="form-group-single">
+                            <label class="form-label">Fecha de Sorteo <span class="required">*</span></label>
+                            <input type="datetime-local" class="form-input" id="sorteo-fecha-sorteo">
+                        </div>
+                        <div class="form-group-single">
+                            <label class="form-label">Duración Máxima (horas)</label>
+                            <input type="number" class="form-input" id="sorteo-duracion" min="1" max="8760" placeholder="Ej: 72">
+                            <div class="form-helper">Tiempo máximo que permanecerá activo</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PREMIOS -->
+                <div class="config-card">
+                    <div class="section-subheader">
+                        <i class="fas fa-gift"></i> Premios
+                    </div>
+                    <div id="sorteo-premios-container">
+                        <!-- Los premios se agregarán dinámicamente -->
+                    </div>
+                    <button class="btn btn-secondary btn-small" id="btn-agregar-premio-sorteo">
+                        <i class="fas fa-plus"></i> Agregar Premio
+                    </button>
+                </div>
+
+                <!-- ESTADÍSTICAS Y MÉTRICAS -->
+                <div class="config-card">
+                    <div class="section-subheader">
+                        <i class="fas fa-chart-line"></i> Estadísticas en Tiempo Real
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-value" id="stat-boletos-vendidos">0</div>
+                            <div class="stat-label">Boletos Vendidos</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="stat-ingresos">$0</div>
+                            <div class="stat-label">Ingresos</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="stat-tasa-ocupacion">0%</div>
+                            <div class="stat-label">Tasa de Ocupación</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="stat-ordenes-activas">0</div>
+                            <div class="stat-label">Órdenes Activas</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- REGLAS Y TÉRMINOS -->
+                <div class="config-card">
+                    <div class="section-subheader">
+                        <i class="fas fa-scroll"></i> Reglas y Términos
+                    </div>
+                    <div class="form-group-single">
+                        <label class="form-label">Términos y Condiciones</label>
+                        <textarea class="form-input" id="sorteo-terminos" rows="4" placeholder="Especifica las reglas, restricciones legales y términos del sorteo"></textarea>
+                    </div>
+                    <div class="form-group-single">
+                        <label class="form-label">Información Legal</label>
+                        <textarea class="form-input" id="sorteo-legal" rows="3" placeholder="Información sobre regulación, responsabilidades y avisos legales"></textarea>
+                    </div>
+                </div>
+
+                <!-- HISTORIAL DE SORTEOS -->
+                <div class="config-card">
+                    <div class="section-subheader">
+                        <i class="fas fa-history"></i> Historial de Sorteos
+                    </div>
+                    <div class="sorteos-tabla-wrapper">
+                        <table class="sorteos-tabla">
+                            <thead>
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Fecha Sorteo</th>
+                                    <th>Ganadores</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sorteos-tabla-tbody">
+                                <tr>
+                                    <td colspan="5" style="text-align: center; padding: var(--spacing-lg); color: var(--text-light);">No hay sorteos registrados aún</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- BOTONES DE ACCIÓN -->
+                <div class="form-actions">
+                    <button class="btn btn-primary" id="btn-guardar-sorteo">
+                        <i class="fas fa-save"></i> Guardar Configuración del Sorteo
+                    </button>
+                    <button class="btn btn-secondary" id="btn-resetear-sorteo">
+                        <i class="fas fa-undo"></i> Cancelar Cambios
+                    </button>
+                    <button class="btn btn-danger" id="btn-finalizar-sorteo" style="margin-left: auto;">
+                        <i class="fas fa-check-circle"></i> Finalizar Sorteo
+                    </button>
+                </div>
+            </section>
+
+            <!-- TAB: DATOS DEL CLIENTE -->
+            <section class="config-section" id="tab-cliente">
+                <div class="section-header">
+                    <h1><i class="fas fa-building"></i> Datos del Cliente</h1>
+                    <p>Gestiona toda la información de tu empresa y sorteo desde aquí</p>
+                </div>
+
+                <!-- FORMULARIO DATOS DEL CLIENTE -->
+                <div class="config-form">
+                    <div class="form-row">
+                        <div class="form-group col-6">
+                            <label for="cliente-nombre">Nombre de la Empresa</label>
+                            <input type="text" id="cliente-nombre" placeholder="Ej: SORTEOS YEPE" required>
+                            <small>El nombre aparecerá en toda la plataforma</small>
+                        </div>
+                        <div class="form-group col-6">
+                            <label for="cliente-eslogan">Eslogan</label>
+                            <input type="text" id="cliente-eslogan" placeholder="Ej: Rifas 100% Transparentes">
+                            <small>Tu mensaje o lema principal</small>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group col-6">
+                            <label for="cliente-telefono">Teléfono</label>
+                            <input type="tel" id="cliente-telefono" placeholder="+52 459 115 3960">
+                            <small>Número de contacto principal</small>
+                        </div>
+                        <div class="form-group col-6">
+                            <label for="cliente-email">Email</label>
+                            <input type="email" id="cliente-email" placeholder="contacto@empresa.com">
+                            <small>Email de contacto</small>
+                        </div>
+                    </div>
+
+                    <!-- INFO DEL SORTEO -->
+                    <div class="form-section-divider">
+                        <h3><i class="fas fa-dice"></i> Información del Sorteo</h3>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group col-6">
+                            <label for="rifa-nombre">Nombre del Sorteo</label>
+                            <input type="text" id="rifa-nombre" placeholder="Ej: iPhone 15 Pro Max" required>
+                            <small>¿Qué se está rifando?</small>
+                        </div>
+                        <div class="form-group col-6">
+                            <label for="rifa-total-boletos">Total de Boletos</label>
+                            <input type="number" id="rifa-total-boletos" placeholder="100000" min="1" required>
+                            <small>Cantidad total de boletos disponibles</small>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group col-6">
+                            <label for="rifa-precio-boleto">Precio por Boleto</label>
+                            <input type="number" id="rifa-precio-boleto" placeholder="50" min="0" step="0.01" required>
+                            <small>Costo unitario del boleto</small>
+                        </div>
+                        <div class="form-group col-6">
+                            <label for="rifa-fecha-sorteo">Fecha del Sorteo</label>
+                            <input type="datetime-local" id="rifa-fecha-sorteo" required>
+                            <small>Cuándo se realizará el sorteo</small>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group full">
+                            <label for="rifa-descripcion">Descripción del Sorteo</label>
+                            <textarea id="rifa-descripcion" placeholder="Describe tu sorteo..." rows="4"></textarea>
+                            <small>Información detallada que verán los participantes</small>
+                        </div>
+                    </div>
+
+                    <!-- CUENTAS DE PAGO -->
+                    <div class="form-section-divider">
+                        <h3><i class="fas fa-university"></i> Cuentas de Pago</h3>
+                    </div>
+
+                    <div id="cuentas-container">
+                        <!-- Las cuentas se cargan dinámicamente aquí -->
+                    </div>
+
+                    <button class="btn btn-secondary" id="btn-agregar-cuenta" style="width: auto;">
+                        <i class="fas fa-plus"></i> Agregar Cuenta
+                    </button>
+
+                    <!-- REDES SOCIALES -->
+                    <div class="form-section-divider">
+                        <h3><i class="fas fa-share-alt"></i> Redes Sociales</h3>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group col-6">
+                            <label for="redes-whatsapp">WhatsApp</label>
+                            <input type="tel" id="redes-whatsapp" placeholder="+52 459 115 3960">
+                            <small>Número para contacto directo</small>
+                        </div>
+                        <div class="form-group col-6">
+                            <label for="redes-facebook">Facebook</label>
+                            <input type="url" id="redes-facebook" placeholder="https://facebook.com/...">
+                            <small>URL de tu página de Facebook</small>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group col-6">
+                            <label for="redes-instagram">Instagram</label>
+                            <input type="url" id="redes-instagram" placeholder="https://instagram.com/...">
+                            <small>URL de tu perfil de Instagram</small>
+                        </div>
+                        <div class="form-group col-6">
+                            <label for="redes-tiktok">TikTok</label>
+                            <input type="url" id="redes-tiktok" placeholder="https://tiktok.com/@...">
+                            <small>URL de tu cuenta de TikTok</small>
+                        </div>
+                    </div>
+
+                    <!-- BOTONES DE ACCIÓN -->
+                    <div class="form-actions">
+                        <button class="btn btn-primary" id="btn-guardar-cliente">
+                            <i class="fas fa-save"></i> Guardar Datos del Cliente
+                        </button>
+                        <button class="btn btn-secondary" id="btn-limpiar-cliente">
+                            <i class="fas fa-redo"></i> Restaurar Valores
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB: PROMOCIONES -->
+            <section class="config-section" id="tab-promociones">
+                <div class="section-header">
+                    <h1><i class="fas fa-tag"></i> Gestionar Promociones</h1>
+                    <p>Crea y administra promociones para atraer más participantes</p>
+                </div>
+
+                <!-- FORMULARIO NUEVA PROMOCIÓN -->
+                <div class="config-card">
+                    <div class="section-subheader">
+                        <i class="fas fa-plus-circle"></i> Agregar Nueva Promoción
+                    </div>
+                    <div class="form-group-single">
+                        <label class="form-label">Nombre de la Promoción <span class="required">*</span></label>
+                        <input type="text" class="form-input" id="promo-nombre" placeholder="Ej: Descuento Black Friday" required>
+                    </div>
+                    <div class="form-group-row">
+                        <div class="form-group-single">
+                            <label class="form-label">Tipo de Descuento <span class="required">*</span></label>
+                            <select class="form-input" id="promo-tipo">
+                                <option value="porcentaje">Porcentaje (%)</option>
+                                <option value="fijo">Monto Fijo ($)</option>
+                                <option value="boletos-gratis">Boletos Gratis</option>
+                            </select>
+                        </div>
+                        <div class="form-group-single">
+                            <label class="form-label">Valor del Descuento <span class="required">*</span></label>
+                            <input type="number" class="form-input" id="promo-valor" placeholder="Ej: 15" min="0" step="0.01" required>
+                        </div>
+                    </div>
+                    <div class="form-group-row">
+                        <div class="form-group-single">
+                            <label class="form-label">Fecha de Inicio <span class="required">*</span></label>
+                            <input type="datetime-local" class="form-input" id="promo-fecha-inicio" required>
+                        </div>
+                        <div class="form-group-single">
+                            <label class="form-label">Fecha de Fin <span class="required">*</span></label>
+                            <input type="datetime-local" class="form-input" id="promo-fecha-fin" required>
+                        </div>
+                    </div>
+                    <div class="form-group-single">
+                        <label class="form-label">Cantidad Máxima de Usos</label>
+                        <input type="number" class="form-input" id="promo-max-usos" placeholder="Ilimitados si está vacío" min="1">
+                    </div>
+                    <div class="form-group-single">
+                        <label class="form-label">Código de Promoción (Opcional)</label>
+                        <input type="text" class="form-input" id="promo-codigo" placeholder="Ej: VERANO2025">
+                        <div class="form-helper">Si está vacío, se generará automáticamente</div>
+                    </div>
+                    <div class="form-group-single">
+                        <label class="form-label">Descripción</label>
+                        <textarea class="form-input" id="promo-descripcion" rows="2" placeholder="Describe la promoción para que los usuarios la vean"></textarea>
+                    </div>
+                    <div class="form-group-single">
+                        <label class="form-label">Estado de la Promoción</label>
+                        <div style="display: flex; gap: var(--spacing-md); align-items: center;">
+                            <label style="display: flex; align-items: center; gap: var(--spacing-sm); cursor: pointer; margin: 0;">
+                                <input type="radio" name="promo-estado" value="activa" checked>
+                                <span>Activa</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: var(--spacing-sm); cursor: pointer; margin: 0;">
+                                <input type="radio" name="promo-estado" value="inactiva">
+                                <span>Inactiva</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-actions" style="margin-top: var(--spacing-lg);">
+                        <button class="btn btn-primary" id="btn-agregar-promo">
+                            <i class="fas fa-plus"></i> Agregar Promoción
+                        </button>
+                        <button class="btn btn-secondary" id="btn-limpiar-promo">
+                            <i class="fas fa-redo"></i> Limpiar Formulario
+                        </button>
+                    </div>
+                </div>
+
+                <!-- LISTA DE PROMOCIONES -->
+                <div class="config-card">
+                    <div class="section-subheader">
+                        <i class="fas fa-list"></i> Promociones Registradas
+                    </div>
+                    <div id="promociones-container" style="display: grid; gap: var(--spacing-lg);">
+                        <p style="color: var(--text-light); text-align: center; padding: var(--spacing-lg);">Cargando promociones...</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- MODAL: CREAR/EDITAR USUARIO -->
+    <div class="modal" id="modal-usuario">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Crear Nuevo Usuario</div>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group-single">
+                    <label class="form-label">Nombre de Usuario <span class="required">*</span></label>
+                    <input type="text" class="form-input" id="input-username" placeholder="usuario123">
+                </div>
+                <div class="form-group-single">
+                    <label class="form-label">Email <span class="required">*</span></label>
+                    <input type="email" class="form-input" id="input-email" placeholder="usuario@ejemplo.com">
+                </div>
+                <div class="form-group-single">
+                    <label class="form-label">Contraseña <span class="required">*</span></label>
+                    <div class="input-with-icon">
+                        <input type="password" class="form-input" id="input-password" placeholder="••••••••">
+                        <button class="input-icon-btn" data-toggle="input-password">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="form-group-single">
+                    <label class="form-label">Rol <span class="required">*</span></label>
+                    <select class="form-input" id="input-rol">
+                        <option value="">Selecciona un rol</option>
+                        <option value="admin">Administrador</option>
+                        <option value="operador">Operador</option>
+                        <option value="viewer">Solo Lectura</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="modal-cancel">Cancelar</button>
+                <button class="btn btn-primary" id="modal-save">Crear Usuario</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: PREMIOS RULETAZO -->
+    <div class="modal" id="modal-premio">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Agregar Premio Ruletazo</div>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group-single">
+                    <label class="form-label">Descripción <span class="required">*</span></label>
+                    <input type="text" class="form-input" id="input-desc-premio" placeholder="Ej: Ruletazo 1">
+                </div>
+                <div class="form-group-single">
+                    <label class="form-label">Premio <span class="required">*</span></label>
+                    <input type="text" class="form-input" id="input-premio" placeholder="Ej: $1000 o iPhone">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="modal-premio-cancel">Cancelar</button>
+                <button class="btn btn-primary" id="modal-premio-save">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script>
+        // ========================================================== //
+        // ARCHIVO: admin-configuracion.html - SCRIPTS                //
+        // DESCRIPCIÓN: Lógica completa y robusta para admin config  //
+        // ÚLTIMA ACTUALIZACIÓN: 2025-12-24                           //
+        // ========================================================== //
+
+        // Obtener URL de API desde config si está disponible, sino usar default
+        const API_BASE = (window.rifaplusConfig && window.rifaplusConfig.backend) 
+            ? window.rifaplusConfig.backend.apiBase 
+            : 'http://127.0.0.1:5001';
+        
+        const TOKEN_KEY = 'rifaplus_admin_token';
+
+        // ========================================================== //
+        // SISTEMA DE ALERTAS                                         //
+        // ========================================================== //
+
+        function mostrarAlerta(mensaje, tipo = 'success') {
+            const container = document.getElementById('alertContainer');
+            const id = 'alerta-' + Date.now();
+            
+            const alertHTML = `
+                <div class="alert alert-${tipo} show" id="${id}">
+                    <i class="fas fa-${tipo === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+                    <span>${mensaje}</span>
+                </div>
+            `;
+            
+            container.insertAdjacentHTML('beforeend', alertHTML);
+            
+            setTimeout(() => {
+                const elem = document.getElementById(id);
+                if (elem) elem.remove();
+            }, 4000);
+        }
+
+        // ========================================================== //
+        // CAMBIO DE TABS                                             //
+        // ========================================================== //
+
+        function cambiarTab(tabName) {
+            // Ocultar todas las secciones
+            document.querySelectorAll('.config-section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.config-tab').forEach(b => b.classList.remove('active'));
+            
+            // Mostrar la seleccionada
+            const section = document.getElementById(`tab-${tabName}`);
+            const tab = document.querySelector(`[data-tab="${tabName}"]`);
+            
+            if (section) section.classList.add('active');
+            if (tab) tab.classList.add('active');
+            
+            // Si es el tab de cliente, cargar los datos
+            if (tabName === 'cliente') {
+                cargarDatosCliente();
+            }
+            
+            // Si es el tab de promociones, cargar las promociones
+            if (tabName === 'promociones') {
+                cargarPromociones();
+            }
+        }
+
+        // ========================================================== //
+        // SECTION: GANADORES                                         //
+        // ========================================================== //
+
+        let configGanadores = {
+            tipoSorteo: 'Simple',
+            ganadores_principales: 1,
+            tienePresorteo: false,
+            ganadores_presorteo: 5,
+            fechaPresorteo: '',
+            descripcionPresorteo: '',
+            tieneRuletazo: false,
+            ganadores_ruletazo: 3,
+            premiosRuletazo: [],
+            descripcionRuletazo: ''
+        };
+
+        let premiosEnEdicion = [];
+
+        function cargarConfigGanadores() {
+            try {
+                const config = window.rifaplusConfig?.rifa?.modalidadGanadores || {};
+                Object.assign(configGanadores, config);
+                
+                // Actualizar UI
+                document.getElementById('ganadores-principales').value = configGanadores.ganadores_principales;
+                document.getElementById('ganadores-presorteo').value = configGanadores.ganadores_presorteo;
+                document.getElementById('ganadores-ruletazo').value = configGanadores.ganadores_ruletazo;
+                document.getElementById('desc-presorteo').value = configGanadores.descripcionPresorteo;
+                document.getElementById('desc-ruletazo').value = configGanadores.descripcionRuletazo;
+                
+                cambiarTipoSorteo(configGanadores.tipoSorteo);
+                premiosEnEdicion = JSON.parse(JSON.stringify(configGanadores.premiosRuletazo || []));
+                renderizarPremios();
+                actualizarPreview();
+                
+                console.log('✅ Configuración de ganadores cargada');
+            } catch (error) {
+                console.error('❌ Error cargando ganadores:', error);
+            }
+        }
+
+        function cambiarTipoSorteo(tipo) {
+            configGanadores.tipoSorteo = tipo;
+            
+            document.querySelectorAll('.tipo-sorteo-btn').forEach(b => b.classList.remove('active'));
+            document.querySelector(`[data-tipo="${tipo}"]`).classList.add('active');
+            
+            document.getElementById('sec-principal').classList.add('show');
+            document.getElementById('sec-presorteo').classList.toggle('show', ['Presorteo', 'Combinado'].includes(tipo));
+            document.getElementById('sec-ruletazo').classList.toggle('show', ['Ruletazo', 'Combinado'].includes(tipo));
+            
+            if (!['Presorteo', 'Combinado'].includes(tipo)) {
+                document.getElementById('toggle-presorteo').classList.remove('active');
+                configGanadores.tienePresorteo = false;
+                document.getElementById('presorteo-campos').style.display = 'none';
+            }
+            
+            if (!['Ruletazo', 'Combinado'].includes(tipo)) {
+                document.getElementById('toggle-ruletazo').classList.remove('active');
+                configGanadores.tieneRuletazo = false;
+                document.getElementById('ruletazo-campos').style.display = 'none';
+            }
+            
+            actualizarPreview();
+        }
+
+        function renderizarPremios() {
+            const lista = document.getElementById('premios-lista');
+            lista.innerHTML = '';
+            
+            if (premiosEnEdicion.length === 0) {
+                lista.innerHTML = '<p style="color: var(--text-lighter); text-align: center; padding: var(--spacing-lg);">Sin premios agregados</p>';
+                return;
+            }
+            
+            premiosEnEdicion.forEach((p, idx) => {
+                const html = `
+                    <div class="premio-item">
+                        <input type="text" class="form-input" value="${p.descripcion || ''}" placeholder="Ej: Ruletazo 1" style="flex: 1;" onchange="premiosEnEdicion[${idx}].descripcion = this.value; actualizarPreview();">
+                        <input type="text" class="form-input" value="${p.premio || ''}" placeholder="Ej: $1000" style="flex: 1; margin: 0 var(--spacing-md);" onchange="premiosEnEdicion[${idx}].premio = this.value; actualizarPreview();">
+                        <button class="btn btn-secondary btn-small" onclick="editarPremio(${idx})" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-danger btn-small" onclick="eliminarPremio(${idx})" title="Eliminar">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+                lista.insertAdjacentHTML('beforeend', html);
+            });
+        }
+
+        function editarPremio(idx) {
+            const p = premiosEnEdicion[idx];
+            document.getElementById('input-desc-premio').value = p.descripcion || '';
+            document.getElementById('input-premio').value = p.premio || '';
+            document.getElementById('modal-premio').dataset.idx = idx;
+            document.getElementById('modal-premio').classList.add('show');
+        }
+
+        function eliminarPremio(idx) {
+            if (confirm('¿Eliminar este premio?')) {
+                premiosEnEdicion.splice(idx, 1);
+                renderizarPremios();
+                actualizarPreview();
+            }
+        }
+
+        function actualizarPreview() {
+            let preview = '📋 RESUMEN GANADORES\n\n';
+            
+            if (configGanadores.ganadores_principales > 0) {
+                preview += `🏆 ${configGanadores.ganadores_principales} Ganador Principal\n`;
+            }
+            
+            if (configGanadores.tienePresorteo) {
+                preview += `\n🎯 PRESORTEO\n`;
+                preview += `   ${configGanadores.ganadores_presorteo} Ganadores\n`;
+                if (configGanadores.fechaPresorteo) {
+                    const fecha = new Date(configGanadores.fechaPresorteo);
+                    preview += `   ${fecha.toLocaleDateString('es-ES')}\n`;
+                }
+            }
+            
+            if (configGanadores.tieneRuletazo) {
+                preview += `\n🎰 RULETAZO\n`;
+                preview += `   ${configGanadores.ganadores_ruletazo} Premios\n`;
+                premiosEnEdicion.forEach(p => {
+                    preview += `   • ${p.descripcion}: ${p.premio}\n`;
+                });
+            }
+            
+            const total = (configGanadores.ganadores_principales || 0) + 
+                         (configGanadores.tienePresorteo ? configGanadores.ganadores_presorteo : 0) +
+                         (configGanadores.tieneRuletazo ? configGanadores.ganadores_ruletazo : 0);
+            
+            preview += `\n📊 TOTAL: ${total} ganadores`;
+            document.getElementById('preview-ganadores').textContent = preview;
+        }
+
+        async function guardarConfigGanadores() {
+            const btn = document.getElementById('btn-guardar-ganadores');
+            btn.classList.add('loading');
+            
+            try {
+                configGanadores.ganadores_principales = parseInt(document.getElementById('ganadores-principales').value) || 1;
+                configGanadores.ganadores_presorteo = parseInt(document.getElementById('ganadores-presorteo').value) || 0;
+                configGanadores.ganadores_ruletazo = parseInt(document.getElementById('ganadores-ruletazo').value) || 0;
+                configGanadores.fechaPresorteo = document.getElementById('fecha-presorteo').value;
+                configGanadores.descripcionPresorteo = document.getElementById('desc-presorteo').value;
+                configGanadores.descripcionRuletazo = document.getElementById('desc-ruletazo').value;
+                configGanadores.premiosRuletazo = [...premiosEnEdicion];
+                
+                const token = localStorage.getItem(TOKEN_KEY);
+                const response = await fetch(`${API_BASE}/api/admin/config`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ rifa: { modalidadGanadores: configGanadores } })
+                });
+                
+                if (!response.ok) throw new Error('Error al guardar');
+                
+                if (window.rifaplusConfig?.set) {
+                    window.rifaplusConfig.set('rifa', 'modalidadGanadores', configGanadores);
+                }
+                
+                mostrarAlerta('✅ Configuración de ganadores guardada', 'success');
+            } catch (error) {
+                console.error('❌ Error:', error);
+                mostrarAlerta('Error al guardar: ' + error.message, 'error');
+            } finally {
+                btn.classList.remove('loading');
+            }
+        }
+
+        // ========================================================== //
+        // SECTION: SEGURIDAD - CAMBIO DE CONTRASEÑA                 //
+        // ========================================================== //
+
+        function togglePasswordVisibility(inputId) {
+            const input = document.getElementById(inputId);
+            if (input.type === 'password') {
+                input.type = 'text';
+            } else {
+                input.type = 'password';
+            }
+        }
+
+        function verificarFuerzaPassword(password) {
+            let strength = 'weak';
+            const elem = document.getElementById('password-strength');
+            
+            if (password.length >= 8 && /[A-Z]/.test(password) && /[0-9]/.test(password)) {
+                strength = 'strong';
+            } else if (password.length >= 6) {
+                strength = 'medium';
+            }
+            
+            elem.className = 'password-strength ' + strength;
+            return strength;
+        }
+
+        async function cambiarPassword() {
+            const btn = document.getElementById('btn-cambiar-password');
+            const current = document.getElementById('current-password').value;
+            const newPass = document.getElementById('new-password').value;
+            const confirm = document.getElementById('confirm-password').value;
+            
+            if (!current || !newPass || !confirm) {
+                mostrarAlerta('Completa todos los campos', 'error');
+                return;
+            }
+            
+            if (newPass !== confirm) {
+                mostrarAlerta('Las contraseñas no coinciden', 'error');
+                return;
+            }
+            
+            if (newPass.length < 8) {
+                mostrarAlerta('La contraseña debe tener mínimo 8 caracteres', 'error');
+                return;
+            }
+            
+            btn.classList.add('loading');
+            
+            try {
+                const token = localStorage.getItem(TOKEN_KEY);
+                const response = await fetch(`${API_BASE}/api/admin/change-password`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        currentPassword: current,
+                        newPassword: newPass
+                    })
+                });
+                
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.error || 'Error al cambiar contraseña');
+                }
+                
+                document.getElementById('current-password').value = '';
+                document.getElementById('new-password').value = '';
+                document.getElementById('confirm-password').value = '';
+                document.getElementById('password-strength').className = 'password-strength';
+                
+                mostrarAlerta('✅ Contraseña cambiada correctamente', 'success');
+            } catch (error) {
+                mostrarAlerta('Error: ' + error.message, 'error');
+            } finally {
+                btn.classList.remove('loading');
+            }
+        }
+
+        // ========================================================== //
+        // SECTION: SEGURIDAD - GESTIÓN DE USUARIOS                  //
+        // ========================================================== //
+
+        async function cargarUsuarios() {
+            try {
+                const token = localStorage.getItem(TOKEN_KEY);
+                const response = await fetch(`${API_BASE}/api/admin/users`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (!response.ok) throw new Error('Error al cargar usuarios');
+                
+                const json = await response.json();
+                const usuarios = json.data || json.usuarios || [];
+                const tbody = document.getElementById('usuarios-tbody');
+                tbody.innerHTML = '';
+                
+                if (!usuarios || usuarios.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: var(--spacing-lg); color: var(--text-lighter);">No hay usuarios</td></tr>';
+                    return;
+                }
+                
+                usuarios.forEach(user => {
+                    const fecha = user.created_at ? new Date(user.created_at).toLocaleDateString('es-ES') : '-';
+                    const html = `
+                        <tr>
+                            <td><strong>${user.username}</strong></td>
+                            <td>${user.email || '-'}</td>
+                            <td><span class="badge badge-${user.rol || 'operador'}">${user.rol || 'operador'}</span></td>
+                            <td>${fecha}</td>
+                            <td>
+                                <button class="btn btn-small btn-secondary" onclick="abrirEditarUsuario(${user.id})" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-small btn-danger" onclick="eliminarUsuario(${user.id}, '${user.username}')" title="Eliminar">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                    tbody.insertAdjacentHTML('beforeend', html);
+                });
+            } catch (error) {
+                console.error('❌ Error:', error);
+                mostrarAlerta('Error al cargar usuarios: ' + error.message, 'error');
+            }
+        }
+
+        function abrirCrearUsuario() {
+            document.getElementById('input-username').value = '';
+            document.getElementById('input-email').value = '';
+            document.getElementById('input-password').value = '';
+            document.getElementById('input-rol').value = '';
+            delete document.getElementById('modal-usuario').dataset.userId;
+            document.querySelector('.modal-title').textContent = 'Crear Nuevo Usuario';
+            document.getElementById('modal-usuario').classList.add('show');
+        }
+
+        function abrirEditarUsuario(id) {
+            // Función para futura implementación
+            mostrarAlerta('Editar usuario - Próximamente', 'info');
+        }
+
+        async function guardarUsuario() {
+            const username = document.getElementById('input-username').value.trim();
+            const email = document.getElementById('input-email').value.trim();
+            const password = document.getElementById('input-password').value;
+            const rol = document.getElementById('input-rol').value;
+            const btn = document.getElementById('modal-save');
+            
+            if (!username || !email || !password || !rol) {
+                mostrarAlerta('Completa todos los campos', 'error');
+                return;
+            }
+            
+            if (password.length < 8) {
+                mostrarAlerta('La contraseña debe tener mínimo 8 caracteres', 'error');
+                return;
+            }
+            
+            btn.classList.add('loading');
+            
+            try {
+                const token = localStorage.getItem(TOKEN_KEY);
+                const response = await fetch(`${API_BASE}/api/admin/users`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ username, email, password, rol })
+                });
+                
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.error || 'Error al crear usuario');
+                }
+                
+                cerrarModalUsuario();
+                cargarUsuarios();
+                mostrarAlerta('✅ Usuario creado correctamente', 'success');
+            } catch (error) {
+                mostrarAlerta('Error: ' + error.message, 'error');
+            } finally {
+                btn.classList.remove('loading');
+            }
+        }
+
+        async function eliminarUsuario(id, username) {
+            if (!confirm(`¿Eliminar usuario "${username}"?`)) return;
+            
+            try {
+                const token = localStorage.getItem(TOKEN_KEY);
+                const response = await fetch(`${API_BASE}/api/admin/users/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (!response.ok) throw new Error('Error al eliminar usuario');
+                
+                cargarUsuarios();
+                mostrarAlerta('✅ Usuario eliminado', 'success');
+            } catch (error) {
+                mostrarAlerta('Error: ' + error.message, 'error');
+            }
+        }
+
+        function cerrarModalUsuario() {
+            document.getElementById('modal-usuario').classList.remove('show');
+        }
+
+        // ========================================================== //
+        // MODAL PREMIOS                                              //
+        // ========================================================== //
+
+        function abrirModalPremio() {
+            document.getElementById('input-desc-premio').value = '';
+            document.getElementById('input-premio').value = '';
+            delete document.getElementById('modal-premio').dataset.idx;
+            document.getElementById('modal-premio').classList.add('show');
+        }
+
+        function guardarPremio() {
+            const desc = document.getElementById('input-desc-premio').value.trim();
+            const premio = document.getElementById('input-premio').value.trim();
+            
+            if (!desc || !premio) {
+                mostrarAlerta('Completa todos los campos', 'error');
+                return;
+            }
+            
+            const modal = document.getElementById('modal-premio');
+            const idx = modal.dataset.idx;
+            
+            if (idx !== undefined) {
+                premiosEnEdicion[idx] = { descripcion: desc, premio: premio };
+            } else {
+                premiosEnEdicion.push({
+                    numero: premiosEnEdicion.length + 1,
+                    descripcion: desc,
+                    premio: premio,
+                    orden: premiosEnEdicion.length + 1
+                });
+            }
+            
+            renderizarPremios();
+            actualizarPreview();
+            modal.classList.remove('show');
+            mostrarAlerta('Premio guardado', 'success');
+        }
+
+        // ========================================================== //
+        // INICIALIZACIÓN                                             //
+        // ========================================================== //
+
+        // Datos del cliente global
+        let datosClienteActual = {};
+
+        // Función: Cargar datos del cliente (GLOBAL)
+        function cargarDatosCliente() {
+            try {
+                const config = window.rifaplusConfig || {};
+                
+                // Cliente
+                datosClienteActual.cliente = config.cliente || {};
+                document.getElementById('cliente-nombre').value = datosClienteActual.cliente.nombre || '';
+                document.getElementById('cliente-eslogan').value = datosClienteActual.cliente.eslogan || '';
+                document.getElementById('cliente-telefono').value = datosClienteActual.cliente.telefono || '';
+                document.getElementById('cliente-email').value = datosClienteActual.cliente.email || '';
+
+                // Rifa
+                datosClienteActual.rifa = config.rifa || {};
+                document.getElementById('rifa-nombre').value = datosClienteActual.rifa.titulo || '';
+                document.getElementById('rifa-total-boletos').value = datosClienteActual.rifa.totalBoletos || '';
+                document.getElementById('rifa-precio-boleto').value = datosClienteActual.rifa.precioBoleto || '';
+                document.getElementById('rifa-descripcion').value = datosClienteActual.rifa.descripcion || '';
+                document.getElementById('rifa-fecha-sorteo').value = datosClienteActual.rifa.fechaSorteo ? datosClienteActual.rifa.fechaSorteo.split('+')[0] : '';
+
+                // Redes sociales
+                const redes = datosClienteActual.cliente.redesSociales || {};
+                document.getElementById('redes-whatsapp').value = redes.whatsapp || '';
+                document.getElementById('redes-facebook').value = redes.facebook || '';
+                document.getElementById('redes-instagram').value = redes.instagram || '';
+                document.getElementById('redes-tiktok').value = redes.tiktok || '';
+
+                // Cuentas (si existen)
+                cargarCuentasPago();
+
+                console.log('✅ Datos del cliente cargados');
+            } catch (error) {
+                console.error('❌ Error cargando datos del cliente:', error);
+                mostrarAlerta('Error cargando configuración: ' + error.message, 'error');
+            }
+        }
+
+        // Función: Cargar cuentas de pago (GLOBAL)
+        function cargarCuentasPago() {
+            const container = document.getElementById('cuentas-container');
+            if (!container) return;
+            
+            const cuentas = window.rifaplusConfig?.tecnica?.bankAccounts || [];
+            
+            container.innerHTML = '';
+            
+            if (cuentas.length === 0) {
+                container.innerHTML = '<p style="color: #999; padding: 20px;">No hay cuentas agregadas aún.</p>';
+                return;
+            }
+
+            cuentas.forEach((cuenta, idx) => {
+                const html = `
+                    <div class="cuenta-pago-item" data-idx="${idx}">
+                        <div class="form-row">
+                            <div class="form-group col-4">
+                                <label>Banco</label>
+                                <input type="text" class="cuenta-banco" value="${cuenta.nombreBanco || ''}" placeholder="Ej: Santander">
+                            </div>
+                            <div class="form-group col-4">
+                                <label>Número de Cuenta</label>
+                                <input type="text" class="cuenta-numero" value="${cuenta.accountNumber || ''}" placeholder="XXXX XXXX XXXX XXXX">
+                            </div>
+                            <div class="form-group col-2">
+                                <label>Tipo</label>
+                                <input type="text" class="cuenta-tipo" value="${cuenta.accountType || ''}" placeholder="Tarjeta">
+                            </div>
+                            <div class="form-group col-2" style="display: flex; align-items: flex-end;">
+                                <button class="btn btn-danger btn-sm btn-eliminar-cuenta" data-idx="${idx}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', html);
+            });
+
+            // Agregar event listeners a botones eliminar
+            document.querySelectorAll('.btn-eliminar-cuenta').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const idx = parseInt(btn.dataset.idx);
+                    const cuentas = window.rifaplusConfig.tecnica.bankAccounts;
+                    cuentas.splice(idx, 1);
+                    cargarCuentasPago();
+                });
+            });
+        }
+
+        // ========================================================== //
+        // SECTION: PROMOCIONES                                       //
+        // ========================================================== //
+
+        let promociones = [];
+
+        function cargarPromociones() {
+            try {
+                const config = window.rifaplusConfig || {};
+                promociones = config.promociones || [];
+                renderizarPromociones();
+                console.log('✅ Promociones cargadas:', promociones);
+            } catch (error) {
+                console.error('❌ Error cargando promociones:', error);
+                promociones = [];
+                renderizarPromociones();
+            }
+        }
+
+        function generarCodigoPromocional() {
+            const caracteres = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let codigo = '';
+            for (let i = 0; i < 8; i++) {
+                codigo += caracteres.charAt(Math.floor(Math.random() * caracteres.length));
+            }
+            return codigo;
+        }
+
+        function renderizarPromociones() {
+            const container = document.getElementById('promociones-container');
+            
+            if (!container) return;
+            
+            if (promociones.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-light); text-align: center; padding: var(--spacing-lg);">No hay promociones registradas. Agrega una para empezar.</p>';
+                return;
+            }
+
+            container.innerHTML = '';
+            
+            promociones.forEach((promo, idx) => {
+                const fechaInicio = new Date(promo.fechaInicio);
+                const fechaFin = new Date(promo.fechaFin);
+                const ahora = new Date();
+                const activa = ahora >= fechaInicio && ahora <= fechaFin && promo.estado === 'activa';
+                const agotada = promo.maxUsos && promo.usos >= promo.maxUsos;
+                
+                const simboloDescuento = promo.tipo === 'porcentaje' ? '%' : (promo.tipo === 'fijo' ? '$' : '');
+                
+                const html = `
+                    <div class="promo-card" style="border: 1px solid var(--divider); border-radius: var(--radius-lg); padding: var(--spacing-lg); background: var(--bg-light); position: relative;">
+                        <div style="display: flex; justify-content: space-between; align-items: start; gap: var(--spacing-lg);">
+                            <div style="flex: 1;">
+                                <div style="display: flex; align-items: center; gap: var(--spacing-md); margin-bottom: var(--spacing-md);">
+                                    <h3 style="margin: 0; color: var(--text-dark);">${promo.nombre}</h3>
+                                    <span style="background: ${activa ? 'var(--success)' : (agotada ? 'var(--danger)' : 'var(--warning)')}; color: white; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">
+                                        ${activa ? 'ACTIVA' : (agotada ? 'AGOTADA' : 'INACTIVA')}
+                                    </span>
+                                </div>
+                                <p style="margin: 0 0 var(--spacing-sm) 0; color: var(--text-light); font-size: 0.9rem;">${promo.descripcion || 'Sin descripción'}</p>
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--spacing-md); margin-bottom: var(--spacing-md);">
+                                    <div>
+                                        <small style="color: var(--text-lighter);">Descuento</small>
+                                        <div style="font-weight: 600; font-size: 1.2rem; color: var(--primary);">${promo.valor}${simboloDescuento}</div>
+                                    </div>
+                                    <div>
+                                        <small style="color: var(--text-lighter);">Tipo</small>
+                                        <div style="font-weight: 600; font-size: 0.9rem; color: var(--text-dark);">${promo.tipo === 'porcentaje' ? 'Porcentaje' : (promo.tipo === 'fijo' ? 'Monto Fijo' : 'Boletos Gratis')}</div>
+                                    </div>
+                                    <div>
+                                        <small style="color: var(--text-lighter);">Código</small>
+                                        <div style="font-weight: 600; font-size: 0.9rem; color: var(--text-dark); font-family: monospace;">${promo.codigo}</div>
+                                    </div>
+                                    <div>
+                                        <small style="color: var(--text-lighter);">Usos</small>
+                                        <div style="font-weight: 600; font-size: 0.9rem; color: var(--text-dark);">${promo.usos || 0}${promo.maxUsos ? ' / ' + promo.maxUsos : ''}</div>
+                                    </div>
+                                </div>
+                                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--spacing-md); font-size: 0.85rem; color: var(--text-light);">
+                                    <div>
+                                        <small style="color: var(--text-lighter);">Inicio:</small>
+                                        <div>${fechaInicio.toLocaleDateString('es-ES')} ${fechaInicio.toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'})}</div>
+                                    </div>
+                                    <div>
+                                        <small style="color: var(--text-lighter);">Fin:</small>
+                                        <div>${fechaFin.toLocaleDateString('es-ES')} ${fechaFin.toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'})}</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: var(--spacing-sm); flex-direction: column;">
+                                <button class="btn btn-secondary btn-small" onclick="editarPromocion(${idx})" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-danger btn-small" onclick="eliminarPromocion(${idx})" title="Eliminar">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', html);
+            });
+        }
+
+        function editarPromocion(idx) {
+            const promo = promociones[idx];
+            document.getElementById('promo-nombre').value = promo.nombre;
+            document.getElementById('promo-tipo').value = promo.tipo;
+            document.getElementById('promo-valor').value = promo.valor;
+            document.getElementById('promo-fecha-inicio').value = promo.fechaInicio;
+            document.getElementById('promo-fecha-fin').value = promo.fechaFin;
+            document.getElementById('promo-max-usos').value = promo.maxUsos || '';
+            document.getElementById('promo-codigo').value = promo.codigo;
+            document.getElementById('promo-descripcion').value = promo.descripcion || '';
+            document.querySelector(`input[name="promo-estado"][value="${promo.estado}"]`).checked = true;
+            
+            document.getElementById('btn-agregar-promo').dataset.editIdx = idx;
+            document.getElementById('btn-agregar-promo').innerHTML = '<i class="fas fa-save"></i> Actualizar Promoción';
+            document.querySelector('.section-subheader i').className = 'fas fa-edit';
+            document.querySelector('.section-subheader').textContent = '';
+            document.querySelector('.section-subheader').innerHTML = '<i class="fas fa-edit"></i> Editando Promoción';
+            
+            // Scroll al formulario
+            document.querySelector('#promo-nombre').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function eliminarPromocion(idx) {
+            if (confirm('¿Estás seguro de que deseas eliminar esta promoción?')) {
+                promociones.splice(idx, 1);
+                guardarPromociones();
+                renderizarPromociones();
+                mostrarAlerta('✅ Promoción eliminada correctamente', 'success');
+            }
+        }
+
+        async function guardarPromociones() {
+            const btn = document.getElementById('btn-agregar-promo');
+            btn.classList.add('loading');
+            
+            try {
+                const token = localStorage.getItem(TOKEN_KEY);
+                const response = await fetch(`${API_BASE}/api/admin/config`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ promociones: promociones })
+                });
+
+                if (!response.ok) throw new Error('Error guardando promociones');
+                
+                // Actualizar config global
+                if (window.rifaplusConfig) {
+                    window.rifaplusConfig.promociones = promociones;
+                }
+                
+                mostrarAlerta('✅ Promociones guardadas correctamente', 'success');
+                console.log('✅ Promociones guardadas');
+            } catch (error) {
+                mostrarAlerta('❌ Error: ' + error.message, 'error');
+                console.error('❌ Error guardando promociones:', error);
+            } finally {
+                btn.classList.remove('loading');
+            }
+        }
+
+        function agregarPromocion() {
+            const nombre = document.getElementById('promo-nombre').value.trim();
+            const tipo = document.getElementById('promo-tipo').value;
+            const valor = parseFloat(document.getElementById('promo-valor').value);
+            const fechaInicio = document.getElementById('promo-fecha-inicio').value;
+            const fechaFin = document.getElementById('promo-fecha-fin').value;
+            const maxUsos = document.getElementById('promo-max-usos').value ? parseInt(document.getElementById('promo-max-usos').value) : null;
+            let codigo = document.getElementById('promo-codigo').value.trim();
+            const descripcion = document.getElementById('promo-descripcion').value.trim();
+            const estado = document.querySelector('input[name="promo-estado"]:checked').value;
+            const editIdx = document.getElementById('btn-agregar-promo').dataset.editIdx;
+
+            // Validaciones
+            if (!nombre) {
+                mostrarAlerta('Por favor ingresa el nombre de la promoción', 'error');
+                return;
+            }
+            if (!valor || valor < 0) {
+                mostrarAlerta('Por favor ingresa un valor válido', 'error');
+                return;
+            }
+            if (!fechaInicio || !fechaFin) {
+                mostrarAlerta('Por favor selecciona las fechas de inicio y fin', 'error');
+                return;
+            }
+            if (new Date(fechaInicio) >= new Date(fechaFin)) {
+                mostrarAlerta('La fecha de fin debe ser posterior a la fecha de inicio', 'error');
+                return;
+            }
+
+            // Generar código si no está proporcionado
+            if (!codigo) {
+                codigo = generarCodigoPromocional();
+            }
+
+            const nuevaPromo = {
+                nombre,
+                tipo,
+                valor,
+                fechaInicio,
+                fechaFin,
+                maxUsos,
+                codigo,
+                descripcion,
+                estado,
+                usos: editIdx !== undefined ? (promociones[editIdx].usos || 0) : 0
+            };
+
+            if (editIdx !== undefined) {
+                // Editar existente
+                promociones[editIdx] = nuevaPromo;
+                mostrarAlerta('✅ Promoción actualizada correctamente', 'success');
+                document.getElementById('btn-agregar-promo').removeAttribute('data-editIdx');
+                document.getElementById('btn-agregar-promo').innerHTML = '<i class="fas fa-plus"></i> Agregar Promoción';
+                document.querySelector('.section-subheader i').className = 'fas fa-plus-circle';
+                document.querySelector('.section-subheader').textContent = '';
+                document.querySelector('.section-subheader').innerHTML = '<i class="fas fa-plus-circle"></i> Agregar Nueva Promoción';
+            } else {
+                // Agregar nueva
+                promociones.push(nuevaPromo);
+                mostrarAlerta('✅ Promoción agregada correctamente', 'success');
+            }
+
+            // Limpiar formulario
+            limpiarFormularioPromo();
+            guardarPromociones();
+            renderizarPromociones();
+        }
+
+        function limpiarFormularioPromo() {
+            document.getElementById('promo-nombre').value = '';
+            document.getElementById('promo-tipo').value = 'porcentaje';
+            document.getElementById('promo-valor').value = '';
+            document.getElementById('promo-fecha-inicio').value = '';
+            document.getElementById('promo-fecha-fin').value = '';
+            document.getElementById('promo-max-usos').value = '';
+            document.getElementById('promo-codigo').value = '';
+            document.getElementById('promo-descripcion').value = '';
+            document.querySelector('input[name="promo-estado"][value="activa"]').checked = true;
+            document.getElementById('btn-agregar-promo').removeAttribute('data-editIdx');
+            document.getElementById('btn-agregar-promo').innerHTML = '<i class="fas fa-plus"></i> Agregar Promoción';
+            document.querySelector('.section-subheader i').className = 'fas fa-plus-circle';
+            document.querySelector('.section-subheader').textContent = '';
+            document.querySelector('.section-subheader').innerHTML = '<i class="fas fa-plus-circle"></i> Agregar Nueva Promoción';
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Cargar configuraciones iniciales
+            cargarConfigGanadores();
+            cargarUsuarios();
+            
+            // Tabs
+            document.querySelectorAll('.config-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    cambiarTab(tab.dataset.tab);
+                });
+            });
+            
+            // Ganadores
+            document.querySelectorAll('.tipo-sorteo-btn').forEach(btn => {
+                btn.addEventListener('click', () => cambiarTipoSorteo(btn.dataset.tipo));
+            });
+            
+            document.getElementById('toggle-presorteo')?.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.target.classList.toggle('active');
+                configGanadores.tienePresorteo = e.target.classList.contains('active');
+                document.getElementById('presorteo-campos').style.display = configGanadores.tienePresorteo ? 'block' : 'none';
+                actualizarPreview();
+            });
+            
+            document.getElementById('toggle-ruletazo')?.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.target.classList.toggle('active');
+                configGanadores.tieneRuletazo = e.target.classList.contains('active');
+                document.getElementById('ruletazo-campos').style.display = configGanadores.tieneRuletazo ? 'block' : 'none';
+                actualizarPreview();
+            });
+            
+            // Inputs ganadores
+            ['ganadores-principales', 'ganadores-presorteo', 'ganadores-ruletazo', 'fecha-presorteo', 'desc-presorteo', 'desc-ruletazo'].forEach(id => {
+                const elem = document.getElementById(id);
+                if (elem) elem.addEventListener('change', actualizarPreview);
+            });
+            
+            document.getElementById('btn-guardar-ganadores')?.addEventListener('click', guardarConfigGanadores);
+            document.getElementById('btn-resetear-ganadores')?.addEventListener('click', () => {
+                if (confirm('¿Restaurar valores por defecto?')) location.reload();
+            });
+            
+            // Premios
+            document.getElementById('btn-agregar-premio')?.addEventListener('click', abrirModalPremio);
+            document.getElementById('modal-premio-save')?.addEventListener('click', guardarPremio);
+            document.getElementById('modal-premio-cancel')?.addEventListener('click', () => {
+                document.getElementById('modal-premio').classList.remove('show');
+            });
+            
+            // Password
+            document.getElementById('btn-cambiar-password')?.addEventListener('click', cambiarPassword);
+            document.getElementById('new-password')?.addEventListener('input', (e) => {
+                verificarFuerzaPassword(e.target.value);
+            });
+            
+            // Toggle password visibility
+            document.querySelectorAll('[data-toggle]').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    togglePasswordVisibility(btn.dataset.toggle);
+                });
+            });
+            
+            // Usuarios
+            document.getElementById('btn-crear-usuario')?.addEventListener('click', abrirCrearUsuario);
+            document.getElementById('modal-save')?.addEventListener('click', guardarUsuario);
+            document.getElementById('modal-cancel')?.addEventListener('click', cerrarModalUsuario);
+            document.querySelectorAll('.modal-close').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.target.closest('.modal').classList.remove('show');
+                });
+            });
+            
+            // Cerrar modales al hacer click fuera
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) modal.classList.remove('show');
+                });
+            });
+
+            // ========================================================== //
+            // BRANDING SECTION - Event Listeners                         //
+            // ========================================================== //
+
+            // Color pickers
+            document.getElementById('color-primary')?.addEventListener('input', (e) => {
+                document.getElementById('color-primary-hex').textContent = e.target.value.toUpperCase();
+                document.querySelector('[style*="#2D6A4F"]').style.backgroundColor = e.target.value;
+                actualizarPreviewBranding();
+            });
+
+            document.getElementById('color-secondary')?.addEventListener('input', (e) => {
+                document.getElementById('color-secondary-hex').textContent = e.target.value.toUpperCase();
+                actualizarPreviewBranding();
+            });
+
+            document.getElementById('color-accent')?.addEventListener('input', (e) => {
+                document.getElementById('color-accent-hex').textContent = e.target.value.toUpperCase();
+                actualizarPreviewBranding();
+            });
+
+            // Logo upload
+            document.getElementById('btn-cambiar-logo')?.addEventListener('click', () => {
+                document.getElementById('logo-input').click();
+            });
+
+            document.getElementById('logo-input')?.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        document.getElementById('logo-img').src = event.target.result;
+                        mostrarAlerta('Logo actualizado correctamente', 'success');
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            // Favicon upload
+            document.getElementById('btn-cambiar-favicon')?.addEventListener('click', () => {
+                document.getElementById('favicon-input').click();
+            });
+
+            document.getElementById('favicon-input')?.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        document.querySelector('.favicon-preview img').src = event.target.result;
+                        mostrarAlerta('Favicon actualizado correctamente', 'success');
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            // Branding inputs
+            ['branding-nombre', 'branding-slogan'].forEach(id => {
+                const elem = document.getElementById(id);
+                if (elem) {
+                    elem.addEventListener('input', actualizarPreviewBranding);
+                }
+            });
+
+            // Theme selector
+            document.querySelectorAll('.theme-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
+                    e.target.closest('.theme-btn')?.classList.add('active');
+                    mostrarAlerta('Tema seleccionado: ' + e.target.closest('.theme-btn').dataset.theme, 'success');
+                });
+            });
+
+            // Save branding
+            document.getElementById('btn-guardar-branding')?.addEventListener('click', guardarConfigBranding);
+            document.getElementById('btn-resetear-branding')?.addEventListener('click', () => {
+                if (confirm('¿Restaurar branding a valores predeterminados?')) {
+                    location.reload();
+                }
+            });
+
+            // ========================================================== //
+            // SORTEO SECTION - Event Listeners                           //
+            // ========================================================== //
+
+            // Agregar premio al sorteo
+            document.getElementById('btn-agregar-premio-sorteo')?.addEventListener('click', () => {
+                const container = document.getElementById('sorteo-premios-container');
+                const idx = container.children.length;
+                const html = `
+                    <div class="premio-item" data-idx="${idx}">
+                        <div class="premio-info">
+                            <input type="text" class="form-input" placeholder="Nombre del premio" data-premio="nombre">
+                            <input type="text" class="form-input" placeholder="Valor del premio (Ej: $5000)" data-premio="valor">
+                        </div>
+                        <button class="btn btn-danger btn-small btn-eliminar-premio" onclick="this.parentElement.remove()">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', html);
+            });
+
+            // Save sorteo
+            document.getElementById('btn-guardar-sorteo')?.addEventListener('click', guardarConfigSorteo);
+            document.getElementById('btn-resetear-sorteo')?.addEventListener('click', () => {
+                if (confirm('¿Cancelar cambios?')) {
+                    document.getElementById('sorteo-nombre').value = '';
+                    document.getElementById('sorteo-descripcion').value = '';
+                    mostrarAlerta('Cambios cancelados', 'info');
+                }
+            });
+
+            document.getElementById('btn-finalizar-sorteo')?.addEventListener('click', () => {
+                if (confirm('¿Finalizar este sorteo? Esta acción no se puede deshacer.')) {
+                    mostrarAlerta('Sorteo finalizado correctamente', 'success');
+                }
+            });
+
+            // ========================================================== //
+            // SECTION: DATOS DEL CLIENTE (NUEVO)                        //
+            // ========================================================== //
+
+            // Evento: Agregar cuenta
+            document.getElementById('btn-agregar-cuenta')?.addEventListener('click', () => {
+                if (!window.rifaplusConfig.tecnica.bankAccounts) {
+                    window.rifaplusConfig.tecnica.bankAccounts = [];
+                }
+                
+                window.rifaplusConfig.tecnica.bankAccounts.push({
+                    id: window.rifaplusConfig.tecnica.bankAccounts.length + 1,
+                    nombreBanco: '',
+                    accountNumber: '',
+                    accountType: 'Tarjeta',
+                    beneficiary: '',
+                    numero_referencia: '',
+                    phone: ''
+                });
+                
+                cargarCuentasPago();
+            });
+
+            // Evento: Guardar datos del cliente
+            document.getElementById('btn-guardar-cliente')?.addEventListener('click', async () => {
+                try {
+                    // Recopilar datos actualizados
+                    const datosParaGuardar = {
+                        cliente: {
+                            nombre: document.getElementById('cliente-nombre').value,
+                            eslogan: document.getElementById('cliente-eslogan').value,
+                            telefono: document.getElementById('cliente-telefono').value,
+                            email: document.getElementById('cliente-email').value,
+                            redesSociales: {
+                                whatsapp: document.getElementById('redes-whatsapp').value,
+                                facebook: document.getElementById('redes-facebook').value,
+                                instagram: document.getElementById('redes-instagram').value,
+                                tiktok: document.getElementById('redes-tiktok').value
+                            }
+                        },
+                        rifa: {
+                            titulo: document.getElementById('rifa-nombre').value,
+                            totalBoletos: parseInt(document.getElementById('rifa-total-boletos').value),
+                            precioBoleto: parseFloat(document.getElementById('rifa-precio-boleto').value),
+                            descripcion: document.getElementById('rifa-descripcion').value,
+                            fechaSorteo: document.getElementById('rifa-fecha-sorteo').value
+                        }
+                    };
+
+                    // Recopilar cuentas actualizadas
+                    const cuentasActualizadas = [];
+                    document.querySelectorAll('.cuenta-pago-item').forEach((item, idx) => {
+                        cuentasActualizadas.push({
+                            id: idx + 1,
+                            nombreBanco: item.querySelector('.cuenta-banco').value,
+                            accountNumber: item.querySelector('.cuenta-numero').value,
+                            accountType: item.querySelector('.cuenta-tipo').value,
+                            beneficiary: '',
+                            numero_referencia: '',
+                            phone: ''
+                        });
+                    });
+
+                    datosParaGuardar.cuentas = cuentasActualizadas;
+
+                    // Validar
+                    if (!datosParaGuardar.cliente.nombre) {
+                        mostrarAlerta('El nombre de la empresa es requerido', 'error');
+                        return;
+                    }
+                    if (!datosParaGuardar.rifa.titulo) {
+                        mostrarAlerta('El nombre del sorteo es requerido', 'error');
+                        return;
+                    }
+
+                    // Obtener token
+                    const token = localStorage.getItem(TOKEN_KEY);
+                    if (!token) {
+                        mostrarAlerta('Debes iniciar sesión', 'error');
+                        return;
+                    }
+
+                    // Enviar al backend
+                    const response = await fetch(`${API_BASE}/api/admin/cliente`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify(datosParaGuardar)
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok && result.success) {
+                        // Actualizar config global
+                        Object.assign(window.rifaplusConfig.cliente, datosParaGuardar.cliente);
+                        Object.assign(window.rifaplusConfig.rifa, datosParaGuardar.rifa);
+                        window.rifaplusConfig.tecnica.bankAccounts = cuentasActualizadas;
+
+                        // Aplicar cambios visuales
+                        window.rifaplusConfig.aplicarConfiguracion();
+
+                        mostrarAlerta('✅ Datos del cliente guardados correctamente', 'success');
+                        console.log('✅ Datos guardados:', result.data);
+                    } else {
+                        mostrarAlerta('Error: ' + (result.message || 'No se pudieron guardar los datos'), 'error');
+                    }
+                } catch (error) {
+                    console.error('Error guardando datos:', error);
+                    mostrarAlerta('Error: ' + error.message, 'error');
+                }
+            });
+
+            // Evento: Limpiar/Restaurar
+            document.getElementById('btn-limpiar-cliente')?.addEventListener('click', () => {
+                if (confirm('¿Restaurar valores predeterminados? Los cambios no guardados se perderán.')) {
+                    cargarDatosCliente();
+                    mostrarAlerta('Valores restaurados', 'info');
+                }
+            });
+
+            // Cargar datos al iniciar
+            window.addEventListener('DOMContentLoaded', cargarDatosCliente);
+            
+            // Si ya se cargó el DOM, cargar inmediatamente
+            if (document.readyState !== 'loading') {
+                cargarDatosCliente();
+            }
+
+            // ========================================================== //
+            // PROMOCIONES EVENT LISTENERS                               //
+            // ========================================================== //
+
+            // Cargar promociones al iniciar
+            cargarPromociones();
+
+            // Botones de promociones
+            document.getElementById('btn-agregar-promo')?.addEventListener('click', agregarPromocion);
+            document.getElementById('btn-limpiar-promo')?.addEventListener('click', limpiarFormularioPromo);
+
+            // Permitir agregar promoción con Enter
+            document.getElementById('promo-descripcion')?.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && e.ctrlKey) {
+                    agregarPromocion();
+                }
+            });
+
+            console.log('✅ admin-configuracion.html inicializado');
+        });
+
+        // ========================================================== //
+        // FUNCIONES BRANDING                                         //
+        // ========================================================== //
+
+        function actualizarPreviewBranding() {
+            const nombre = document.getElementById('branding-nombre').value || 'SORTEOS YEPE';
+            const slogan = document.getElementById('branding-slogan').value || 'Tu oportunidad de ganar grande';
+            const colorPrimario = document.getElementById('color-primary').value || '#2D6A4F';
+            const colorSecundario = document.getElementById('color-secondary').value || '#1B4332';
+
+            document.getElementById('preview-nombre').textContent = nombre;
+            document.getElementById('preview-slogan').textContent = slogan;
+
+            const previewHeader = document.querySelector('.preview-header');
+            if (previewHeader) {
+                previewHeader.style.background = `linear-gradient(135deg, ${colorPrimario} 0%, ${colorSecundario} 100%)`;
+            }
+        }
+
+        async function guardarConfigBranding() {
+            try {
+                const config = {
+                    nombre: document.getElementById('branding-nombre').value,
+                    slogan: document.getElementById('branding-slogan').value,
+                    descripcion: document.getElementById('branding-descripcion').value,
+                    colorPrimario: document.getElementById('color-primary').value,
+                    colorSecundario: document.getElementById('color-secondary').value,
+                    colorAccento: document.getElementById('color-accent').value,
+                    fontMain: document.getElementById('branding-font-main').value,
+                    fontTitle: document.getElementById('branding-font-title').value,
+                    tema: document.querySelector('.theme-btn.active')?.dataset.theme || 'light'
+                };
+
+                // Guardar en localStorage
+                localStorage.setItem('branding-config', JSON.stringify(config));
+                mostrarAlerta('✅ Branding guardado correctamente', 'success');
+            } catch (error) {
+                mostrarAlerta('Error al guardar branding: ' + error.message, 'error');
+            }
+        }
+
+        // ========================================================== //
+        // FUNCIONES SORTEO                                           //
+        // ========================================================== //
+
+        async function guardarConfigSorteo() {
+            try {
+                const premios = [];
+                document.querySelectorAll('.premio-item').forEach(item => {
+                    const nombre = item.querySelector('[data-premio="nombre"]')?.value;
+                    const valor = item.querySelector('[data-premio="valor"]')?.value;
+                    if (nombre && valor) {
+                        premios.push({ nombre, valor });
+                    }
+                });
+
+                const config = {
+                    nombre: document.getElementById('sorteo-nombre').value,
+                    estado: document.getElementById('sorteo-estado').value,
+                    descripcion: document.getElementById('sorteo-descripcion').value,
+                    fechaInicio: document.getElementById('sorteo-fecha-inicio').value,
+                    fechaCierre: document.getElementById('sorteo-fecha-cierre').value,
+                    fechaSorteo: document.getElementById('sorteo-fecha-sorteo').value,
+                    duracion: document.getElementById('sorteo-duracion').value,
+                    premios: premios,
+                    terminos: document.getElementById('sorteo-terminos').value,
+                    legal: document.getElementById('sorteo-legal').value
+                };
+
+                // Guardar en localStorage
+                localStorage.setItem('sorteo-config', JSON.stringify(config));
+                mostrarAlerta('✅ Configuración del sorteo guardada correctamente', 'success');
+            } catch (error) {
+                mostrarAlerta('Error al guardar sorteo: ' + error.message, 'error');
+            }
+        }
+
+        // Cargar configuraciones guardadas al iniciar
+        function cargarConfiguracionesGuardadas() {
+            try {
+                const brandingConfig = JSON.parse(localStorage.getItem('branding-config') || '{}');
+                const sorteoConfig = JSON.parse(localStorage.getItem('sorteo-config') || '{}');
+
+                // Cargar branding
+                if (brandingConfig.nombre) document.getElementById('branding-nombre').value = brandingConfig.nombre;
+                if (brandingConfig.slogan) document.getElementById('branding-slogan').value = brandingConfig.slogan;
+                if (brandingConfig.descripcion) document.getElementById('branding-descripcion').value = brandingConfig.descripcion;
+                if (brandingConfig.colorPrimario) document.getElementById('color-primary').value = brandingConfig.colorPrimario;
+                if (brandingConfig.colorSecundario) document.getElementById('color-secondary').value = brandingConfig.colorSecundario;
+                if (brandingConfig.colorAccento) document.getElementById('color-accent').value = brandingConfig.colorAccento;
+
+                // Cargar sorteo
+                if (sorteoConfig.nombre) document.getElementById('sorteo-nombre').value = sorteoConfig.nombre;
+                if (sorteoConfig.estado) document.getElementById('sorteo-estado').value = sorteoConfig.estado;
+                if (sorteoConfig.descripcion) document.getElementById('sorteo-descripcion').value = sorteoConfig.descripcion;
+                if (sorteoConfig.fechaInicio) document.getElementById('sorteo-fecha-inicio').value = sorteoConfig.fechaInicio;
+                if (sorteoConfig.fechaCierre) document.getElementById('sorteo-fecha-cierre').value = sorteoConfig.fechaCierre;
+                if (sorteoConfig.fechaSorteo) document.getElementById('sorteo-fecha-sorteo').value = sorteoConfig.fechaSorteo;
+                if (sorteoConfig.duracion) document.getElementById('sorteo-duracion').value = sorteoConfig.duracion;
+                if (sorteoConfig.terminos) document.getElementById('sorteo-terminos').value = sorteoConfig.terminos;
+                if (sorteoConfig.legal) document.getElementById('sorteo-legal').value = sorteoConfig.legal;
+
+                // Cargar premios
+                if (sorteoConfig.premios && sorteoConfig.premios.length > 0) {
+                    const container = document.getElementById('sorteo-premios-container');
+                    sorteoConfig.premios.forEach((premio, idx) => {
+                        const html = `
+                            <div class="premio-item" data-idx="${idx}">
+                                <div class="premio-info">
+                                    <input type="text" class="form-input" placeholder="Nombre del premio" data-premio="nombre" value="${premio.nombre}">
+                                    <input type="text" class="form-input" placeholder="Valor del premio" data-premio="valor" value="${premio.valor}">
+                                </div>
+                                <button class="btn btn-danger btn-small btn-eliminar-premio" onclick="this.parentElement.remove()">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        `;
+                        container.insertAdjacentHTML('beforeend', html);
+                    });
+                }
+
+                actualizarPreviewBranding();
+            } catch (error) {
+                console.error('Error cargando configuraciones:', error);
+            }
+        }
+
+        // Ejecutar carga al inicio
+        setTimeout(cargarConfiguracionesGuardadas, 500);
+    </script>
+</body>
+</html>

@@ -1,0 +1,2454 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' http://127.0.0.1:* http://localhost:*; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://fonts.googleapis.com https://cdn.sheetjs.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; connect-src 'self' http://127.0.0.1:* http://localhost:* https:; img-src 'self' data: https:;">
+    <title>Panel Admin - SORTEOS YEPE</title>
+    <link rel="icon" href="images/logo.png" sizes="32x32">
+    <link rel="preload" as="image" href="images/logo.png" fetchpriority="high">
+    <link rel="apple-touch-icon" href="images/logo.png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/admin-layout.css?v=20251221">
+    <link rel="stylesheet" href="css/styles.css?v=20251128">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // ============================================================
+        // LIMPIEZA COMPLETA DE CACHÉ - EJECUTAR ANTES DE CARGAR CONFIG
+        // ============================================================
+        // Esto asegura que el navegador NO usa valores cacheados de fechas
+        (function limpiarCacheYFechas() {
+            // Borrar localStorage relacionado con fechas y sorteo
+            const keysABorrar = [
+                'rifaplus_fecha_sorteo',
+                'rifaplus_timestamp_sorteo',
+                'rifaplus_fecha_cierre',
+                'rifaplus_countdown_cache',
+                'rifaplus_sorteo_fecha',
+                'countdown_lastDate',
+                'sorteo_fecha_backup',
+                'rifaplus_config_actual',
+                'rifaplus_config_actual_v2',
+                'sorteo-config',
+                'rifaplus_sorteo_activo',
+                'rifaplus_fecha',
+                'rifaplus_timestamp'
+            ];
+            
+            keysABorrar.forEach(key => {
+                if (localStorage.getItem(key)) {
+                    console.warn(`🧹 Limpiando localStorage: ${key}`);
+                    localStorage.removeItem(key);
+                }
+            });
+            
+            // Forzar recarga de config invalidando caché
+            console.log('✅ localStorage limpiado completamente');
+        })();
+    </script>
+    <script src="js/config.js?v=20251228.15"></script>
+    <script src="js/theme-dynamic.js"></script>
+    <script src="js/admin-layout.js?v=20251228.15"></script>
+    <script>
+        // Aplicar estado de visibilidad de ingresos ANTES de renderizar el DOM
+        // Esto evita el "flash" donde se muestra la cantidad antes de ocultarse
+        (function() {
+            if (localStorage.getItem('rifaplus_revenue_hidden') === 'true') {
+                document.documentElement.setAttribute('data-revenue-hidden', 'true');
+            }
+        })();
+    </script>
+    <style>
+        /* ========================================================== */
+        /* ARCHIVO: admin-dashboard.html - ESTILOS GLOBALES           */
+        /* DESCRIPCIÓN: Panel administrativo con login, stats y        */
+        /*              visualización de órdenes y gráficas            */
+        /* ÚLTIMA ACTUALIZACIÓN: 2024-12-01                           */
+        /* ========================================================== */
+
+        /* ========================================================== */
+        /* SECCIÓN 1: VARIABLES GLOBALES Y RESET                      */
+        /* ========================================================== */
+
+        :root {
+            /* Colores Primarios */
+            --color-primario: #1877F2;
+            --color-primario-oscuro: #0A5CCC;
+            --color-primario-claro: #E7F3FF;
+            --color-secundario: #31A24C;
+            --color-acento: #0084FF;
+            
+            /* Estados */
+            --color-exito: #31A24C;
+            --color-peligro: #E4163A;
+            --color-advertencia: #B4740C;
+            
+            /* Texto */
+            --color-texto-oscuro: #0A0E27;
+            --color-texto-normal: #65676B;
+            --color-texto-claro: #8A8D91;
+            
+            /* Fondos */
+            --color-fondo-claro: #F0F2F5;
+            --color-fondo-blanco: #FFFFFF;
+            --color-fondo-oscuro: #E4E6EB;
+            
+            /* Bordes */
+            --color-borde: #CED0D4;
+            --color-divisor: #E5E7EB;
+            
+            /* Sombras */
+            --sombra-pequena: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --sombra-media: 0 2px 4px rgba(0, 0, 0, 0.1);
+            --sombra-grande: 0 4px 12px rgba(0, 0, 0, 0.12);
+            
+            /* Compatibilidad con nomenclatura anterior */
+            --primary: var(--color-primario);
+            --primary-dark: var(--color-primario-oscuro);
+            --primary-light: var(--color-primario-claro);
+            --secondary: var(--color-secundario);
+            --accent: var(--color-acento);
+            --success: var(--color-exito);
+            --danger: var(--color-peligro);
+            --warning: var(--color-advertencia);
+            --text-dark: var(--color-texto-oscuro);
+            --text-light: var(--color-texto-normal);
+            --text-lighter: var(--color-texto-claro);
+            --bg-light: var(--color-fondo-claro);
+            --bg-white: var(--color-fondo-blanco);
+            --bg-dark: var(--color-fondo-oscuro);
+            --border-color: var(--color-borde);
+            --divider: var(--color-divisor);
+            --shadow-sm: var(--sombra-pequena);
+            --shadow-md: var(--sombra-media);
+            --shadow-lg: var(--sombra-grande);
+        }
+
+        /**
+         * Reset global: Eliminamos márgenes y rellenos por defecto
+         */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /**
+         * Estilos base del body
+         */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', 'Ubuntu', sans-serif;
+            background: #F8F9FA;
+            color: var(--color-texto-oscuro);
+            line-height: 1.5;
+            font-size: 13px;
+        }
+
+        /* ========================================================== */
+        /* SECCIÓN 2: FORMULARIO DE LOGIN                             */
+        /* ========================================================== */
+        /* ========================================================== */
+        /* SECCIÓN 2: FORMULARIO DE LOGIN                             */
+        /* ========================================================== */
+
+        /**
+         * Contenedor principal del login
+         * Posicionado fixed cubriendo toda la pantalla con gradiente azul
+         */
+        .login-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background: linear-gradient(135deg, #1877F2 0%, #1563DB 50%, #0A5CCC 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        /**
+         * Caja de login con estilos de card
+         */
+        .login-box {
+            background: var(--color-fondo-blanco);
+            padding: 2rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        /**
+         * Logo en la parte superior del login
+         */
+        .login-logo {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 1rem;
+            border-radius: 0.75rem;
+            overflow: hidden;
+            box-shadow: var(--sombra-media);
+        }
+
+        .login-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /**
+         * Título principal del formulario de login
+         */
+        .login-box h1 {
+            font-size: 1.75rem;
+            margin-bottom: 0.5rem;
+            text-align: center;
+            color: var(--color-primario);
+            font-weight: 700;
+        }
+
+        /**
+         * Subtítulo descriptivo del login
+         */
+        .login-subtitle {
+            text-align: center;
+            color: var(--color-texto-normal);
+            margin-bottom: 2rem;
+            font-size: 0.95rem;
+        }
+
+        /**
+         * Grupo de formulario: contenedor para label e input
+         */
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        /**
+         * Inputs del formulario con estados y transiciones
+         */
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--color-borde);
+            border-radius: 0.5rem;
+            font-size: 0.9375rem;
+            transition: all 0.2s ease;
+            background: var(--color-fondo-blanco);
+        }
+
+        /**
+         * Estado focus del input con sombra azul
+         */
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--color-primario);
+            box-shadow: 0 0 0 3px rgba(10, 102, 194, 0.1);
+            background: #FAFBFF;
+        }
+
+        /**
+         * Botón genérico de envío de formulario
+         */
+        .btn {
+            width: 100%;
+            padding: 0.75rem;
+            background: #1877F2;
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.9375rem;
+            box-shadow: 0 2px 4px rgba(24, 119, 242, 0.2);
+        }
+
+        /**
+         * Estado hover del botón
+         */
+        .btn:hover:not(:disabled) {
+            background: #0A5CCC;
+            box-shadow: 0 4px 8px rgba(24, 119, 242, 0.3);
+        }
+
+        /**
+         * Estado deshabilitado del botón
+         */
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /**
+         * Mensaje de error con estilos de alerta
+         */
+        .error {
+            color: var(--color-peligro);
+            font-size: 0.9rem;
+            margin-top: 1rem;
+            padding: 0.75rem;
+            background: rgba(239, 68, 68, 0.1);
+            border-radius: 0.5rem;
+            display: none;
+            border-left: 4px solid var(--color-peligro);
+        }
+
+        /**
+         * Clase para mostrar el mensaje de error
+         */
+        .error.show {
+            display: block;
+        }
+
+        /* ========================================================== */
+        /* SECCIÓN 3: DASHBOARD Y CONTENEDOR PRINCIPAL                */
+        /* ========================================================== */
+
+        /**
+         * Contenedor del dashboard como flex layout
+         */
+        .dashboard {
+            display: none;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /**
+         * Dashboard visible cuando está autenticado
+         */
+        .dashboard.logged-in {
+            display: flex;
+        }
+
+        /* ========================================================== */
+        /* SECCIÓN 4: HEADER Y NAVEGACIÓN SUPERIOR                    */
+        /* ========================================================== */
+        
+        /* Estilos del header antiguo deshabilitados - usar admin-layout.css */
+        .header,
+        .top-nav,
+        .nav-content,
+        .menu-toggle {
+            display: none !important;
+        }
+
+        /**
+         * Contenedor principal adaptado al nuevo layout
+         */
+        .header {
+            background: var(--color-fondo-blanco);
+            border-bottom: 1px solid var(--color-borde);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        /**
+         * Contenido centrado del header
+         */
+        .header-content {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        /**
+         * Sección izquierda: logo y título
+         */
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        /**
+         * Contenedor del logo con esquinas redondeadas
+         */
+        .logo-container {
+            width: 80px;
+            height: 80px;
+            border-radius: 0.75rem;
+            overflow: hidden;
+            box-shadow: var(--sombra-media);
+            flex-shrink: 0;
+        }
+
+        .logo-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /**
+         * Contenedor del título y subtítulo
+         */
+        .header-title {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .header-title-main {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--color-texto-oscuro);
+        }
+
+        .header-title-sub {
+            font-size: 0.9rem;
+            font-weight: 400;
+            color: var(--color-texto-normal);
+        }
+
+        /**
+         * Sección derecha: botón de logout
+         */
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        /**
+         * Botón de logout con estilos de acción
+         */
+        .logout-btn {
+            padding: 0.6rem 1.2rem;
+            background: #1877F2;
+            color: white;
+            border: none;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 600;
+            font-size: 0.9375rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 2px 4px rgba(24, 119, 242, 0.15);
+        }
+
+        /**
+         * Estado hover del botón de logout
+         */
+        .logout-btn:hover {
+            background: #0A5CCC;
+            box-shadow: 0 4px 8px rgba(24, 119, 242, 0.25);
+        }
+
+        /* ========================================================== */
+        /* SECCIÓN 5: BARRA DE NAVEGACIÓN SUPERIOR                    */
+        /* ========================================================== */
+        /* ========================================================== */
+        /* SECCIÓN 5: BARRA DE NAVEGACIÓN SUPERIOR                    */
+        /* ========================================================== */
+
+        /**
+         * Barra de navegación sticky con botones de secciones
+         */
+        .top-nav {
+            background: var(--color-fondo-blanco);
+            border-bottom: 1px solid var(--color-borde);
+            padding: 0;
+            position: sticky;
+            top: 0;
+            z-index: 99;
+        }
+
+        /**
+         * Contenedor de navegación con flexbox
+         */
+        .nav-content {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 1rem 2rem;
+            list-style: none;
+            flex-wrap: wrap;
+        }
+
+        /**
+         * Botón de menu toggle para responsive (hamburguesa)
+         */
+        .menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.5rem;
+            color: var(--color-primario);
+            padding: 0.5rem 1rem;
+            transition: all 0.3s ease;
+        }
+
+        /**
+         * Estado hover del botón de menu
+         */
+        .menu-toggle:hover {
+            color: var(--color-primario-oscuro);
+        }
+
+        /**
+         * Botones de navegación individual
+         */
+        .nav-btn {
+            padding: 0.6rem 1.25rem;
+            background: var(--color-fondo-blanco);
+            border: 1px solid var(--color-borde);
+            border-radius: 0.375rem;
+            color: var(--color-texto-oscuro);
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9375rem;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+
+        /**
+         * Estado hover del botón de navegación
+         */
+        .nav-btn:hover {
+            border-color: #1877F2;
+            color: #1877F2;
+            background: #F0F6FF;
+            box-shadow: 0 2px 4px rgba(24, 119, 242, 0.1);
+        }
+
+        /**
+         * Botón de navegación activo
+         */
+        .nav-btn.active {
+            background: #1877F2;
+            color: white;
+            border-color: #1877F2;
+            box-shadow: 0 2px 6px rgba(24, 119, 242, 0.3);
+        }
+
+        /**
+         * Media query para dispositivos tablets/móviles
+         */
+        @media (max-width: 1100px) {
+            .menu-toggle {
+                display: block;
+            }
+
+            .nav-content {
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                background: var(--color-fondo-blanco);
+                border-bottom: 2px solid var(--color-borde);
+                flex-direction: column;
+                gap: 0;
+                max-height: 0;
+                overflow: hidden;
+                transition: max-height 0.3s ease;
+                padding: 0;
+            }
+
+            /**
+             * Nav content visible en mobile
+             */
+            .nav-content.active {
+                max-height: 400px;
+                padding: 1rem 0;
+            }
+
+            /**
+             * Botones de navegación en mobile
+             */
+            .nav-btn {
+                border-bottom: 1px solid var(--color-borde);
+                border-left: 4px solid transparent;
+                border-radius: 0;
+                padding: 1rem 1.75rem;
+                width: 100%;
+                border: none;
+            }
+
+            .nav-btn:hover {
+                border-left-color: var(--color-primario);
+                transform: none;
+            }
+        }
+
+        /* ========================================================== */
+        /* SECCIÓN 6: CONTENEDOR PRINCIPAL DE CONTENIDOS              */
+        /* ========================================================== */
+
+        /**
+         * Contenedor con ancho máximo centrado
+         */
+        .container {
+            max-width: 100%;
+            margin: 0;
+            padding: 2rem;
+            flex: 1;
+            width: 100%;
+        }
+        
+        /* Usar el ID del nuevo main content */
+        #adminMain {
+            width: 100%;
+            padding-top: 5rem;
+            padding-right: 2rem;
+            padding-bottom: 2rem;
+            padding-left: 2rem;
+        }
+        
+        /* Hacer que el dashboard sea flex */
+        .dashboard {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        
+        /* Hacer que el contenedor de main sea flex */
+        .dashboard > .admin-main {
+            flex: 1;
+        }
+
+        /* ========================================================== */
+        /* SECCIÓN 7: GRID DE ESTADÍSTICAS                            */
+        /* ========================================================== */
+
+        /**
+         * Grid responsive de 3 columnas para tarjetas de estadísticas
+         */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        /**
+         * Tarjeta individual de estadística
+         */
+        .stat-card {
+            background: linear-gradient(135deg, #FFFFFF 0%, #F8F9FA 100%);
+            padding: 1.25rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            border: 1px solid var(--color-borde);
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /**
+         * Línea superior de color en la tarjeta (indicador visual)
+         */
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #1877F2 0%, #0084FF 100%);
+        }
+
+        /**
+         * Estado hover de la tarjeta
+         */
+        .stat-card:hover {
+            box-shadow: 0 2px 8px rgba(24, 119, 242, 0.12);
+            border-color: #D0E3F5;
+            transform: translateY(-2px);
+        }
+
+        /**
+         * Variante de tarjeta exitosa (verde)
+         */
+        .stat-card.success::before {
+            background: linear-gradient(90deg, #31A24C 0%, #2a8a3d 100%);
+        }
+
+        /**
+         * Variante de tarjeta de advertencia (naranja)
+         */
+        .stat-card.warning::before {
+            background: linear-gradient(90deg, #B4740C 0%, #8d5608 100%);
+        }
+
+        /**
+         * Variante de tarjeta de peligro (rojo)
+         */
+        .stat-card.danger::before {
+            background: linear-gradient(90deg, #E4163A 0%, #c41230 100%);
+        }
+
+        /**
+         * Etiqueta de la estadística (texto pequeño superior)
+         */
+        .stat-label {
+            font-size: 0.8125rem;
+            color: var(--color-texto-claro);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /**
+         * Icono de la estadística
+         */
+        .stat-icon {
+            font-size: 1.25rem;
+            width: 24px;
+        }
+
+        /**
+         * Valor grande de la estadística
+         */
+        .stat-value {
+            font-size: 2.25rem;
+            font-weight: 700;
+            color: var(--color-texto-oscuro);
+            margin-bottom: 0.5rem;
+        }
+
+        /**
+         * Variante de valor en rojo (para estados de peligro)
+         */
+        .stat-value.danger {
+            color: var(--color-peligro);
+        }
+
+        /**
+         * Texto descriptivo pequeño debajo del valor
+         */
+        .stat-subtext {
+            font-size: 0.85rem;
+            color: var(--color-texto-normal);
+        }
+
+        /**
+         * Botón para toggle de visibilidad en tarjetas
+         */
+        .stat-toggle-visibility {
+            background: none;
+            border: none;
+            color: var(--color-texto-claro);
+            font-size: 0.9rem;
+            cursor: pointer;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            transition: all 0.2s ease;
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .stat-toggle-visibility:hover {
+            background: var(--color-fondo-claro);
+            color: var(--color-primario);
+        }
+
+        /**
+         * Estado cuando está oculto (ojo tachado)
+         */
+        .stat-toggle-visibility.hidden i::before {
+            content: '\f070';
+        }
+
+        .stat-value.hidden {
+            color: transparent;
+            background: linear-gradient(90deg, #E4E6EB 0%, #E4E6EB 100%);
+            border-radius: 0.25rem;
+            min-height: 2.5rem;
+            display: flex;
+            align-items: center;
+            padding: 0 0.5rem;
+        }
+
+        /**
+         * Aplicar estado oculto de ingresos si está guardado en localStorage
+         * Usa atributo data del documento root para evitar flash de contenido
+         */
+        html[data-revenue-hidden="true"] #statRevenue {
+            color: transparent !important;
+            background: linear-gradient(90deg, #E4E6EB 0%, #E4E6EB 100%) !important;
+            border-radius: 0.25rem;
+            min-height: 2.5rem;
+            display: flex;
+            align-items: center;
+            padding: 0 0.5rem;
+        }
+
+        html[data-revenue-hidden="true"] #toggleRevenueVisibility {
+            color: var(--color-primario);
+        }
+
+        html[data-revenue-hidden="true"] #toggleRevenueVisibility i::before {
+            content: '\f070';
+        }
+
+        .countdown-progress-section {
+            background: linear-gradient(135deg, #FFFFFF 0%, #F8F9FA 100%);
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            margin-bottom: 1.5rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            align-items: center;
+            border: 1px solid var(--border-color);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .progress-title {
+            font-size: 0.9375rem;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .progress-percentage {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #0A66C2 0%, #0084FF 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .progress-bar-wrapper {
+            height: 16px;
+            background: #E7F0FA;
+            border-radius: 999px;
+            overflow: hidden;
+            width: 100%;
+            border: 1px solid #D0E3F5;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #1877F2 0%, #0084FF 100%);
+            border-radius: 999px;
+            transition: width 0.4s ease;
+            box-shadow: 0 2px 6px rgba(24, 119, 242, 0.4);
+        }
+
+        .countdown-compact {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1.5rem;
+            min-width: unset;
+            width: 100%;
+            padding: 1.5rem;
+            background: linear-gradient(135deg, #F0F6FF 0%, #F8FAFC 100%);
+            border-radius: 0.5rem;
+            border: 1px solid #D0E3F5;
+        }
+
+        .countdown-title {
+            font-size: 0.8125rem;
+            color: var(--text-lighter);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            font-weight: 700;
+        }
+
+        .countdown-display-compact {
+            display: flex;
+            gap: 0.75rem;
+            justify-content: center;
+        }
+
+        .countdown-unit-compact {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.35rem;
+            background: var(--bg-white);
+            padding: 0.875rem 0.625rem;
+            border-radius: 0.375rem;
+            min-width: 65px;
+            border: 1px solid #D0E3F5;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 3px rgba(24, 119, 242, 0.08);
+        }
+
+        .countdown-unit-compact:hover {
+            border-color: #1877F2;
+            box-shadow: 0 3px 8px rgba(24, 119, 242, 0.15);
+            transform: translateY(-2px);
+            background: #F0F6FF;
+        }
+
+        .countdown-value-compact {
+            font-size: 1.375rem;
+            font-weight: 700;
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #1877F2 0%, #0084FF 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .countdown-label-compact {
+            font-size: 0.6875rem;
+            color: var(--text-lighter);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .countdown-date {
+            font-size: 0.8125rem;
+            color: var(--text-lighter);
+            text-align: center;
+            margin-top: 0.5rem;
+            font-weight: 500;
+        }
+
+        /* ===== ORDERS SECTION ===== */
+        .orders-section {
+            background: linear-gradient(135deg, #FFFFFF 0%, #F8F9FA 100%);
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1rem;
+        }
+
+        .section-title {
+            font-size: 1rem;
+            font-weight: 700;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-dark);
+        }
+
+        .pending-count {
+            background: rgba(228, 22, 58, 0.1);
+            color: var(--danger);
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            font-weight: 600;
+            font-size: 0.8125rem;
+        }
+
+        .orders-container {
+            overflow-x: auto;
+            border-radius: 0.375rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .orders-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px;
+        }
+
+        .orders-table thead {
+            background: var(--bg-light);
+        }
+
+        .orders-table th {
+            padding: 0.75rem;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.8125rem;
+            color: var(--text-light);
+        }
+
+        .orders-table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--divider);
+            font-size: 0.8125rem;
+        }
+
+        .orders-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .orders-table tbody tr:hover {
+            background: var(--bg-light);
+        }
+
+        .order-id {
+            color: var(--primary);
+            font-weight: 600;
+            font-family: 'Courier New', monospace;
+        }
+
+        .order-status {
+            display: inline-block;
+            padding: 0.35rem 0.75rem;
+            border-radius: 0.375rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .status-pendiente {
+            background: rgba(240, 202, 69, 0.15);
+            color: #B8860B;
+        }
+
+        .status-confirmada {
+            background: rgba(49, 162, 76, 0.15);
+            color: #065F46;
+        }
+
+        .status-rechazada {
+            background: rgba(228, 22, 58, 0.15);
+            color: var(--danger);
+        }
+
+        .order-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .btn-action {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.375rem;
+            font-size: 0.8125rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .btn-confirm {
+            background: #31A24C;
+            color: white;
+            box-shadow: 0 1px 2px rgba(49, 162, 76, 0.2);
+        }
+
+        .btn-confirm:hover {
+            background: #2a8a3d;
+            box-shadow: 0 2px 4px rgba(49, 162, 76, 0.3);
+        }
+
+        .btn-reject {
+            background: #E4163A;
+            color: white;
+            box-shadow: 0 1px 2px rgba(228, 22, 58, 0.2);
+        }
+
+        .btn-reject:hover {
+            background: #c41230;
+            box-shadow: 0 2px 4px rgba(228, 22, 58, 0.3);
+        }
+
+        .orders-empty {
+            text-align: center;
+            color: var(--text-light);
+            padding: 3rem;
+            font-size: 0.95rem;
+        }
+
+        /* ========================================================== */
+        /* SECCIÓN 10: GRÁFICAS Y VISUALIZACIÓN DE DATOS              */
+        /* ========================================================== */
+
+        /**
+         * Contenedor de gráficas
+         */
+        .charts-section {
+            background: var(--bg-white);
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 2rem;
+        }
+
+        .charts-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .charts-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 0.5rem 1rem;
+            border: 2px solid var(--border-color);
+            background: white;
+            color: var(--text-dark);
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .filter-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .filter-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2rem;
+        }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 400px;
+            background: linear-gradient(135deg, #FFFFFF 0%, #F8F9FA 100%);
+            border-radius: 0.5rem;
+            padding: 1.25rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            border: 1px solid var(--border-color);
+        }
+
+        .chart-title {
+            font-size: 0.9375rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 1rem;
+            text-align: center;
+            letter-spacing: 0.02em;
+        }
+
+        .chart-container canvas {
+            max-width: 100%;
+            max-height: calc(100% - 50px);
+        }
+
+        /* ========================================================== */
+        /* SECCIÓN 11: ESTILOS RESPONSIVE PARA DISPOSITIVOS          */
+        /* ========================================================== */
+
+        /**
+        /**
+         * Media query para tablets (max-width: 1024px)
+         */
+        @media (max-width: 1024px) {
+            #adminMain {
+                padding-top: 5rem;
+            }
+
+            .countdown-progress-section {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+                padding: 2rem;
+            }
+
+            .countdown-compact {
+                order: -1;
+                min-width: 100%;
+            }
+
+            .countdown-display-compact {
+                justify-content: center;
+            }
+        }
+
+        @media (max-width: 850px) {
+            #adminMain {
+                padding-top: 5rem;
+            }
+
+            .countdown-progress-section {
+                padding: 1.5rem;
+                gap: 1.5rem;
+            }
+
+            .progress-title {
+                font-size: 1rem;
+            }
+
+            .progress-percentage {
+                font-size: 1.5rem;
+            }
+
+            .progress-bar-wrapper {
+                height: 14px;
+            }
+
+            .countdown-compact {
+                padding: 1rem;
+                gap: 1rem;
+            }
+
+            .countdown-display-compact {
+                gap: 0.4rem;
+            }
+
+            .countdown-unit-compact {
+                min-width: 60px;
+                padding: 0.75rem 0.5rem;
+            }
+
+            .countdown-value-compact {
+                font-size: 1.4rem;
+            }
+
+            .countdown-label-compact {
+                font-size: 0.6rem;
+            }
+
+            .header-content {
+                padding: 1rem;
+            }
+
+            .logo-container {
+                width: 50px;
+                height: 50px;
+            }
+
+            .header-title-main {
+                font-size: 1.1rem;
+            }
+
+            .header-title-sub {
+                font-size: 0.8rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1rem;
+                margin-bottom: 1.5rem;
+            }
+
+            .stat-card {
+                padding: 1rem;
+                font-size: 0.9rem;
+            }
+
+            .stat-value {
+                font-size: 1.75rem;
+            }
+
+            .container {
+                padding: 1rem;
+            }
+
+            .countdown-progress-section,
+            .orders-section,
+            .charts-section {
+                padding: 1.5rem;
+            }
+
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .chart-container {
+                height: 350px;
+            }
+
+            .section-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1rem;
+                margin-bottom: 1.5rem;
+            }
+
+            .stat-card {
+                padding: 1rem;
+            }
+
+            .stat-label {
+                font-size: 0.8rem;
+            }
+
+            .stat-value {
+                font-size: 1.5rem;
+            }
+
+            .stat-subtext {
+                font-size: 0.75rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            #adminMain {
+                padding-top: 5rem;
+            }
+
+            .header-content {
+                padding: 0.75rem;
+            }
+
+            .logout-btn {
+                padding: 0.5rem 0.75rem;
+                font-size: 0.75rem;
+            }
+
+            .countdown-display-compact {
+                gap: 0.5rem;
+            }
+
+            .countdown-unit-compact {
+                min-width: 50px;
+                padding: 0.5rem 0.25rem;
+            }
+
+            .countdown-value-compact {
+                font-size: 1.2rem;
+            }
+
+            .login-box {
+                padding: 1.5rem;
+                margin: 1rem;
+            }
+
+            .order-actions {
+                flex-direction: column;
+            }
+
+            .btn-action {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- LOGIN SCREEN -->
+    <div id="loginScreen" class="login-container">
+        <div class="login-box">
+            <div class="login-logo">
+                <img src="images/logo.png" alt="Logo" id="loginLogo" width="100" height="50">
+            </div>
+            <h1 id="loginTitle">Panel Admin</h1>
+            <p class="login-subtitle">Acceso para administradores</p>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="username">Usuario</label>
+                    <input type="text" id="username" required placeholder="Ingresa tu usuario">
+                </div>
+                <div class="form-group">
+                    <label for="password">Contraseña</label>
+                    <input type="password" id="password" required placeholder="Ingresa tu contraseña">
+                </div>
+                <button type="submit" class="btn" id="loginBtn">Acceder al Panel</button>
+                <div class="error" id="loginError"></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div id="dashboard" class="dashboard">
+        <!-- ADMIN HEADER -->
+        <div class="admin-header">
+            <div class="admin-header-content">
+                <div class="admin-header-left">
+                    <div class="admin-logo-container">
+                        <img src="images/logo.png" alt="Logo" id="dashboardLogo">
+                    </div>
+                    <div class="admin-header-title">
+                        <div class="admin-header-title-main">Panel de Administración</div>
+                        <div class="admin-header-title-sub">SORTEOS YEPE</div>
+                    </div>
+                </div>
+                <div class="admin-header-right">
+                    <button class="admin-logout-btn" id="logoutBtn">
+                        <i class="fas fa-sign-out-alt"></i> <span>Cerrar Sesión</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ADMIN SIDEBAR -->
+        <aside class="admin-sidebar" id="adminSidebar">
+            <div class="admin-sidebar-content">
+                <div class="admin-sidebar-section">
+                    <div class="admin-sidebar-section-title">Navegación</div>
+                    <a href="admin-dashboard.html" class="admin-nav-btn" id="navDashboard">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="admin-ordenes.html" class="admin-nav-btn" id="navOrdenes">
+                        <i class="fas fa-clipboard-list"></i>
+                        <span>Órdenes</span>
+                    </a>
+                    <a href="admin-boletos.html" class="admin-nav-btn" id="navBoletos">
+                        <i class="fas fa-ticket-alt"></i>
+                        <span>Boletos</span>
+                    </a>
+                    <a href="admin-ruletazo.html" class="admin-nav-btn" id="navRuletazo">
+                        <i class="fas fa-dharmachakra"></i>
+                        <span>Ruletazo</span>
+                    </a>
+                </div>
+                <div class="admin-sidebar-section">
+                    <div class="admin-sidebar-section-title">Sistema</div>
+                    <a href="admin-configuracion.html" class="admin-nav-btn" id="navConfig">
+                        <i class="fas fa-cog"></i>
+                        <span>Configuración</span>
+                    </a>
+                    <a href="ayuda.html" class="admin-nav-btn" id="navAyuda">
+                        <i class="fas fa-question-circle"></i>
+                        <span>Ayuda</span>
+                    </a>
+                </div>
+            </div>
+        </aside>
+
+        <!-- TOGGLE SIDEBAR BUTTON (MOBILE) -->
+        <button class="admin-sidebar-toggle" id="sidebarToggle">
+            <i class="fas fa-bars"></i>
+        </button>
+
+        <!-- MAIN CONTENT -->
+        <div class="admin-main" id="adminMain">
+            <!-- STATS GRID - ORDEN FINAL ESPECIFICADO -->
+            <div class="stats-grid">
+                <div class="stat-card success">
+                    <div class="stat-label">
+                        <i class="fas fa-ticket-alt stat-icon"></i>
+                        Boletos Disponibles
+                    </div>
+                    <div class="stat-value" id="statAvailable">0</div>
+                    <div class="stat-subtext">De <span id="totalTickets">500</span> boletos</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-label">
+                        <i class="fas fa-check-circle stat-icon"></i>
+                        Boletos Vendidos
+                    </div>
+                    <div class="stat-value" id="statSold">0</div>
+                    <div class="stat-subtext">Confirmados</div>
+                </div>
+
+                <div class="stat-card warning">
+                    <div class="stat-label">
+                        <i class="fas fa-shopping-cart stat-icon"></i>
+                        Boletos Apartados
+                    </div>
+                    <div class="stat-value" id="statReserved">0</div>
+                    <div class="stat-subtext">En este momento</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-label">
+                        <i class="fas fa-dollar-sign stat-icon"></i>
+                        Ingresos Confirmados
+                        <button class="stat-toggle-visibility" id="toggleRevenueVisibility" title="Mostrar/Ocultar">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                    <div class="stat-value" id="statRevenue">$0</div>
+                    <div class="stat-subtext">Pagos verificados</div>
+                </div>
+
+                <div class="stat-card danger">
+                    <div class="stat-label">
+                        <i class="fas fa-clock stat-icon"></i>
+                        Órdenes Pendientes
+                    </div>
+                    <div class="stat-value" id="statPending">0</div>
+                    <div class="stat-subtext">Esperando confirmación</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-label">
+                        <i class="fas fa-clipboard-list stat-icon"></i>
+                        Total de Órdenes
+                    </div>
+                    <div class="stat-value" id="statTotalOrders">0</div>
+                    <div class="stat-subtext">Todas las órdenes</div>
+                </div>
+            </div>
+
+            <!-- COUNTDOWN & PROGRESS SECTION - UNIFICADO -->
+            <div class="countdown-progress-section">
+                <div class="progress-container">
+                    <div class="progress-header">
+                        <div class="progress-title">Progreso de Ventas</div>
+                        <div class="progress-percentage" id="progressPercentage">0%</div>
+                    </div>
+                    <div class="progress-bar-wrapper">
+                        <div class="progress-bar" id="progressBar" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div class="countdown-compact">
+                    <div class="countdown-title">⏰ Tiempo Restante</div>
+                    <div class="countdown-display-compact">
+                        <div class="countdown-unit-compact">
+                            <div class="countdown-value-compact" id="countdownDays">00</div>
+                            <div class="countdown-label-compact">Días</div>
+                        </div>
+                        <div class="countdown-unit-compact">
+                            <div class="countdown-value-compact" id="countdownHours">00</div>
+                            <div class="countdown-label-compact">Horas</div>
+                        </div>
+                        <div class="countdown-unit-compact">
+                            <div class="countdown-value-compact" id="countdownMinutes">00</div>
+                            <div class="countdown-label-compact">Min</div>
+                        </div>
+                        <div class="countdown-unit-compact">
+                            <div class="countdown-value-compact" id="countdownSeconds">00</div>
+                            <div class="countdown-label-compact">Seg</div>
+                        </div>
+                    </div>
+                    <div class="countdown-date" id="countdownDate">Cargando fecha del sorteo...</div>
+                </div>
+            </div>
+
+            <!-- ORDERS SECTION - OCULTO POR DEFECTO (Ver en nav) -->
+            <div class="orders-section" style="display: none;">
+                <div class="section-header">
+                    <div class="section-title">
+                        <i class="fas fa-clipboard-list"></i>
+                        Órdenes Pendientes
+                        <span class="pending-count" id="pendingCount">0</span>
+                    </div>
+                </div>
+                <div class="orders-container" id="ordersContainer">
+                    <div class="orders-empty">Cargando órdenes...</div>
+                </div>
+            </div>
+
+            <!-- CHARTS SECTION -->
+            <div class="charts-section">
+                <div class="charts-header">
+                    <div class="charts-title">
+                        <i class="fas fa-chart-pie"></i>
+                        Análisis de Datos
+                    </div>
+                </div>
+                <div class="charts-grid">
+                    <div class="chart-container">
+                        <h3 class="chart-title">Estado de Boletos</h3>
+                        <canvas id="distributionChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3 class="chart-title">Tendencia de Ventas (7 días)</h3>
+                        <canvas id="trendChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/calculo-precios.js?v=20251230.1"></script>
+    <script src="js/carrito-global.js"></script>
+    <script src="js/main.js"></script>
+    <script>
+        /* ============================================================ */
+        /* ARCHIVO: admin-dashboard.html - SCRIPT PRINCIPAL             */
+        /* DESCRIPCIÓN: Lógica del panel administrativo                 */
+        /* ÚLTIMA ACTUALIZACIÓN: 2024-12-01                            */
+        /* ============================================================ */
+
+        /* ============================================================ */
+        /* SECCIÓN 1: CONFIGURACIÓN Y VARIABLES GLOBALES               */
+        /* ============================================================ */
+
+        // Obtener URL de API desde config si está disponible, sino usar default
+        const URL_API = (window.rifaplusConfig && window.rifaplusConfig.backend) 
+            ? window.rifaplusConfig.backend.apiBase 
+            : 'http://127.0.0.1:5001';
+        
+        // 🔐 FUNCIÓN CENTRAL: Obtener token dinámicamente del localStorage
+        // Esto asegura que siempre se use el token más actualizado
+        function obtenerTokenActual() {
+            return localStorage.getItem('rifaplus_token') || 
+                   localStorage.getItem('rifaplus_admin_token') ||
+                   localStorage.getItem('admin_token') ||
+                   localStorage.getItem('token') ||
+                   null;
+        }
+        
+        let tokenAutenticacion = null; // Variable para compatibilidad, pero usar obtenerTokenActual()
+        let intervaloConteoRegresivo = null;
+        let intervaloEstadisticas = null;
+        let graficoDistribucion = null;
+        let graficoTendencia = null;
+        let rangoActual = '7';
+
+        /**
+         * Inicializar configuración global del dashboard
+         * Establece el nombre y logo de la organización desde config
+         */
+        function inicializarConfiguracion() {
+            const config = window.rifaplusConfig || {};
+            const nombreCliente = config.cliente?.nombre || 'SORTEOS YEPE';
+            const logoCliente = config.cliente?.logo || 'images/logo.png';
+
+            document.getElementById('loginTitle').textContent = `${nombreCliente} - Admin`;
+            document.getElementById('loginLogo').src = logoCliente;
+            document.getElementById('dashboardLogo').src = logoCliente;
+            const headerTitleSub = document.querySelector('.admin-header-title-sub');
+            if (headerTitleSub) {
+                headerTitleSub.textContent = nombreCliente;
+            }
+        }
+
+        /* ============================================================ */
+        /* SECCIÓN 2: AUTENTICACIÓN Y GESTIÓN DE SESIÓN                */
+        /* ============================================================ */
+
+        /**
+         * Manejar el envío del formulario de login
+         * Validar credenciales con el servidor y crear sesión
+         */
+        document.getElementById('loginForm').addEventListener('submit', async (evento) => {
+            evento.preventDefault();
+            const usuarioInput = document.getElementById('username').value;
+            const contrasenaInput = document.getElementById('password').value;
+            const botonLogin = document.getElementById('loginBtn');
+            const mensajeErrorLogin = document.getElementById('loginError');
+
+            botonLogin.disabled = true;
+            mensajeErrorLogin.classList.remove('show');
+
+            try {
+                const respuestaLogin = await fetch(`${URL_API}/api/admin/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: usuarioInput, password: contrasenaInput })
+                });
+
+                const datosLogin = await respuestaLogin.json();
+                if (!datosLogin.success) throw new Error(datosLogin.message || 'Error al autenticar');
+
+                tokenAutenticacion = datosLogin.token;
+                localStorage.setItem('rifaplus_token', tokenAutenticacion);
+                localStorage.setItem('rifaplus_admin_token', tokenAutenticacion);
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('dashboard').classList.add('logged-in');
+
+                // Si hay un redirect pendiente, ir a esa página
+                const redirectPendiente = localStorage.getItem('redirectAfterLogin');
+                if (redirectPendiente) {
+                    localStorage.removeItem('redirectAfterLogin');
+                    window.location.href = redirectPendiente;
+                    return;
+                }
+
+                inicializarDashboard();
+            } catch (error) {
+                mensajeErrorLogin.textContent = error.message;
+                mensajeErrorLogin.classList.add('show');
+                botonLogin.disabled = false;
+            }
+        });
+
+        /**
+         * Cerrar sesión del usuario actual
+         * Limpiar tokens, detener intervalos y destruir gráficas
+         */
+        // El logout ahora se maneja en admin-layout.js, pero agregamos lógica adicional del dashboard
+        const originalLogout = ADMIN_LAYOUT.logout.bind(ADMIN_LAYOUT);
+        ADMIN_LAYOUT.logout = function() {
+            // Limpiar recursos del dashboard
+            tokenAutenticacion = null;
+            if (intervaloConteoRegresivo) clearInterval(intervaloConteoRegresivo);
+            if (intervaloEstadisticas) clearInterval(intervaloEstadisticas);
+            if (window.graficoDistribucion) window.graficoDistribucion.destroy();
+            if (window.graficoTendencia) window.graficoTendencia.destroy();
+            
+            // Llamar al logout original
+            originalLogout();
+        };
+
+        /* ============================================================ */
+        /* SECCIÓN 3: CUENTA REGRESIVA HACIA EL SORTEO                */
+        /* ============================================================ */
+
+        /**
+         * Iniciar la cuenta regresiva que muestra el tiempo hasta el sorteo
+         * Actualiza cada segundo con el tiempo restante
+         * NOTA: Usa funciones centralizadas de config.js para obtener la fecha
+         */
+        function iniciarCuentaRegresiva() {
+            // Verificar que las funciones centralizadas existan
+            if (!window.rifaplusConfig?.obtenerTimestampSorteo || !window.rifaplusConfig?.obtenerFechaSorteoFormato) {
+                console.error('❌ [AdminCountdown] Funciones centralizadas de config no disponibles');
+                document.getElementById('countdownDate').textContent = 'Error: config.js no cargado';
+                return;
+            }
+
+            // Validar la fecha
+            const validacion = window.rifaplusConfig.validarFechaSorteo?.();
+            if (!validacion || !validacion.valida) {
+                console.error('❌ [AdminCountdown] Fecha del sorteo inválida:', validacion?.mensaje);
+                document.getElementById('countdownDate').textContent = 'Fecha no configurada';
+                return;
+            }
+
+            console.log('✓ [AdminCountdown] Fecha validada:', window.rifaplusConfig.obtenerFechaSorteoFormato());
+
+            /**
+             * Actualizar cada segundo la cuenta regresiva
+             * Obtiene el timestamp dinámicamente cada vez
+             */
+            function actualizarCuentaRegresiva() {
+                // Obtener timestamp dinámicamente (no cachear)
+                const timestampObjetivo = window.rifaplusConfig.obtenerTimestampSorteo();
+                if (!timestampObjetivo) {
+                    console.error('❌ [AdminCountdown] No se pudo obtener timestamp');
+                    return;
+                }
+
+                const ahora = new Date().getTime();
+                const diferencia = timestampObjetivo - ahora;
+
+                if (diferencia <= 0) {
+                    // El sorteo ya sucedió
+                    document.getElementById('countdownDays').textContent = '🎉';
+                    document.getElementById('countdownHours').textContent = '¡S';
+                    document.getElementById('countdownMinutes').textContent = 'O';
+                    document.getElementById('countdownSeconds').textContent = 'R';
+                    document.getElementById('countdownDate').textContent = 'SORTEO COMPLETADO';
+                    clearInterval(intervaloConteoRegresivo);
+                    return;
+                }
+
+                const dias = Math.floor(diferencia / (1000 * 60 * 60 * 24));
+                const horas = Math.floor((diferencia % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutos = Math.floor((diferencia % (1000 * 60 * 60)) / (1000 * 60));
+                const segundos = Math.floor((diferencia % (1000 * 60)) / 1000);
+
+                document.getElementById('countdownDays').textContent = String(dias).padStart(2, '0');
+                document.getElementById('countdownHours').textContent = String(horas).padStart(2, '0');
+                document.getElementById('countdownMinutes').textContent = String(minutos).padStart(2, '0');
+                document.getElementById('countdownSeconds').textContent = String(segundos).padStart(2, '0');
+                
+                const objetivo = new Date(timestampObjetivo);
+                document.getElementById('countdownDate').textContent = `Sorteo: ${objetivo.toLocaleDateString('es-MX')} a las ${objetivo.toLocaleTimeString('es-MX')}`;
+            }
+
+            actualizarCuentaRegresiva();
+            intervaloConteoRegresivo = setInterval(actualizarCuentaRegresiva, 1000);
+            console.log('✓ [AdminCountdown] Cuenta regresiva inicializada - referencia: config.js rifa.fechaSorteo');
+        }
+
+        /* ============================================================ */
+        /* SECCIÓN 4: CARGA DE ESTADÍSTICAS                             */
+        /* ============================================================ */
+
+        /**
+         * Cargar y mostrar todas las estadísticas del dashboard
+         * Incluye boletos disponibles, vendidos, ingresos confirmados, etc.
+         */
+        async function cargarEstadisticas() {
+            try {
+                const token = obtenerTokenActual();
+                console.log('📊 [cargarEstadisticas] Token obtenido:', !!token, token?.substring(0, 20) + '...');
+                if (!token) {
+                    console.error('⚠️ [cargarEstadisticas] No hay token disponible');
+                    return;
+                }
+                console.log('📡 [cargarEstadisticas] Enviando petición a:', `${URL_API}/api/admin/stats`);
+                const respuestaEstadisticas = await fetch(`${URL_API}/api/admin/stats`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                console.log('📥 [cargarEstadisticas] Status:', respuestaEstadisticas.status);
+                const datosEstadisticas = await respuestaEstadisticas.json();
+                console.log('📥 [cargarEstadisticas] Response:', datosEstadisticas);
+                if (!datosEstadisticas.success) throw new Error(datosEstadisticas.message);
+
+                const estadisticas = datosEstadisticas.data;
+                const config = window.rifaplusConfig || {};
+                const totalBoletosDisponibles = Number(config.rifa?.totalBoletos || 500);
+
+                // Obtener datos reales de boletos
+                let vendidos = 0, apartados = 0;
+                try {
+                    const respBoletosPublicos = await fetch(`${URL_API}/api/public/boletos`);
+                    const datosBoletosPublicos = await respBoletosPublicos.json();
+                    if (datosBoletosPublicos.success) {
+                        vendidos = (datosBoletosPublicos.data?.sold || []).length;
+                        apartados = (datosBoletosPublicos.data?.reserved || []).length;
+                    }
+                } catch (error) {
+                    console.warn('Error cargando boletos reales:', error);
+                }
+
+                const disponibles = Math.max(0, Number(totalBoletosDisponibles) - (Number(vendidos) + Number(apartados)));
+                const porcentaje = totalBoletosDisponibles > 0 ? Number(((Number(vendidos) / Number(totalBoletosDisponibles)) * 100).toFixed(1)) : 0;
+                
+                // Contar órdenes pendientes: incluye 'pendiente' + 'comprobante_recibido'
+                // Forzar conversión a número para evitar concatenación de strings (ej. '1' + '1' -> '11')
+                const cantidadPendiente = Number(estadisticas.por_estado?.find(e => e.estado === 'pendiente')?.cantidad || 0);
+                const cantidadComprobante = Number(estadisticas.por_estado?.find(e => e.estado === 'comprobante_recibido')?.cantidad || 0);
+                const pendientes = cantidadPendiente + cantidadComprobante;
+                
+                // Calcular ingresos confirmados
+                let ingresosConfirmados = parseFloat(estadisticas.ingresos_confirmados || 0);
+                const tokenCalculo = obtenerTokenActual();
+                if ((!estadisticas.ingresos_confirmados || isNaN(ingresosConfirmados)) && tokenCalculo) {
+                    try {
+                        const respOrdenes = await fetch(`${URL_API}/api/ordenes?estado=confirmada&limit=1000`, { 
+                            headers: { 'Authorization': `Bearer ${tokenCalculo}` } 
+                        });
+                        const datosOrdenes = await respOrdenes.json();
+                        if (datosOrdenes && datosOrdenes.success && Array.isArray(datosOrdenes.data)) {
+                            ingresosConfirmados = datosOrdenes.data.reduce((acumulado, orden) => acumulado + (parseFloat(orden.total) || 0), 0);
+                        }
+                    } catch (error) {
+                        ingresosConfirmados = parseFloat(estadisticas.ingresos_totales || 0);
+                    }
+                }
+
+                // Actualizar estadísticas en la interfaz
+                document.getElementById('statAvailable').textContent = Number(disponibles).toLocaleString();
+                document.getElementById('statSold').textContent = Number(vendidos).toLocaleString();
+                document.getElementById('statPending').textContent = Number(pendientes).toLocaleString();
+                document.getElementById('statReserved').textContent = Number(apartados).toLocaleString();
+                document.getElementById('statRevenue').textContent = `$${Number(ingresosConfirmados).toLocaleString('es-MX', { maximumFractionDigits: 0 })}`;
+                document.getElementById('statTotalOrders').textContent = Number(estadisticas.total_ordenes || 0).toLocaleString();
+                document.getElementById('totalTickets').textContent = Number(totalBoletosDisponibles).toLocaleString();
+
+                // Actualizar barra de progreso
+                document.getElementById('progressPercentage').textContent = `${porcentaje}%`;
+                document.getElementById('progressBar').style.width = `${porcentaje}%`;
+            } catch (error) {
+                console.error('Error cargando estadísticas:', error);
+            }
+        }
+
+        /* ============================================================ */
+        /* SECCIÓN 5: CARGA DE GRÁFICAS Y VISUALIZACIONES                */
+        /* ============================================================ */
+
+        /**
+         * Cargar y mostrar las gráficas del dashboard
+         * Incluye distribución de boletos y tendencia de ventas
+         * @param {string} rango - Rango de tiempo para la tendencia
+         */
+        async function cargarGraficas(rango) {
+            try {
+                console.log('📊 Iniciando carga de gráficas...');
+                console.log('📊 ¿Chart.js cargado?:', typeof Chart !== 'undefined');
+                
+                // Esperar a que Chart.js esté disponible
+                let intentos = 0;
+                while (typeof Chart === 'undefined' && intentos < 50) {
+                    await new Promise(resolve => setTimeout(resolve, 50));
+                    intentos++;
+                }
+                
+                if (typeof Chart === 'undefined') {
+                    console.error('❌ Chart.js no pudo cargarse después de múltiples intentos');
+                    console.error('   Verificar CSP: https://cdn.jsdelivr.net debe estar permitido en script-src');
+                    return;
+                }
+
+                console.log('✅ Chart.js disponible, cargando datos...');
+
+                // Obtener datos de boletos reales
+                let vendidos = 0, disponibles = 0, apartados = 0;
+                try {
+                    const respBoletosPublicos = await fetch(`${URL_API}/api/public/boletos`);
+                    const datosBoletosPublicos = await respBoletosPublicos.json();
+                    if (datosBoletosPublicos.success && datosBoletosPublicos.data) {
+                        const config = window.rifaplusConfig || {};
+                        const totalBoletosDisponibles = config.rifa?.totalBoletos || 500;
+                        vendidos = (datosBoletosPublicos.data?.sold || []).length;
+                        apartados = (datosBoletosPublicos.data?.reserved || []).length;
+                        disponibles = Math.max(0, totalBoletosDisponibles - (vendidos + apartados));
+                        console.log('Boletos cargados:', { vendidos, disponibles, apartados });
+                    }
+                } catch (error) {
+                    console.warn('Error cargando boletos:', error);
+                }
+
+                // Generar datos de tendencia (últimos 7 días)
+                let datosGrafica = [];
+                try {
+                    const token = obtenerTokenActual();
+                    if (!token) {
+                        console.error('⚠️ [cargarGraficas] No hay token disponible');
+                        throw new Error('Token no disponible');
+                    }
+                    const respTendencia = await fetch(`${URL_API}/api/admin/sales-stats?range=7`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    const datosTendencia = await respTendencia.json();
+                    if (datosTendencia.success && Array.isArray(datosTendencia.data) && datosTendencia.data.length > 0) {
+                        datosGrafica = datosTendencia.data;
+                        
+                        // Validar datos cargados
+                        const hoy = new Date();
+                        const fechaHoy = hoy.getFullYear() + '-' + 
+                                       String(hoy.getMonth() + 1).padStart(2, '0') + '-' + 
+                                       String(hoy.getDate()).padStart(2, '0');
+                        
+                        console.log('✅ Datos de tendencia cargados desde backend:');
+                        datosGrafica.forEach((item, indice) => {
+                            const esHoy = item.fecha === fechaHoy ? '(HOY)' : '';
+                            console.log(`  [${indice}] ${item.fecha} ${esHoy}: ${item.boletos} boletos`);
+                        });
+                        console.log(`📊 Total: ${datosGrafica.reduce((suma, d) => suma + (d.boletos || 0), 0)} boletos`);
+                    } else {
+                        console.warn('No hay datos válidos del backend');
+                        throw new Error('No hay datos de tendencia');
+                    }
+                } catch (error) {
+                    console.warn('⚠️ Error obteniendo datos del backend:', error);
+                    // Fallback: generar datos simulados para 7 días
+                    const hoy = new Date();
+                    for (let i = 6; i >= 0; i--) {
+                        const fecha = new Date(hoy);
+                        fecha.setDate(fecha.getDate() - i);
+                        const boletosSimulados = 0; // Datos vacíos de prueba
+                        datosGrafica.push({
+                            fecha: fecha.getFullYear() + '-' + 
+                                   String(fecha.getMonth() + 1).padStart(2, '0') + '-' + 
+                                   String(fecha.getDate()).padStart(2, '0'),
+                            boletos: boletosSimulados
+                        });
+                    }
+                    console.log('📊 Usando datos vacíos (sin órdenes confirmadas)');
+                }
+
+                // GRÁFICA 1: DISTRIBUCIÓN DE BOLETOS (Doughnut Chart)
+                _crearGraficoDistribucion(vendidos, disponibles, apartados);
+
+                // GRÁFICA 2: TENDENCIA DE VENTAS 7 DÍAS (Line Chart)
+                _crearGraficoTendencia(datosGrafica);
+
+            } catch (error) {
+                console.error('Error en cargarGraficas:', error);
+            }
+        }
+
+        /**
+         * Crear gráfico de distribución de boletos (tipo Doughnut)
+         * @param {number} vendidos - Cantidad de boletos vendidos
+         * @param {number} disponibles - Cantidad de boletos disponibles  
+         * @param {number} apartados - Cantidad de boletos apartados
+         */
+        function _crearGraficoDistribucion(vendidos, disponibles, apartados) {
+            try {
+                const canvasDistribucion = document.getElementById('distributionChart');
+                if (!canvasDistribucion) {
+                    console.error('Canvas distributionChart no encontrado');
+                    return;
+                }
+                
+                const ctxDistribucion = canvasDistribucion.getContext('2d');
+                
+                // Destruir gráfica anterior si existe
+                if (window.graficoDistribucion && typeof window.graficoDistribucion.destroy === 'function') {
+                    window.graficoDistribucion.destroy();
+                }
+                
+                // Calcular porcentajes
+                const totalBoletos = vendidos + disponibles + apartados;
+                const porcVendidos = totalBoletos > 0 ? ((vendidos / totalBoletos) * 100).toFixed(1) : 0;
+                const porcDisponibles = totalBoletos > 0 ? ((disponibles / totalBoletos) * 100).toFixed(1) : 0;
+                const porcApartados = totalBoletos > 0 ? ((apartados / totalBoletos) * 100).toFixed(1) : 0;
+                
+                window.graficoDistribucion = new Chart(ctxDistribucion, {
+                    type: 'doughnut',
+                    data: {
+                        labels: [
+                            `Vendidos\n${vendidos} (${porcVendidos}%)`,
+                            `Disponibles\n${disponibles} (${porcDisponibles}%)`,
+                            `Apartados\n${apartados} (${porcApartados}%)`
+                        ],
+                        datasets: [{
+                            data: [vendidos, disponibles, apartados],
+                            backgroundColor: [
+                                '#0A66C2',
+                                '#31A24C',
+                                '#F0CA45'
+                            ],
+                            borderColor: '#fff',
+                            borderWidth: 2,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    font: { size: 13, family: 'Inter', weight: '600' },
+                                    padding: 20,
+                                    usePointStyle: true,
+                                    color: '#1F2937',
+                                    generateLabels: function(grafico) {
+                                        const datos = grafico.data;
+                                        return datos.labels.map((etiqueta, i) => ({
+                                            text: etiqueta,
+                                            fillStyle: datos.datasets[0].backgroundColor[i],
+                                            hidden: false,
+                                            index: i,
+                                            pointStyle: 'circle'
+                                        }));
+                                    }
+                                }
+                            },
+                            tooltip: {
+                                enabled: true,
+                                backgroundColor: 'rgba(0,0,0,0.9)',
+                                padding: 12,
+                                titleFont: { size: 13, weight: 'bold', family: 'Inter' },
+                                bodyFont: { size: 12, family: 'Inter' },
+                                callbacks: {
+                                    title: function(contexto) {
+                                        return contexto[0].label.split('\n')[0];
+                                    },
+                                    label: function(contexto) {
+                                        const valor = contexto.parsed;
+                                        const total = contexto.dataset.data.reduce((a, b) => a + b, 0);
+                                        const porcentaje = ((valor / total) * 100).toFixed(1);
+                                        return `Cantidad: ${valor}\nPorcentaje: ${porcentaje}%`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+                console.log('Gráfica de distribución creada exitosamente');
+            } catch (error) {
+                console.error('Error creando gráfica de distribución:', error);
+            }
+        }
+
+        /**
+         * Crear gráfico de tendencia de ventas (tipo Line)
+         * @param {Array} datosGrafica - Array de objetos con fecha y boletos vendidos
+         */
+        function _crearGraficoTendencia(datosGrafica) {
+            try {
+                const etiquetas = datosGrafica.length > 0 ? datosGrafica.map(item => {
+                    const fecha = new Date(item.fecha + 'T00:00:00');
+                    const diasSemana = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+                    const dia = diasSemana[fecha.getDay()] || 'Día';
+                    const num = fecha.getDate();
+                    return `${dia} ${num}`;
+                }) : ['Sin datos'];
+                
+                const boletos = datosGrafica.length > 0 ? datosGrafica.map(item => {
+                    const cantidad = parseInt(item.boletos) || 0;
+                    return cantidad;
+                }) : [0];
+
+                console.log('📈 Datos para gráfica de tendencia:');
+                console.log('  - Etiquetas:', etiquetas);
+                console.log('  - Boletos:', boletos);
+
+                const canvasTendencia = document.getElementById('trendChart');
+                if (!canvasTendencia) {
+                    console.error('Canvas trendChart no encontrado');
+                    return;
+                }
+                
+                const ctxTendencia = canvasTendencia.getContext('2d');
+                
+                // Destruir gráfica anterior si existe
+                if (window.graficoTendencia && typeof window.graficoTendencia.destroy === 'function') {
+                    window.graficoTendencia.destroy();
+                }
+                
+                window.graficoTendencia = new Chart(ctxTendencia, {
+                    type: 'line',
+                    data: {
+                        labels: etiquetas,
+                        datasets: [{
+                            label: 'Boletos Vendidos',
+                            data: boletos,
+                            borderColor: '#0A66C2',
+                            backgroundColor: 'rgba(10, 102, 194, 0.1)',
+                            borderWidth: 3,
+                            tension: 0.4,
+                            fill: true,
+                            pointBackgroundColor: '#0A66C2',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2,
+                            pointRadius: 6,
+                            pointHoverRadius: 8,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: {
+                            mode: 'index',
+                            intersect: false,
+                        },
+                        plugins: {
+                            legend: {
+                                display: true,
+                                labels: { 
+                                    font: { size: 12, family: 'Inter', weight: '600' },
+                                    color: '#1F2937',
+                                    padding: 15
+                                }
+                            },
+                            tooltip: {
+                                enabled: true,
+                                backgroundColor: 'rgba(0,0,0,0.9)',
+                                padding: 14,
+                                titleFont: { size: 13, weight: 'bold', family: 'Inter' },
+                                bodyFont: { size: 12, family: 'Inter' },
+                                displayColors: true,
+                                callbacks: {
+                                    label: function(contexto) {
+                                        return `Vendidos: ${contexto.parsed.y} boletos`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    stepSize: 1,
+                                    font: { family: 'Inter' },
+                                    color: '#6B7280'
+                                },
+                                grid: { 
+                                    color: 'rgba(0,0,0,0.05)',
+                                    drawBorder: true
+                                }
+                            },
+                            x: {
+                                ticks: { 
+                                    font: { family: 'Inter', size: 11 },
+                                    color: '#6B7280'
+                                },
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        }
+                    }
+                });
+                console.log('✅ Gráfica de tendencia creada exitosamente');
+            } catch (error) {
+                console.error('❌ Error creando gráfica de tendencia:', error);
+            }
+        }
+
+        /* ============================================================ */
+        /* SECCIÓN 6: CARGA DE ÓRDENES PENDIENTES                       */
+        /* ============================================================ */
+
+        /**
+         * Cargar todas las órdenes pendientes de confirmación
+         * Muestra tabla con información de órdenes y opciones de acción
+         */
+        async function cargarOrdenesPendientes() {
+            try {
+                const token = obtenerTokenActual();
+                console.log('🔐 [cargarOrdenesPendientes] Token disponible:', !!token);
+                console.log('🔐 [cargarOrdenesPendientes] Longitud del token:', token?.length || 0);
+                console.log('📡 [cargarOrdenesPendientes] URL:', `${URL_API}/api/ordenes?limit=1000`);
+                
+                if (!token) {
+                    console.error('⚠️ [cargarOrdenesPendientes] No hay token disponible');
+                    return;
+                }
+                
+                const respuesta = await fetch(`${URL_API}/api/ordenes?limit=1000`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                console.log('📊 [cargarOrdenesPendientes] Status:', respuesta.status);
+                const datos = await respuesta.json();
+                console.log('📥 [cargarOrdenesPendientes] Respuesta:', datos);
+                
+                if (!datos.success) throw new Error(datos.message);
+
+                // Filtrar órdenes que NO están confirmadas ni canceladas (pendientes)
+                const todasOrdenes = datos.data || [];
+                const ordenes = todasOrdenes.filter(o => {
+                    const estado = o.estado || 'pendiente';
+                    return estado !== 'confirmada' && estado !== 'cancelada';
+                });
+                
+                const contenedor = document.getElementById('ordersContainer');
+                
+                if (!Array.isArray(ordenes) || ordenes.length === 0) {
+                    contenedor.innerHTML = '<div class="orders-empty">✅ No hay órdenes pendientes</div>';
+                    document.getElementById('pendingCount').textContent = '0';
+                    return;
+                }
+
+                document.getElementById('pendingCount').textContent = ordenes.length;
+
+                let html = '<table class="orders-table"><thead><tr>';
+                html += '<th>Orden ID</th>';
+                html += '<th>Cliente</th>';
+                html += '<th>Total</th>';
+                html += '<th>Estado</th>';
+                html += '<th>Fecha</th>';
+                html += '<th>Acciones</th>';
+                html += '</tr></thead><tbody>';
+
+                ordenes.forEach(orden => {
+                    const claseEstado = `status-${orden.estado || 'pendiente'}`;
+                    const fechaFormato = orden.created_at ? new Date(orden.created_at).toLocaleDateString('es-MX') : '-';
+                    html += `<tr>`;
+                    html += `<td class="order-id">${orden.numero_orden || orden.id}</td>`;
+                    html += `<td>${orden.nombre_cliente || orden.cliente_nombre || '-'}</td>`;
+                    html += `<td>$${parseFloat(orden.total || 0).toLocaleString('es-MX')}</td>`;
+                    html += `<td><span class="order-status ${claseEstado}">${orden.estado || 'Pendiente'}</span></td>`;
+                    html += `<td>${fechaFormato}</td>`;
+                    html += `<td class="order-actions">`;
+                    html += `<button class="btn-action btn-confirm" onclick="confirmarOrden('${orden.numero_orden || orden.id}')"><i class="fas fa-check"></i> Confirmar</button>`;
+                    html += `<button class="btn-action btn-reject" onclick="rechazarOrden('${orden.numero_orden || orden.id}')"><i class="fas fa-times"></i> Rechazar</button>`;
+                    html += `</td>`;
+                    html += `</tr>`;
+                });
+
+                html += '</tbody></table>';
+                contenedor.innerHTML = html;
+            } catch (error) {
+                console.error('Error cargando órdenes pendientes:', error);
+                document.getElementById('ordersContainer').innerHTML = '<div class="orders-empty">❌ Error al cargar órdenes</div>';
+            }
+        }
+
+        /* ============================================================ */
+        /* SECCIÓN 7: ACCIONES SOBRE ÓRDENES                            */
+        /* ============================================================ */
+
+        /**
+         * Confirmar una orden como pagada
+         * @param {string} ordenId - ID de la orden a confirmar
+         */
+        async function confirmarOrden(ordenId) {
+            if (!confirm('¿Confirmar esta orden?')) return;
+            try {
+                const token = obtenerTokenActual();
+                if (!token) {
+                    console.error('⚠️ No hay token disponible');
+                    return;
+                }
+                const respuesta = await fetch(`${URL_API}/api/ordenes/${ordenId}/estado`, {
+                    method: 'PUT',
+                    headers: { 
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ estado: 'confirmada' })
+                });
+                const datos = await respuesta.json();
+                if (!datos.success) throw new Error(datos.message);
+                cargarOrdenesPendientes();
+                cargarEstadisticas();
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        /**
+         * Rechazar una orden
+         * @param {string} ordenId - ID de la orden a rechazar
+         */
+        async function rechazarOrden(ordenId) {
+            if (!confirm('¿Rechazar esta orden?')) return;
+            try {
+                const token = obtenerTokenActual();
+                if (!token) {
+                    console.error('⚠️ No hay token disponible');
+                    return;
+                }
+                const respuesta = await fetch(`${URL_API}/api/ordenes/${ordenId}/estado`, {
+                    method: 'PUT',
+                    headers: { 
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ estado: 'rechazada' })
+                });
+                const datos = await respuesta.json();
+                if (!datos.success) throw new Error(datos.message);
+                cargarOrdenesPendientes();
+                cargarEstadisticas();
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        /* ============================================================ */
+        /* SECCIÓN 8: INTERACCIÓN DEL MENÚ NAVEGACIÓN                  */
+        /* ============================================================ */
+
+        /**
+         * Alternar visibilidad del menú de navegación en móvil (migrado a admin-layout.js)
+         * El nuevo sidebar ya maneja esto automáticamente
+         */
+
+        /* ============================================================ */
+        /* SECCIÓN 9: INICIALIZACIÓN DEL DASHBOARD                      */
+        /* ============================================================ */
+
+        /**
+         * Inicializar completamente el dashboard
+         * Carga estadísticas, gráficas, órdenes y activa intervalos
+         */
+        async function inicializarDashboard() {
+            try {
+                console.log('Dashboard inicializándose...');
+                iniciarCuentaRegresiva();
+                await cargarEstadisticas();
+                console.log('Estadísticas cargadas, ahora cargando gráficas...');
+                await new Promise(resolve => setTimeout(resolve, 500)); // Pequeño delay para Chart.js
+                await cargarGraficas(rangoActual);
+                await cargarOrdenesPendientes();
+                console.log('Dashboard inicializado completamente');
+                intervaloEstadisticas = setInterval(cargarEstadisticas, 30000);
+                setInterval(cargarOrdenesPendientes, 60000);
+                
+                // Inicializar toggle de visibilidad de ingresos
+                configurarToggleVisibilidad();
+            } catch (error) {
+                console.error('Error inicializando dashboard:', error);
+            }
+        }
+
+        /**
+         * Configurar el botón de toggle de visibilidad en la tarjeta de ingresos
+         */
+        function configurarToggleVisibilidad() {
+            const toggleBtn = document.getElementById('toggleRevenueVisibility');
+            const statValue = document.getElementById('statRevenue');
+            
+            if (!toggleBtn || !statValue) return;
+            
+            // Restaurar estado guardado al cargar (ya está en el HTML via atributo data)
+            const revenueOculto = localStorage.getItem('rifaplus_revenue_hidden') === 'true';
+            if (revenueOculto) {
+                statValue.classList.add('hidden');
+                toggleBtn.classList.add('hidden');
+                toggleBtn.title = 'Mostrar ingresos';
+                toggleBtn.innerHTML = '<i class="fas fa-eye-slash"></i>';
+            }
+            
+            toggleBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const isHidden = statValue.classList.toggle('hidden');
+                toggleBtn.classList.toggle('hidden', isHidden);
+                
+                // Guardar estado en localStorage y en atributo del documento
+                localStorage.setItem('rifaplus_revenue_hidden', isHidden);
+                if (isHidden) {
+                    document.documentElement.setAttribute('data-revenue-hidden', 'true');
+                    toggleBtn.title = 'Mostrar ingresos';
+                    toggleBtn.innerHTML = '<i class="fas fa-eye-slash"></i>';
+                } else {
+                    document.documentElement.removeAttribute('data-revenue-hidden');
+                    toggleBtn.title = 'Ocultar ingresos';
+                    toggleBtn.innerHTML = '<i class="fas fa-eye"></i>';
+                }
+            });
+        }
+
+        /* ============================================================ */
+        /* SECCIÓN 10: CARGA AL ABRIR LA PÁGINA                         */
+        /* ============================================================ */
+
+        /**
+         * Verificar token guardado y cargar dashboard si existe
+         */
+        window.addEventListener('load', () => {
+            inicializarConfiguracion();
+            const tokenGuardado = localStorage.getItem('rifaplus_token') || 
+                               localStorage.getItem('rifaplus_admin_token') ||
+                               localStorage.getItem('admin_token') ||
+                               localStorage.getItem('token');
+            console.log('🔐 [PageLoad] Token encontrado en localStorage:', !!tokenGuardado);
+            console.log('🔐 [PageLoad] Longitud del token:', tokenGuardado?.length || 0);
+            console.log('🔐 [PageLoad] Primeros 20 caracteres:', tokenGuardado?.substring(0, 20) || 'N/A');
+            
+            if (tokenGuardado) {
+                tokenAutenticacion = tokenGuardado;
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('dashboard').classList.add('logged-in');
+                inicializarDashboard();
+            }
+        });
+    </script>
+</body>
+</html>

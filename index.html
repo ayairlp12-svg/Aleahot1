@@ -1,0 +1,1544 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' http://127.0.0.1:* http://localhost:*; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://fonts.googleapis.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; connect-src 'self' http://127.0.0.1:* http://localhost:* https:; img-src 'self' data: https:;">
+    <title>SORTEOS YEPE - Gana un iPhone 15 Pro Max 256GB | Rifas 100% Transparentes</title>
+    <meta name="description" content="Participa en SORTEOS YEPE del iPhone 15 Pro Max 256GB. Sorteo 100% transparente en vivo. Compra tus boletos de forma segura.">
+    <link rel="stylesheet" href="css/styles.css?v=20251228.15">
+    <link rel="preload" as="image" href="images/logo.png" fetchpriority="high">
+    <link rel="icon" href="images/logo.png" sizes="32x32">
+    <link rel="apple-touch-icon" href="images/logo.png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/modal-contacto.css">
+    <link rel="stylesheet" href="css/orden-formal.css">
+    <!-- ✅ Carga inteligente de boletos para 1M boletos -->
+    <script src="js/boletos-loader.js"></script>
+    <script>
+        // ============================================================
+        // LIMPIEZA COMPLETA DE CACHÉ - EJECUTAR ANTES DE CARGAR CONFIG
+        // ============================================================
+        (function limpiarCacheYFechas() {
+            // BORRAR TODOS los keys de localStorage que contengan fecha, sorteo o countdown
+            const keysABorrar = [
+                'rifaplus_fecha_sorteo',
+                'rifaplus_timestamp_sorteo',
+                'rifaplus_fecha_cierre',
+                'rifaplus_countdown_cache',
+                'rifaplus_sorteo_fecha',
+                'countdown_lastDate',
+                'sorteo_fecha_backup',
+                'rifaplus_config_actual',
+                'rifaplus_config_actual_v2',
+                'sorteo-config',
+                'rifaplus_sorteo_activo',
+                'rifaplus_fecha',
+                'rifaplus_timestamp'
+            ];
+            
+            keysABorrar.forEach(key => {
+                if (localStorage.getItem(key)) {
+                    console.warn(`🧹 Limpiando localStorage: ${key}`);
+                    localStorage.removeItem(key);
+                }
+            });
+            
+            // Verificar que se limpió
+            console.log('✅ localStorage limpiado completamente');
+            console.log('Keys restantes en localStorage:', Object.keys(localStorage));
+        })();
+    </script>
+    <script src="js/theme-loader.js?v=20251228.15"></script>
+    <script src="js/config.js?v=1766990666"></script>
+    <script src="js/theme-dynamic.js"></script>
+    <!-- DEBUG: Verificar que config se cargó correctamente -->
+    <script>
+        console.log('=== DEBUG CONFIG LOAD ===');
+        console.log('window.rifaplusConfig:', typeof window.rifaplusConfig);
+        if (window.rifaplusConfig) {
+            console.log('rifaplusConfig.rifa.fechaSorteo:', window.rifaplusConfig.rifa?.fechaSorteo);
+            const ts = window.rifaplusConfig.obtenerTimestampSorteo?.();
+            console.log('obtenerTimestampSorteo():', ts);
+            if (ts) {
+                const fecha = new Date(ts);
+                console.log('Fecha parseada:', fecha.toISOString());
+                const ahora = new Date();
+                const diff = ts - ahora.getTime();
+                console.log('Diferencia en ms:', diff);
+                console.log('Diferencia en minutos:', diff / (1000 * 60));
+                console.log('Diferencia en horas:', diff / (1000 * 60 * 60));
+                console.log('Diferencia en días:', diff / (1000 * 60 * 60 * 24));
+            }
+        }
+    </script>
+    <script src="js/ganadores.js?v=20251228.15"></script>
+    <script src="js/modal-sorteo-finalizado.js?v=20251228.15"></script>
+    <script src="js/main.js?v=20251228.15"></script>
+    <script src="js/calculo-precios.js?v=20251230.1"></script>
+    <script src="js/carrito-global.js?v=1766990666"></script>
+    <script src="js/flujo-compra.js?v=20251228.15"></script>
+    <script src="js/orden-formal.js?v=20251228.15"></script>
+    <script src="js/modal-contacto.js?v=20251228.15"></script>
+</head>
+<body>
+    <!-- HEADER CON MENÚ -->
+    <header class="header">
+        <div class="container">
+            <div class="header-left">
+                <button class="hamburger" id="hamburger" aria-label="Abrir menú" aria-expanded="false">
+                    <span class="hamburger-box">
+                        <span class="hamburger-inner"></span>
+                    </span>
+                </button>
+            </div>
+
+            <a href="#top" class="logo" data-logo-src id="logoLink">
+                <div class="logo-circle">
+                    <img src="images/logo.png" alt="SORTEOS EL TREBOL" class="logo-image dynamic-logo" data-dynamic-logo="true" fetchpriority="high" width="320" height="137">
+                </div>
+            </a>
+
+            <nav class="nav" aria-label="Navegación principal">
+                <a href="#inicio" class="nav-link active">Inicio</a>
+                <a href="compra.html" class="nav-link">Comprar boletos</a>
+                <a href="cuentas-pago.html" class="nav-link">Cuentas de pago</a>
+                <a href="ayuda.html" class="nav-link">Ayuda</a>
+                <a href="mis-boletos.html" class="nav-link">Mis Boletos</a>
+            </nav>
+
+            <div class="header-right">
+                <div class="carrito-nav" id="carritoNav" aria-label="Carrito de compras">
+                    <span class="carrito-icon" aria-hidden="true">🛒</span>
+                    <span class="carrito-count">0</span>
+                    <span class="sr-only">0 items en el carrito</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="overlay-menu" id="overlayMenu" inert>
+            <div class="overlay-inner">
+                <button class="overlay-close" id="overlayClose" aria-label="Cerrar menú">×</button>
+                <a href="#inicio" class="overlay-link">Inicio</a>
+                <a href="compra.html" class="overlay-link">Comprar boletos</a>
+                <a href="cuentas-pago.html" class="overlay-link">Cuentas de pago</a>
+                <a href="ayuda.html" class="overlay-link">Ayuda</a>
+                <a href="mis-boletos.html" class="overlay-link">Mis Boletos</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- HERO SECTION -->
+    <section class="hero" id="inicio">
+        <div class="container">
+            <div class="hero-content">
+                <h1 class="hero-title" id="heroTitle">Gana un <span class="highlight" id="heroHighlight">iPhone 15 Pro Max 256GB</span></h1>
+                <p class="hero-description" id="heroDescription">256GB - Último Modelo - Totalmente Nuevo en Caja</p>
+                <button class="btn btn-secondary-accent" onclick="window.location.href='compra.html'" aria-label="Comprar boletos ahora">
+                    Comprar Boletos Ahora
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- CARRUSEL -->
+    <section class="carrusel-section" aria-label="Galería de imágenes del premio">
+        <div class="container">
+            <div class="carrusel">
+                <div class="carrusel-inner">
+                    <!-- Las imágenes se generan dinámicamente desde config.js -->
+                </div>
+                <button class="carrusel-prev" aria-label="Imagen anterior">‹</button>
+                <button class="carrusel-next" aria-label="Siguiente imagen">›</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- CUENTA REGRESIVA - URGENCIA -->
+    <section class="countdown-section">
+        <div class="container">
+            <div class="countdown-card">
+                <div class="countdown-header">
+                    <span class="countdown-badge">🔥 OPORTUNIDAD ÚNICA</span>
+                    <h2 class="countdown-title">¡El Sorteo Está Cada Vez Más Cerca!</h2>
+                    <p class="countdown-subtitle" id="countdownSubtitle">No pierdas tu oportunidad de ganar este increíble premio.
+                    <strong>Cada boleto comprado aumenta tus posibilidades de ser el afortunado ganador.</strong></p>
+                </div>
+                
+                <div class="countdown-timer" aria-live="polite">
+                    <div class="countdown-item">
+                        <span class="countdown-number" id="countdown-days">00</span>
+                        <span class="countdown-label">DÍAS</span>
+                    </div>
+                    <div class="countdown-separator" aria-hidden="true">:</div>
+                    <div class="countdown-item">
+                        <span class="countdown-number" id="countdown-hours">00</span>
+                        <span class="countdown-label">HORAS</span>
+                    </div>
+                    <div class="countdown-separator" aria-hidden="true">:</div>
+                    <div class="countdown-item">
+                        <span class="countdown-number" id="countdown-minutes">00</span>
+                        <span class="countdown-label">MINUTOS</span>
+                    </div>
+                    <div class="countdown-separator" aria-hidden="true">:</div>
+                    <div class="countdown-item">
+                        <span class="countdown-number" id="countdown-seconds">00</span>
+                        <span class="countdown-label">SEGUNDOS</span>
+                    </div>
+                </div>
+
+                <div class="countdown-progress">
+                    <div class="progress-label">
+                        <span class="progress-text">Boletos Vendidos</span>
+                        <span class="progress-percentage" id="porcentaje-vendido">0%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-fill" style="width: 0%;"></div>
+                    </div>
+                    <div class="progress-stats">
+                        <span><strong id="boletos-vendidos">0</strong> vendidos</span>
+                        <span class="progress-divider" aria-hidden="true">•</span>
+                        <span><strong id="boletos-restantes">-</strong> disponibles</span>
+                    </div>
+                </div>
+
+                <div class="countdown-cta">
+                    <p class="urgency-text">¿Listo para participar? Tu oportunidad está aquí</p>
+                    <button class="btn btn-urgency" onclick="window.location.href='compra.html'">
+                        Comprar boletos ahora
+                    </button>
+                    <p class="small-text">Compra segura • Entrega inmediata • Soporte 24/7</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- INFORMACIÓN DEL SORTEO -->
+    <section class="rifa-descripcion-formal">
+        <div class="container">
+            <div class="descripcion-content">
+                <h2 class="descripcion-titulo">Información del Sorteo</h2>
+                <div class="descripcion-intro">
+                    <p>
+                        <strong>Segunda Edición - SORTEOS EL TREBOL</strong><br>
+                        Te presentamos un evento excepcional donde el ganador afortunado se llevará 
+                        <strong>una hermosa RAM 700 2025 completamente nueva</strong>.
+                    </p>
+                </div>
+                
+                <div class="descripcion-texto">
+                    <div class="descripcion-seccion">
+                        <h3>🎰 Ruletazos Adicionales</h3>
+                        <p>
+                            Además del sorteo principal, se realizarán <strong>5 ruletazos de $1,000 cada uno</strong>, 
+                            dándote más oportunidades de ganar premios extraordinarios.
+                        </p>
+                    </div>
+
+                    <div class="descripcion-seccion">
+                        <h3>🔢 Sistema de Ganador Especial</h3>
+                        <p>
+                            El sorteo está basado en el ganador del "sorteo mayor". Los <strong>últimos 3 dígitos</strong> del número ganador 
+                            serán los <strong>primeros 3 dígitos</strong> del ganador de este sorteo, y los <strong>primeros 3 serán los últimos</strong>. 
+                            Un sistema único y transparente.
+                        </p>
+                    </div>
+
+                    <div class="descripcion-seccion descripcion-condicion">
+                        <h3>⚠️ Condición de Realización</h3>
+                        <p>
+                            Este sorteo está condicionado a la venta del <strong>80% de los boletos</strong>. En caso de no cumplirse esta condición, 
+                            la fecha del sorteo se pospondrá automáticamente al próximo "sorteo mayor".
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Información del Sorteo (Tarjetas) -->
+                <div class="info-rifa-cards">
+                    <h3 class="info-rifa-subtitle">Detalles del Sorteo</h3>
+                    <div class="info-grid" id="infoRifaGrid">
+                        <!-- Se carga dinámicamente desde config.js -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <style>
+        .rifa-descripcion-formal {
+            background: #f8f9fa;
+            padding: 4rem 1.5rem;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .descripcion-content {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .descripcion-titulo {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .descripcion-intro {
+            background: white;
+            padding: 1.5rem;
+            border-radius: var(--radius-md);
+            margin-bottom: 2rem;
+            border-left: 3px solid #333;
+        }
+
+        .descripcion-intro p {
+            margin: 0;
+            font-size: 1rem;
+            line-height: 1.6;
+            color: #333;
+        }
+
+        .descripcion-intro strong {
+            color: #1a1a1a;
+            font-weight: 600;
+        }
+
+        .descripcion-texto {
+            font-size: 1rem;
+            line-height: 1.8;
+            color: #333;
+        }
+
+        .descripcion-texto p {
+            margin-bottom: 1.5rem;
+            text-align: justify;
+        }
+
+        .descripcion-texto strong {
+            color: #1a1a1a;
+            font-weight: 600;
+        }
+
+        .descripcion-seccion {
+            background: white;
+            padding: 1.5rem;
+            border-radius: var(--radius-md);
+            margin-bottom: 1.5rem;
+            border-left: 3px solid #666;
+        }
+
+        .descripcion-seccion h3 {
+            font-size: 1.1rem;
+            color: #1a1a1a;
+            margin-top: 0;
+            margin-bottom: 0.75rem;
+            font-weight: 600;
+        }
+
+        .descripcion-seccion p {
+            margin: 0;
+            color: #555;
+        }
+
+        .descripcion-condicion {
+            background: white;
+            border-left-color: #d4a574;
+        }
+
+        .descripcion-condicion h3 {
+            color: #d4a574;
+        }
+
+        .info-rifa-cards {
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .info-rifa-subtitle {
+            font-size: 1.2rem;
+            color: #1a1a1a;
+            margin-bottom: 2rem;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .rifa-descripcion-formal {
+                padding: 2.5rem 1rem;
+            }
+
+            .descripcion-titulo {
+                font-size: 1.6rem;
+                margin-bottom: 1.25rem;
+            }
+
+            .descripcion-intro {
+                padding: 1.25rem;
+                margin-bottom: 1.5rem;
+            }
+
+            .descripcion-texto {
+                font-size: 0.95rem;
+            }
+
+            .descripcion-texto p {
+                text-align: left;
+            }
+
+            .descripcion-seccion {
+                padding: 1.25rem;
+                margin-bottom: 1rem;
+            }
+
+            .descripcion-seccion h3 {
+                font-size: 1rem;
+            }
+        }
+    </style>
+
+    <script>
+    // Cargar información de rifa dinámicamente desde config.js
+    document.addEventListener('DOMContentLoaded', function() {
+        const infoGrid = document.getElementById('infoRifaGrid');
+        if (!infoGrid || !window.rifaplusConfig) return;
+
+        const infoItems = window.rifaplusConfig.rifa.infoRifa || [];
+        
+        infoItems.forEach((item) => {
+            const infoItem = document.createElement('div');
+            infoItem.className = 'info-item';
+            
+            // Manejar contenido dinámico
+            let contenido = item.contenido;
+            if (item.contenido === 'dinamico-fecha') {
+                contenido = window.rifaplusConfig.rifa.fechaSorteoFormato;
+            } else if (item.contenido === 'dinamico-hora') {
+                contenido = `${window.rifaplusConfig.rifa.horaSorteo} (${window.rifaplusConfig.rifa.zonaHoraria})`;
+            } else if (item.contenido === 'dinamico-modalidad') {
+                contenido = window.rifaplusConfig.rifa.modalidadSorteo;
+            } else if (item.contenido === 'dinamico-boletos') {
+                contenido = `<span id="total-boletos-info">${window.rifaplusConfig.rifa.totalBoletos}</span> disponibles`;
+            }
+            
+            // Determinar si es la tarjeta de modalidad
+            const esModalidad = item.titulo === 'Modalidad del Sorteo' || item.titulo === 'Modalidad';
+            
+            // Si es modalidad, hacer clickeable y usar icono de Facebook
+            if (esModalidad) {
+                const facebookUrl = window.rifaplusConfig.cliente.redesSociales.facebook;
+                infoItem.style.cursor = 'pointer';
+                infoItem.onclick = function() {
+                    if (facebookUrl) {
+                        window.open(facebookUrl, '_blank');
+                    }
+                };
+                infoItem.style.transition = 'all var(--transition-normal)';
+                infoItem.onmouseover = function() {
+                    this.style.transform = 'translateY(-8px)';
+                    this.style.boxShadow = '0 12px 24px rgba(0, 0, 0, 0.15)';
+                };
+                infoItem.onmouseout = function() {
+                    this.style.transform = 'translateY(0)';
+                    this.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.08)';
+                };
+                
+                // Reemplazar icono con Facebook icon y agregar enlace visual
+                infoItem.innerHTML = `
+                    <span class="info-icon" aria-hidden="true"><i class="fab fa-facebook-f" style="color: #1877F2;"></i></span>
+                    <h3>${item.titulo}</h3>
+                    <p>${contenido}</p>
+                    <p style="font-size: 0.85rem; color: #1877F2; margin-top: 0.5rem; font-weight: 600;">Haz click para visitarnos →</p>
+                `;
+            } else {
+                infoItem.innerHTML = `
+                    <span class="info-icon" aria-hidden="true">${item.icono}</span>
+                    <h3>${item.titulo}</h3>
+                    <p>${contenido}</p>
+                `;
+            }
+            
+            infoGrid.appendChild(infoItem);
+        });
+    });
+    </script>
+
+    <!-- PRECIOS Y PROMOCIONES -->
+    <section class="precios-section">
+        <div class="container">
+            <h2 class="section-title">Precios y Promociones</h2>
+            <div class="precios-grid" id="preciosGrid">
+                <!-- Se carga dinámicamente desde config.js -->
+            </div>
+        </div>
+    </section>
+
+    <script>
+    // Cargar promociones dinámicamente desde config.js
+    document.addEventListener('DOMContentLoaded', function() {
+        const preciosGrid = document.getElementById('preciosGrid');
+        if (!preciosGrid || !window.rifaplusConfig) return;
+
+        // Agregar tarjeta de precio individual
+        const precioIndividual = document.createElement('div');
+        precioIndividual.className = 'precio-card';
+        precioIndividual.innerHTML = `
+            <div class="precio">1 boleto × $${window.rifaplusConfig.rifa.precioBoleto}</div>
+            <button class="btn btn-secondary" onclick="window.location.href='compra.html'">Comprar</button>
+        `;
+        preciosGrid.appendChild(precioIndividual);
+
+        // Agregar tarjetas de promociones
+        if (window.rifaplusConfig.rifa.promociones && window.rifaplusConfig.rifa.promociones.length > 0) {
+            window.rifaplusConfig.rifa.promociones.forEach((promo) => {
+                const precioCard = document.createElement('div');
+                precioCard.className = 'precio-card';
+                precioCard.innerHTML = `
+                    <div class="precio">${promo.cantidad} boletos × $${promo.precio}</div>
+                    <button class="btn btn-secondary" onclick="window.location.href='compra.html'">Comprar</button>
+                `;
+                preciosGrid.appendChild(precioCard);
+            });
+        }
+    });
+    </script>
+
+    <!-- BONOS SECTION -->
+    <section class="bonos-section" id="bonosSection" style="display: none;">
+        <div class="container">
+            <h2 class="section-title">Bonos Especiales</h2>
+            <p class="bonos-subtitle">Obtén beneficios extras al participar en nuestro sorteo</p>
+            <div class="bonos-grid" id="bonosGrid">
+                <!-- Se carga dinámicamente desde config.js -->
+            </div>
+        </div>
+    </section>
+
+    <style>
+        .bonos-section {
+            background: #f8f9fa;
+            padding: 4rem 1.5rem;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .bonos-section .section-title {
+            margin-bottom: 3rem;
+            text-align: center;
+        }
+
+        .bonos-subtitle {
+            text-align: center;
+            color: #666;
+            font-size: 1rem;
+            margin-bottom: 3rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .bonos-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.25rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .bonos-grid > :last-child:nth-child(odd) {
+            grid-column: 1;
+        }
+
+        .bono-card {
+            background: white;
+            border-radius: var(--radius-md);
+            padding: 1.25rem;
+            border: 1px solid #e0e0e0;
+            transition: all var(--transition-normal);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 1.25rem;
+        }
+
+        .bono-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--bono-color-start);
+            transform: scaleX(0);
+            transition: transform var(--transition-normal);
+            transform-origin: left;
+        }
+
+        .bono-card:hover {
+            border-color: var(--bono-color-start);
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .bono-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .bono-numero {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--bono-bg);
+            color: var(--bono-color-start);
+            font-weight: 700;
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .bono-header {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+            flex: 1;
+        }
+
+        .bono-titulo {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin: 0;
+            line-height: 1.2;
+        }
+
+        .bono-descripcion {
+            font-size: 0.85rem;
+            color: #666;
+            margin: 0;
+            line-height: 1.4;
+            flex: 1;
+        }
+
+        .bono-accion {
+            margin-top: 0;
+            flex-shrink: 0;
+        }
+
+        .bono-btn-whatsapp {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.65rem 1.2rem;
+            background: #25D366;
+            color: white;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all var(--transition-normal);
+            white-space: nowrap;
+        }
+
+        .bono-btn-whatsapp:hover {
+            background: #1FAD4F;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(37, 211, 102, 0.3);
+        }
+
+        .bono-btn-whatsapp i {
+            font-size: 1.2rem;
+        }
+
+        /* Colores para diferentes bonos */
+        .bono-card.bono-success {
+            --bono-color-start: #10b981;
+            --bono-color-end: #059669;
+            --bono-bg: rgba(16, 185, 129, 0.1);
+        }
+
+        .bono-card.bono-warning {
+            --bono-color-start: #f59e0b;
+            --bono-color-end: #d97706;
+            --bono-bg: rgba(245, 158, 11, 0.1);
+        }
+
+        .bono-card.bono-info {
+            --bono-color-start: #3b82f6;
+            --bono-color-end: #1d4ed8;
+            --bono-bg: rgba(59, 130, 246, 0.1);
+        }
+
+        .bono-card.bono-primary {
+            --bono-color-start: #0f172a;
+            --bono-color-end: #051425;
+            --bono-bg: rgba(15, 23, 42, 0.1);
+        }
+
+        @media (max-width: 1024px) {
+            .bonos-grid {
+                grid-template-columns: 1fr;
+                gap: 1.25rem;
+                max-width: 800px;
+            }
+
+            .bonos-grid > :last-child:nth-child(odd) {
+                grid-column: 1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .bonos-section {
+                padding: 3rem 1rem;
+            }
+
+            .bonos-grid {
+                grid-template-columns: 1fr;
+                gap: 1.25rem;
+            }
+
+            .bonos-grid > :last-child:nth-child(odd) {
+                grid-column: 1;
+            }
+
+            .bono-card {
+                padding: 1rem;
+                gap: 1rem;
+            }
+
+            .bono-icono {
+                font-size: 1.5rem;
+            }
+
+            .bono-titulo {
+                font-size: 0.95rem;
+            }
+
+            .bono-descripcion {
+                font-size: 0.8rem;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .bonos-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+                max-width: 100%;
+                padding: 0;
+            }
+
+            .bonos-grid > :last-child:nth-child(odd) {
+                grid-column: 1;
+            }
+
+            .bono-card {
+                padding: 0.875rem;
+                gap: 0.875rem;
+            }
+
+            .bono-icono {
+                font-size: 1.4rem;
+            }
+
+            .bono-titulo {
+                font-size: 0.9rem;
+            }
+
+            .bono-descripcion {
+                font-size: 0.75rem;
+            }
+
+            .bono-btn-whatsapp {
+                padding: 0.55rem 1rem;
+                font-size: 0.75rem;
+            }
+        }
+    </style>
+
+    <script>
+    // Cargar bonos dinámicamente desde config.js
+    document.addEventListener('DOMContentLoaded', function() {
+        const bonosSection = document.getElementById('bonosSection');
+        const bonosGrid = document.getElementById('bonosGrid');
+
+        if (!bonosSection || !bonosGrid || !window.rifaplusConfig) return;
+
+        const config = window.rifaplusConfig.rifa.bonos;
+
+        // Verificar si los bonos están habilitados
+        if (!config || !config.enabled) {
+            bonosSection.style.display = 'none';
+            return;
+        }
+
+        // Mostrar sección si hay bonos
+        bonosSection.style.display = 'block';
+        bonosGrid.innerHTML = '';
+
+        // Renderizar cada bono
+        if (config.items && Array.isArray(config.items)) {
+            config.items.forEach((bono) => {
+                const colorMap = {
+                    success: 'bono-success',
+                    warning: 'bono-warning',
+                    info: 'bono-info',
+                    primary: 'bono-primary'
+                };
+
+                const bonoCard = document.createElement('div');
+                bonoCard.className = `bono-card ${colorMap[bono.color] || 'bono-primary'}`;
+
+                let contenido = `
+                    <div class="bono-icono">✔️</div>
+                    <div class="bono-header">
+                        <p class="bono-titulo">${bono.titulo}</p>
+                        <p class="bono-descripcion">${bono.descripcion}</p>
+                    </div>
+                `;
+
+                // Agregar botón especial para WhatsApp si es necesario
+                if (bono.accion === 'unirseWhatsapp') {
+                    const whatsappUrl = window.rifaplusConfig.cliente.redesSociales.canalWhatsapp;
+                    if (whatsappUrl) {
+                        contenido += `
+                            <div class="bono-accion">
+                                <a href="${whatsappUrl}" target="_blank" class="bono-btn-whatsapp">
+                                    <i class="fab fa-whatsapp"></i>
+                                    Unirte al canal
+                                </a>
+                            </div>
+                        `;
+                    }
+                }
+
+                bonoCard.innerHTML = contenido;
+                bonosGrid.appendChild(bonoCard);
+            });
+        }
+    });
+    </script>
+
+    <!-- GANADORES -->
+    <section class="seccion-ganadores" id="seccionGanadores" style="display: none;">
+        <div class="container">
+            <h2 class="section-title">Ganadores Registrados</h2>
+            <div class="ganadores-contenedor" id="ganadoresContenedor">
+                <!-- Se genera dinámicamente con JavaScript -->
+            </div>
+        </div>
+    </section>
+
+    <style>
+        .seccion-ganadores {
+            background: linear-gradient(135deg, rgba(124, 58, 237, 0.05) 0%, rgba(124, 58, 237, 0.02) 100%);
+            padding: 3rem 1.5rem;
+            border-top: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .seccion-ganadores .section-title {
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .ganadores-contenedor {
+            display: grid;
+            gap: 2rem;
+        }
+
+        .ganadores-por-tipo {
+            background: white;
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .ganadores-tipo-header {
+            background: linear-gradient(135deg, var(--header-color-1) 0%, var(--header-color-2) 100%);
+            color: white;
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .ganadores-tipo-header h3 {
+            margin: 0;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .ganadores-tipo-icono {
+            font-size: 1.5rem;
+        }
+
+        .ganadores-tipo-counter {
+            background: rgba(255, 255, 255, 0.25);
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .ganadores-lista {
+            padding: 1.5rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .ganador-card {
+            background: linear-gradient(135deg, white 0%, var(--bg-light) 100%);
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 1.5rem;
+            transition: all var(--transition-fast);
+            animation: slideInUp 0.4s ease-out backwards;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .ganador-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--ganador-color);
+            transform: scaleX(0);
+            transition: transform var(--transition-normal);
+            transform-origin: left;
+        }
+
+        .ganador-card:hover {
+            border-color: var(--ganador-color);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+        }
+
+        .ganador-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .ganador-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .ganador-logo {
+            width: 60px;
+            height: 60px;
+            min-width: 60px;
+            background: var(--ganador-bg);
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: 700;
+            overflow: hidden;
+        }
+
+        .ganador-logo-img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            object-position: center;
+            padding: 4px;
+        }
+
+        .ganador-header-info {
+            flex: 1;
+        }
+
+        .ganador-numero {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--ganador-color);
+            margin: 0;
+            line-height: 1.2;
+        }
+
+        .ganador-fecha {
+            font-size: 0.75rem;
+            color: var(--ganador-color);
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-top: 0.25rem;
+            opacity: 0.9;
+        }
+
+        .ganador-lugar {
+            font-size: 0.7rem;
+            color: white;
+            background: var(--ganador-color);
+            padding: 0.35rem 0.6rem;
+            border-radius: 0.25rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            white-space: nowrap;
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .ganador-posicion {
+            font-size: 0.75rem;
+            color: var(--ganador-color);
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-top: 0.25rem;
+        }
+
+        .ganador-cliente {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .ganador-cliente-row {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .ganador-cliente-label {
+            font-size: 0.7rem;
+            color: var(--text-light);
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .ganador-cliente-valor {
+            font-size: 0.95rem;
+            color: var(--text-dark);
+            font-weight: 500;
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .ganadores-lista {
+                grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+                gap: 1rem;
+                padding: 1rem;
+            }
+
+            .ganador-card {
+                padding: 1rem;
+            }
+
+            .ganador-header {
+                margin-bottom: 1rem;
+            }
+
+            .ganador-logo {
+                width: 50px;
+                height: 50px;
+                font-size: 1.5rem;
+                overflow: hidden;
+            }
+
+            .ganador-numero {
+                font-size: 1.1rem;
+            }
+
+            .ganador-numero {
+                font-size: 1.2rem;
+            }
+
+            .ganadores-tipo-header h3 {
+                font-size: 1.1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .ganadores-lista {
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            }
+
+            .ganador-card {
+                padding: 0.5rem;
+            }
+
+            .ganador-numero {
+                font-size: 1rem;
+            }
+
+            .ganador-posicion {
+                width: 1.75rem;
+                height: 1.75rem;
+                font-size: 0.75rem;
+            }
+        }
+    </style>
+
+    <script>
+        /**
+         * Formatear número de lugar
+         * Para sorteos/presorteos: 1 → 1er lugar, 2 → 2do lugar, etc
+         * Para ruletazos: 1 → Ruletazo 1, 2 → Ruletazo 2, etc
+         */
+        function formatarLugar(lugar, tipo = 'sorteo') {
+            if (!lugar) return '-';
+            const num = Number(lugar);
+            if (isNaN(num) || num < 1) return '-';
+            
+            // Para ruletazos, usar formato "Ruletazo N"
+            if (tipo === 'ruletazos') {
+                return `Ruletazo ${num}`;
+            }
+            
+            // Para sorteos y presorteos, usar formato ordinal
+            const sufijos = {
+                1: 'er',
+                2: 'do',
+                3: 'er',
+                4: 'to',
+                5: 'to',
+                6: 'to',
+                7: 'mo',
+                8: 'vo',
+                9: 'no',
+                10: 'mo'
+            };
+            
+            if (num <= 10) {
+                return `${num}${sufijos[num] || 'o'} lugar`;
+            } else {
+                return `${num}° lugar`;
+            }
+        }
+
+        /**
+         * Renderizar sección de ganadores dinámicamente
+         */
+        async function renderizarSeccionGanadores() {
+            const seccion = document.getElementById('seccionGanadores');
+            const contenedor = document.getElementById('ganadoresContenedor');
+            if (!seccion || !contenedor) return;
+
+            try {
+                const res = await fetch('http://localhost:5001/api/ganadores?limit=500');
+                if (!res.ok) throw new Error('no_server');
+                const payload = await res.json();
+                const rows = payload && payload.data ? payload.data : [];
+
+                if (!Array.isArray(rows) || rows.length === 0) {
+                    seccion.style.display = 'none';
+                    console.log('[index] No hay ganadores en servidor — sección oculta');
+                    return;
+                }
+
+                // Mapear y renderizar (estructura simplificada)
+                const mapped = { sorteo: [], presorteo: [], ruletazos: [] };
+                rows.forEach((r, idx) => {
+                    const tipoRaw = (r.tipo_ganador || '').toString().toLowerCase();
+                    let key = 'sorteo';
+                    if (tipoRaw.includes('presorte')) key = 'presorteo';
+                    else if (tipoRaw.includes('rulet')) key = 'ruletazos';
+                    const numero = r.numero_boleto || r.numero_orden || '';
+                    mapped[key].push({ numero: String(numero), posicion: r.posicion || (idx + 1), nombre: r.nombre_ganador || r.nombre_cliente || '' });
+                });
+
+                seccion.style.display = 'block';
+                contenedor.innerHTML = '';
+                for (const tipo of ['sorteo','presorteo','ruletazos']) {
+                    const arr = mapped[tipo];
+                    if (!arr || arr.length === 0) continue;
+                    const tipoSeccion = document.createElement('div');
+                    tipoSeccion.className = 'ganadores-por-tipo';
+                    tipoSeccion.innerHTML = `
+                        <div class="ganadores-tipo-header">
+                            <h3>${tipo.toUpperCase()}</h3>
+                            <div class="ganadores-tipo-counter">${arr.length} ganador${arr.length>1?'es':''}</div>
+                        </div>
+                        <div class="ganadores-lista">
+                            ${arr.map(g => `
+                                <div class="ganador-card">
+                                    <div class="ganador-numero">${g.numero}</div>
+                                    <div class="ganador-nombre">${g.nombre}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                    contenedor.appendChild(tipoSeccion);
+                }
+            } catch (e) {
+                console.warn('[index] Error fetching ganadores from server, hiding section', e);
+                seccion.style.display = 'none';
+            }
+            
+            // fin
+        }
+
+        // Renderizar en DOMContentLoaded
+        document.addEventListener('DOMContentLoaded', function() {
+            renderizarSeccionGanadores();
+        });
+
+        // Escuchar cambios en ganadores desde otras páginas
+        // Hay dos variantes de evento en el código base ('ganadoresActualizados' y el typo 'ganadesoresActualizados')
+        ['ganadoresActualizados', 'ganadesoresActualizados', 'ganadesoresActualizados'].forEach(ev => {
+            window.addEventListener(ev, function() {
+                renderizarSeccionGanadores();
+            });
+        });
+
+        // Escuchar evento storage para sincronización entre pestañas (clave usada por GanadoresManager)
+        window.addEventListener('storage', function(e) {
+            try {
+                const key = e.key;
+                const expected = window.GanadoresManager && window.GanadoresManager.STORAGE_KEY;
+                if (key && expected && key === expected) {
+                    renderizarSeccionGanadores();
+                }
+            } catch (err) {
+                // no bloquear
+            }
+        });
+    </script>
+
+    <!-- CONTACTO -->
+    <section class="contacto-section">
+        <div class="container">
+            <h2 class="section-title">Síguenos en nuestras redes sociales y únete a nuestro canal de WhatsApp</h2>
+            <div class="contacto-grid" id="contactoGrid">
+                <!-- Se carga dinámicamente desde config.js -->
+            </div>
+        </div>
+    </section>
+
+    <script>
+    // Cargar redes sociales dinámicamente desde config.js
+    document.addEventListener('DOMContentLoaded', function() {
+        const contactoGrid = document.getElementById('contactoGrid');
+        if (!contactoGrid || !window.rifaplusConfig) return;
+
+        const redes = window.rifaplusConfig.cliente.redesSociales;
+        
+        // WhatsApp - Canal
+        if (redes.canalWhatsapp) {
+            const whatsappCard = document.createElement('div');
+            whatsappCard.className = 'contacto-icono-btn';
+            whatsappCard.innerHTML = `
+                <i class="fab fa-whatsapp contacto-icon-grande"></i>
+                <span class="contacto-nombre-usuario">Canal ${redes.canalWhatsappNombre || 'WhatsApp'}</span>
+                <a href="${redes.canalWhatsapp}" class="btn btn-contacto" target="_blank">
+                    Unirte
+                </a>
+            `;
+            contactoGrid.appendChild(whatsappCard);
+        }
+        
+        // Facebook
+        if (redes.facebook) {
+            const facebookCard = document.createElement('div');
+            facebookCard.className = 'contacto-icono-btn';
+            facebookCard.innerHTML = `
+                <i class="fab fa-facebook-f contacto-icon-grande"></i>
+                <span class="contacto-nombre-usuario">${redes.facebookUsuario || 'Facebook'}</span>
+                <a href="${redes.facebook}" class="btn btn-contacto" target="_blank">
+                    Seguir
+                </a>
+            `;
+            contactoGrid.appendChild(facebookCard);
+        }
+        
+        // Instagram
+        if (redes.instagram) {
+            const instagramCard = document.createElement('div');
+            instagramCard.className = 'contacto-icono-btn';
+            instagramCard.innerHTML = `
+                <i class="fab fa-instagram contacto-icon-grande"></i>
+                <span class="contacto-nombre-usuario">${redes.instagramUsuario || 'Instagram'}</span>
+                <a href="${redes.instagram}" class="btn btn-contacto" target="_blank">
+                    Seguir
+                </a>
+            `;
+            contactoGrid.appendChild(instagramCard);
+        }
+    });
+    </script>
+
+    <!-- FOOTER REDISEÑADO -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-main">
+                <!-- Columna izquierda: Logo y nombre -->
+                <div class="footer-logo-section">
+                    <div class="footer-logo-box">
+                        <img src="images/logo.png" alt="SORTEOS EL TREBOL" class="footer-logo-img dynamic-logo" data-dynamic-logo="true" width="200" height="100">
+                    </div>
+                    <h3 id="footerNombre" class="footer-client-name">SORTEOS YEPE</h3>
+                    <p id="footerEslogan" class="footer-eslogan">Rifas 100% Transparentes y Seguras</p>
+                </div>
+
+                <!-- Columna central: Enlaces -->
+                <div class="footer-links-section">
+                    <h4 class="footer-links-title">Enlaces</h4>
+                    <ul class="footer-links-list">
+                        <li><a href="index.html">Inicio</a></li>
+                        <li><a href="compra.html">Comprar Boletos</a></li>
+                        <li><a href="ayuda.html">Ayuda</a></li>
+                        <li><a href="mis-boletos.html">Mis Boletos</a></li>
+                    </ul>
+                </div>
+
+                <!-- Columna derecha: Contacto y redes sociales -->
+                <div class="footer-contact-section">
+                    <h4 class="footer-contact-title">Contacto</h4>
+                    <div class="footer-social-icons" id="footerSocial">
+                        <!-- Se carga dinámicamente desde config.js -->
+                    </div>
+                    <div class="footer-contact-details">
+                        <p><i class="fas fa-envelope"></i> <a id="footerEmail" href="mailto:contacto@mirifa.com">contacto@mirifa.com</a></p>
+                        <p><i class="fas fa-phone"></i> <a id="footerTelefono" href="tel:+525512345678">+52 55-1234-5678</a></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Divisor -->
+            <div class="footer-divider"></div>
+
+            <!-- Copyright -->
+            <div class="footer-bottom">
+                <p id="footerCopyright">&copy; 2025 <strong>SORTEOS YEPE</strong>. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+    // Actualizar footer dinámicamente desde config.js
+    document.addEventListener('DOMContentLoaded', function() {
+        const config = window.rifaplusConfig;
+        if (!config) return;
+
+        // Actualizar nombre en footer
+        const footerNombre = document.getElementById('footerNombre');
+        if (footerNombre) {
+            footerNombre.textContent = config.cliente.nombre;
+        }
+
+        // Actualizar eslogan en footer
+        const footerEslogan = document.getElementById('footerEslogan');
+        if (footerEslogan) {
+            footerEslogan.textContent = config.cliente.eslogan || 'Rifas 100% Transparentes y Seguras';
+        }
+
+        // Hacer que el logo redirija a la red social principal
+        const logoLink = document.getElementById('logoLink');
+        if (logoLink) {
+            // El logo siempre apunta a la página de inicio
+            logoLink.href = './index.html';
+            logoLink.target = '_self';
+            logoLink.setAttribute('aria-label', 'Ir a la página de inicio');
+        }
+
+        // Actualizar redes sociales en footer
+        const footerSocial = document.getElementById('footerSocial');
+        if (footerSocial) {
+            footerSocial.innerHTML = '';
+            if (config.cliente.redesSociales.whatsapp) {
+                const whatsappLink = document.createElement('a');
+                whatsappLink.href = `https://wa.me/${config.cliente.redesSociales.whatsapp.replace(/[^0-9]/g, '')}`;
+                whatsappLink.target = '_blank';
+                whatsappLink.title = 'WhatsApp';
+                whatsappLink.innerHTML = '<i class="fab fa-whatsapp"></i>';
+                footerSocial.appendChild(whatsappLink);
+            }
+            if (config.cliente.redesSociales.facebook) {
+                const facebookLink = document.createElement('a');
+                facebookLink.href = config.cliente.redesSociales.facebook;
+                facebookLink.target = '_blank';
+                facebookLink.title = 'Facebook';
+                facebookLink.innerHTML = '<i class="fab fa-facebook-f"></i>';
+                footerSocial.appendChild(facebookLink);
+            }
+            if (config.cliente.redesSociales.instagram) {
+                const instagramLink = document.createElement('a');
+                instagramLink.href = config.cliente.redesSociales.instagram;
+                instagramLink.target = '_blank';
+                instagramLink.title = 'Instagram';
+                instagramLink.innerHTML = '<i class="fab fa-instagram"></i>';
+                footerSocial.appendChild(instagramLink);
+            }
+        }
+
+        // Actualizar información de contacto
+        const footerEmail = document.getElementById('footerEmail');
+        if (footerEmail) {
+            footerEmail.href = `mailto:${config.cliente.email}`;
+            footerEmail.textContent = config.cliente.email;
+        }
+
+        const footerTelefono = document.getElementById('footerTelefono');
+        if (footerTelefono) {
+            footerTelefono.href = `tel:${config.cliente.telefono.replace(/[^0-9+]/g, '')}`;
+            footerTelefono.textContent = config.cliente.telefono;
+        }
+
+        // Actualizar copyright
+        const footerCopyright = document.getElementById('footerCopyright');
+        if (footerCopyright) {
+            const anio = config.cliente.anioActual || new Date().getFullYear();
+            footerCopyright.innerHTML = `&copy; ${anio} <strong>${config.cliente.nombre}</strong>. Todos los derechos reservados.`;
+        }
+    });
+    </script>
+
+    <!-- MODAL CARRITO EXPANDIBLE -->
+    <div class="modal-carrito-overlay" id="carritoModal">
+        <div class="modal-carrito">
+            <div class="modal-carrito-header">
+                <h2>🛒 Tu Carrito</h2>
+                <button class="modal-carrito-close" id="closeCarrito" aria-label="Cerrar carrito">×</button>
+            </div>
+            
+            <div class="modal-carrito-body">
+                <!-- Mensaje si está vacío -->
+                <div class="carrito-vacio" id="carritoVacio">
+                    <div class="carrito-vacio-content">
+                        <p class="carrito-vacio-icon">🎯</p>
+                        <p class="carrito-vacio-titulo">Tu carrito está vacío</p>
+                        <p class="carrito-vacio-subtitulo">¡Comienza a seleccionar tus boletos favoritos!</p>
+                        <button class="btn btn-primary btn-carrito-comprar" id="btnIrAComprar">
+                            🎫 Ir a Comprar Boletos
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Lista de boletos seleccionados -->
+                <div class="carrito-lista" id="carritoLista" style="display: none;">
+                    <div class="carrito-items" id="carritoItems"></div>
+                </div>
+            </div>
+
+            <div class="modal-carrito-footer" id="carritoFooter">
+                <div class="carrito-resumen" id="carritoResumen">
+                    <div class="carrito-resumen-row">
+                        <div class="carrito-resumen-item">
+                            <span>Cantidad de boletos:</span>
+                            <strong id="carritoResumenCantidad">0</strong>
+                        </div>
+                        <button class="btn btn-danger btn-sm" id="btnLimpiarCarrito" title="Eliminar todos los boletos" aria-label="Eliminar todos los boletos del carrito">
+                            Limpiar carrito
+                        </button>
+                    </div>
+                    <div class="carrito-resumen-item">
+                        <span>Subtotal:</span>
+                        <strong id="carritoResumenSubtotal">$0</strong>
+                    </div>
+                    <div class="carrito-resumen-item">
+                        <span>Descuento:</span>
+                        <strong id="carritoResumenDescuento">$0</strong>
+                    </div>
+                    <div class="carrito-resumen-total">
+                        <span>Total:</span>
+                        <strong id="carritoResumenTotal">$0</strong>
+                    </div>
+                </div>
+
+                <div class="carrito-acciones carrito-acciones-bottom">
+                    <button class="btn btn-outline" id="btnSeguirComprando">Seguir comprando</button>
+                    <button class="btn btn-primary btn-lg" id="btnProcederCarrito" disabled>Proceder al pago</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL SELECCIONAR CUENTA DE PAGO -->
+    <div class="modal-overlay" id="modalSeleccionCuenta">
+        <div class="modal-contacto modal-contacto--small" role="dialog" aria-modal="true">
+            <div class="modal-header modal-header-center">
+                <h2>Selecciona la cuenta de pago de tu preferencia</h2>
+                <button class="modal-close" id="closeModalSeleccionCuenta" aria-label="Cerrar">×</button>
+            </div>
+            <div class="modal-body" style="padding:1.5rem; flex: 1; overflow-y: auto;">
+                <div id="cuentasLista">
+                    <!-- cuentas se inyectan aquí -->
+                </div>
+            </div>
+            <div class="modal-footer-contacto" style="justify-content:flex-end;">
+                <!-- Close button: use the × button in the header -->
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL LOADING -->
+    <div id="modalLoadingOrden" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; align-items: center; justify-content: center; flex-direction: column;">
+        <div style="background: white; padding: 40px; border-radius: 12px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.3);">
+            <div style="width: 60px; height: 60px; border: 4px solid #f0f0f0; border-top: 4px solid #7c3aed; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px;" id="spinnerOrden"></div>
+            <h3 style="margin: 0 0 10px 0; color: #333; font-size: 18px;">⏳ Apartando tu orden...</h3>
+            <p style="margin: 5px 0 15px 0; color: #666; font-size: 14px;">Por favor espera, esto puede tomar algunos segundos</p>
+            <p id="tiempoTranscurrido" style="margin: 0; color: #999; font-size: 12px;">Tiempo: 0s</p>
+        </div>
+        <style>
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+        </style>
+    </div>
+
+    <!-- MODAL ORDEN FORMAL -->
+    <div class="modal-orden-formal" id="modalOrdenFormal">
+        <div class="orden-formal-container">
+            <div class="orden-formal-header">
+                <h2>📄 Orden de Pago</h2>
+                <p style="font-size: 0.9rem; opacity: 0.9; margin-bottom: 8px;">✓ Te recomendamos descargar la orden de pago o tomarle captura de pantalla para tener evidencia de su compra</p>
+                <p>Después haga click en "Continuar" para guardar su orden en el sistema</p>
+                <button class="modal-close" id="closeOrdenFormal" aria-label="Cerrar">×</button>
+            </div>
+            <div class="orden-formal-content">
+                <div id="contenidoOrdenFormal">
+                    <!-- Se llena dinámicamente con JavaScript -->
+                </div>
+            </div>
+            <div class="orden-formal-footer">
+                <button class="btn btn-secondary" id="btnDescargarOrdenFormal">
+                    <i class="fas fa-download"></i> Descargar
+                </button>
+                <button class="btn btn-primary" id="btnContinuarOrdenFormal">
+                    <i class="fas fa-lock-open"></i> Apartar boletos
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botón Flotante: Subir Comprobante -->
+    <a href="mis-boletos.html" class="btn-flotante-comprobante" title="Subir comprobante de pago">
+        <i class="fas fa-cloud-upload-alt"></i>
+        <span class="btn-flotante-texto">Subir comprobante</span>
+    </a>
+
+</body>
+</html>

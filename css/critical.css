@@ -1,0 +1,16 @@
+/**
+ * Critical CSS Inline - Performance Optimization
+ * Contiene solo los estilos críticos para LCP
+ */
+
+/* Critical styles for above-the-fold content */
+:root{--primary:#0F3A7D;--primary-dark:#082860;--primary-light:#1B5FB8;--secondary:#E8563B;--text-dark:#1F2937;--text-light:#6B7280;--bg-light:#F9FAFB;--bg-white:#FFF;--border-color:#E5E7EB;--radius-lg:.75rem;--transition-fast:150ms ease}
+*{margin:0;padding:0;box-sizing:border-box}
+html{font-size:16px;scroll-behavior:smooth;-webkit-font-smoothing:antialiased}
+body{font-family:'Inter',sans-serif;color:var(--text-dark);background:#F9FAFB;line-height:1.6;width:100%;overflow-x:hidden}
+.header{position:sticky;top:0;z-index:100;background:var(--bg-white);box-shadow:0 1px 3px rgba(0,0,0,.1);will-change:transform}
+.container{max-width:1200px;margin:0 auto;padding:0 20px}
+.btn{display:inline-flex;align-items:center;justify-content:center;padding:.75rem 2rem;border:none;border-radius:var(--radius-lg);font-size:1rem;font-weight:600;cursor:pointer;transition:background-color var(--transition-fast);text-decoration:none;min-height:2.5rem}
+.btn-primary{background:var(--primary);color:white}
+.btn-primary:hover:not(:disabled){background:var(--primary-dark)}
+img{max-width:100%;height:auto;display:block}

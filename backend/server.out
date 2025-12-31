@@ -1,0 +1,181 @@
+⚙️  Configuración de expiración cargada:
+   - Tiempo apartado: 4 horas
+   - Intervalo limpieza: 5 minutos
+🚀 Servidor RifaPlus corriendo en puerto 5001
+📍 Ambiente: development
+
+╔════════════════════════════════════════════════════════╗
+║         🚀 SERVICIO DE EXPIRACIÓN INICIADO             ║
+╠════════════════════════════════════════════════════════╣
+║ Intervalo: 5 minutos                              
+║ Tiempo apartado: 4 horas                        
+║ Próxima ejecución: 2025-12-29T04:56:33.766Z
+╚════════════════════════════════════════════════════════╝
+
+[2025-12-29T04:51:35.768Z] 🔍 [ExpService] INICIANDO LIMPIEZA
+   Límite: 2025-12-29T00:51:35.768Z
+✅ [ExpService] No hay órdenes para limpiar
+🔐 [verificarToken] Authorization header: true
+🔐 [verificarToken] Token extraído: true
+🔐 [verificarToken] Longitud del token: 204
+🔐 [verificarToken] Primeros 20 caracteres: eyJhbGciOiJIUzI1NiIs
+❌ [verificarToken] Error al verificar: invalid signature
+🔐 [verificarToken] Authorization header: true
+🔐 [verificarToken] Token extraído: true
+🔐 [verificarToken] Longitud del token: 204
+🔐 [verificarToken] Primeros 20 caracteres: eyJhbGciOiJIUzI1NiIs
+❌ [verificarToken] Error al verificar: invalid signature
+🔐 [verificarToken] Authorization header: true
+🔐 [verificarToken] Token extraído: true
+🔐 [verificarToken] Longitud del token: 204
+🔐 [verificarToken] Primeros 20 caracteres: eyJhbGciOiJIUzI1NiIs
+❌ [verificarToken] Error al verificar: invalid signature
+🔐 [verificarToken] Authorization header: true
+🔐 [verificarToken] Token extraído: true
+🔐 [verificarToken] Longitud del token: 204
+🔐 [verificarToken] Primeros 20 caracteres: eyJhbGciOiJIUzI1NiIs
+❌ [verificarToken] Error al verificar: invalid signature
+🔐 [verificarToken] Authorization header: true
+🔐 [verificarToken] Token extraído: true
+🔐 [verificarToken] Longitud del token: 204
+🔐 [verificarToken] Primeros 20 caracteres: eyJhbGciOiJIUzI1NiIs
+❌ [verificarToken] Error al verificar: invalid signature
+
+[2025-12-29T04:56:33.757Z] 🔍 [ExpService] INICIANDO LIMPIEZA
+   Límite: 2025-12-29T00:56:33.757Z
+✅ [ExpService] No hay órdenes para limpiar
+🔐 [verificarToken] Authorization header: true
+🔐 [verificarToken] Token extraído: true
+🔐 [verificarToken] Longitud del token: 204
+🔐 [verificarToken] Primeros 20 caracteres: eyJhbGciOiJIUzI1NiIs
+❌ [verificarToken] Error al verificar: invalid signature
+
+[2025-12-29T05:01:33.714Z] 🔍 [ExpService] INICIANDO LIMPIEZA
+   Límite: 2025-12-29T01:01:33.714Z
+✅ [ExpService] No hay órdenes para limpiar
+🔐 [verificarToken] Authorization header: true
+🔐 [verificarToken] Token extraído: true
+🔐 [verificarToken] Longitud del token: 204
+🔐 [verificarToken] Primeros 20 caracteres: eyJhbGciOiJIUzI1NiIs
+❌ [verificarToken] Error al verificar: invalid signature
+🔐 [verificarToken] Authorization header: true
+🔐 [verificarToken] Token extraído: true
+🔐 [verificarToken] Longitud del token: 204
+🔐 [verificarToken] Primeros 20 caracteres: eyJhbGciOiJIUzI1NiIs
+❌ [verificarToken] Error al verificar: invalid signature
+🔐 [verificarToken] Authorization header: true
+🔐 [verificarToken] Token extraído: true
+🔐 [verificarToken] Longitud del token: 204
+🔐 [verificarToken] Primeros 20 caracteres: eyJhbGciOiJIUzI1NiIs
+❌ [verificarToken] Error al verificar: invalid signature
+🔐 [verificarToken] Authorization header: true
+🔐 [verificarToken] Token extraído: true
+🔐 [verificarToken] Longitud del token: 204
+🔐 [verificarToken] Primeros 20 caracteres: eyJhbGciOiJIUzI1NiIs
+❌ [verificarToken] Error al verificar: invalid signature
+🔐 [verificarToken] Authorization header: true
+🔐 [verificarToken] Token extraído: true
+🔐 [verificarToken] Longitud del token: 204
+🔐 [verificarToken] Primeros 20 caracteres: eyJhbGciOiJIUzI1NiIs
+❌ [verificarToken] Error al verificar: invalid signature
+🔐 [verificarToken] Authorization header: true
+🔐 [verificarToken] Token extraído: true
+🔐 [verificarToken] Longitud del token: 204
+🔐 [verificarToken] Primeros 20 caracteres: eyJhbGciOiJIUzI1NiIs
+❌ [verificarToken] Error al verificar: invalid signature
+🔐 [verificarToken] Authorization header: true
+🔐 [verificarToken] Token extraído: true
+🔐 [verificarToken] Longitud del token: 204
+🔐 [verificarToken] Primeros 20 caracteres: eyJhbGciOiJIUzI1NiIs
+❌ [verificarToken] Error al verificar: invalid signature
+
+[2025-12-29T05:06:33.703Z] 🔍 [ExpService] INICIANDO LIMPIEZA
+   Límite: 2025-12-29T01:06:33.703Z
+✅ [ExpService] No hay órdenes para limpiar
+🔐 [verificarToken] Authorization header: true
+🔐 [verificarToken] Token extraído: true
+🔐 [verificarToken] Longitud del token: 204
+🔐 [verificarToken] Primeros 20 caracteres: eyJhbGciOiJIUzI1NiIs
+❌ [verificarToken] Error al verificar: invalid signature
+🔐 [verificarToken] Authorization header: true
+🔐 [verificarToken] Token extraído: true
+🔐 [verificarToken] Longitud del token: 204
+🔐 [verificarToken] Primeros 20 caracteres: eyJhbGciOiJIUzI1NiIs
+❌ [verificarToken] Error al verificar: invalid signature
+🔐 [verificarToken] Authorization header: true
+🔐 [verificarToken] Token extraído: true
+🔐 [verificarToken] Longitud del token: 204
+🔐 [verificarToken] Primeros 20 caracteres: eyJhbGciOiJIUzI1NiIs
+❌ [verificarToken] Error al verificar: invalid signature
+🔐 [verificarToken] Authorization header: true
+🔐 [verificarToken] Token extraído: true
+🔐 [verificarToken] Longitud del token: 204
+🔐 [verificarToken] Primeros 20 caracteres: eyJhbGciOiJIUzI1NiIs
+❌ [verificarToken] Error al verificar: invalid signature
+🔐 [verificarToken] Authorization header: true
+🔐 [verificarToken] Token extraído: true
+🔐 [verificarToken] Longitud del token: 204
+🔐 [verificarToken] Primeros 20 caracteres: eyJhbGciOiJIUzI1NiIs
+❌ [verificarToken] Error al verificar: invalid signature
+🔐 [verificarToken] Authorization header: true
+🔐 [verificarToken] Token extraído: true
+🔐 [verificarToken] Longitud del token: 204
+🔐 [verificarToken] Primeros 20 caracteres: eyJhbGciOiJIUzI1NiIs
+❌ [verificarToken] Error al verificar: invalid signature
+🔐 [verificarToken] Authorization header: true
+🔐 [verificarToken] Token extraído: true
+🔐 [verificarToken] Longitud del token: 204
+🔐 [verificarToken] Primeros 20 caracteres: eyJhbGciOiJIUzI1NiIs
+❌ [verificarToken] Error al verificar: invalid signature
+🔐 [verificarToken] Authorization header: true
+🔐 [verificarToken] Token extraído: true
+🔐 [verificarToken] Longitud del token: 204
+🔐 [verificarToken] Primeros 20 caracteres: eyJhbGciOiJIUzI1NiIs
+❌ [verificarToken] Error al verificar: invalid signature
+
+[2025-12-29T05:11:33.692Z] 🔍 [ExpService] INICIANDO LIMPIEZA
+   Límite: 2025-12-29T01:11:33.692Z
+✅ [ExpService] No hay órdenes para limpiar
+🔐 [verificarToken] Authorization header: true
+🔐 [verificarToken] Token extraído: true
+🔐 [verificarToken] Longitud del token: 204
+🔐 [verificarToken] Primeros 20 caracteres: eyJhbGciOiJIUzI1NiIs
+❌ [verificarToken] Error al verificar: invalid signature
+🔐 [verificarToken] Authorization header: true
+🔐 [verificarToken] Token extraído: true
+🔐 [verificarToken] Longitud del token: 204
+🔐 [verificarToken] Primeros 20 caracteres: eyJhbGciOiJIUzI1NiIs
+❌ [verificarToken] Error al verificar: invalid signature
+🔐 [verificarToken] Authorization header: true
+🔐 [verificarToken] Token extraído: true
+🔐 [verificarToken] Longitud del token: 204
+🔐 [verificarToken] Primeros 20 caracteres: eyJhbGciOiJIUzI1NiIs
+❌ [verificarToken] Error al verificar: invalid signature
+🔐 [verificarToken] Authorization header: true
+🔐 [verificarToken] Token extraído: true
+🔐 [verificarToken] Longitud del token: 204
+🔐 [verificarToken] Primeros 20 caracteres: eyJhbGciOiJIUzI1NiIs
+❌ [verificarToken] Error al verificar: invalid signature
+
+[2025-12-29T05:16:33.673Z] 🔍 [ExpService] INICIANDO LIMPIEZA
+   Límite: 2025-12-29T01:16:33.673Z
+✅ [ExpService] No hay órdenes para limpiar
+🔐 [verificarToken] Authorization header: true
+🔐 [verificarToken] Token extraído: true
+🔐 [verificarToken] Longitud del token: 204
+🔐 [verificarToken] Primeros 20 caracteres: eyJhbGciOiJIUzI1NiIs
+❌ [verificarToken] Error al verificar: invalid signature
+🔐 [verificarToken] Authorization header: true
+🔐 [verificarToken] Token extraído: true
+🔐 [verificarToken] Longitud del token: 204
+🔐 [verificarToken] Primeros 20 caracteres: eyJhbGciOiJIUzI1NiIs
+❌ [verificarToken] Error al verificar: invalid signature
+
+[2025-12-29T05:21:33.662Z] 🔍 [ExpService] INICIANDO LIMPIEZA
+   Límite: 2025-12-29T01:21:33.662Z
+✅ [ExpService] No hay órdenes para limpiar
+🔐 [verificarToken] Authorization header: true
+🔐 [verificarToken] Token extraído: true
+🔐 [verificarToken] Longitud del token: 204
+🔐 [verificarToken] Primeros 20 caracteres: eyJhbGciOiJIUzI1NiIs
+❌ [verificarToken] Error al verificar: invalid signature

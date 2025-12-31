@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' http://127.0.0.1:* http://localhost:*; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://fonts.googleapis.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; connect-src 'self' http://127.0.0.1:* http://localhost:* https:; img-src 'self' data: https:;">
+    <title>Ruletazo - Admin Panel</title>
+    <link rel="icon" href="images/logo.png" sizes="32x32">
+    <link rel="preload" as="image" href="images/logo.png" fetchpriority="high">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/admin-layout.css?v=20251221">
+    <link rel="stylesheet" href="css/styles.css?v=20251128">
+    <link rel="stylesheet" href="css/admin-ruletazo.css">
+    <script>
+        (function limpiarCacheYFechas() {
+            ['rifaplus_fecha_sorteo','rifaplus_timestamp_sorteo','rifaplus_fecha_cierre'].forEach(k => localStorage.removeItem(k));
+        })();
+    </script>
+    <script src="js/config.js?v=20251228.15"></script>
+    <script src="js/theme-dynamic.js"></script>
+    <script src="js/ganadores.js?v=20251228.15"></script>
+    <script src="js/admin-layout.js?v=20251228.15"></script>
+    <style>
+        :root {
+            --primary: #7C3AED;
+            --primary-dark: #5a2abf;
+            --primary-light: #F3E9FF;
+            --success: #31A24C;
+            --danger: #E4163A;
+            --warning: #B4740C;
+            --text-dark: #0A0E27;
+            --text-light: #65676B;
+            --text-lighter: #8A8D91;
+            --bg-light: #F0F2F5;
+            --bg-white: #FFFFFF;
+            --border-color: #CED0D4;
+            --divider: #E5E7EB;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', 'Ubuntu', sans-serif;
+            background: #F8F9FA;
+            color: var(--text-dark);
+            line-height: 1.5;
+            font-size: 13px;
+        }
+
+        /* ===== HEADER ===== */
+        .header {
+            background: var(--bg-white);
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo-container {
+            width: 60px;
+            height: 60px;
+            border-radius: 0.75rem;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .logo-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .header-title {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header-title-main {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .header-title-sub {
+            font-size: 0.75rem;
+            color: var(--text-lighter);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .header-right {
+            display: flex;
+            gap: 0.75rem;
+            margin-left: auto;
+        }
+
+        .btn-panel,
+        .btn-logout {
+            padding: 0.6rem 1rem;
+            border: 1px solid var(--border-color);
+            background: var(--bg-white);
+            color: var(--text-dark);
+            border-radius: 0.375rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+        }
+
+        .btn-panel:hover {
+            background: var(--bg-light);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .btn-logout:hover {
+            background: #ffe0e0;
+            border-color: var(--danger);
+            color: var(--danger);
+        }
+
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- ADMIN HEADER -->
+    <div class="admin-header">
+        <div class="admin-header-content">
+            <div class="admin-header-left">
+                <div class="admin-logo-container">
+                    <img src="images/logo.png" alt="SORTEOS YEPE" class="admin-logo-img">
+                </div>
+                <div class="admin-header-title">
+                    <div class="admin-header-title-main">Panel Administrativo</div>
+                    <div class="admin-header-title-sub">SORTEOS YEPE</div>
+                </div>
+            </div>
+            <div class="admin-header-right">
+                <button class="admin-logout-btn" title="Cerrar sesión">
+                    <i class="fas fa-sign-out-alt"></i> <span>Cerrar Sesión</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADMIN SIDEBAR -->
+    <aside class="admin-sidebar" id="adminSidebar">
+        <div class="admin-sidebar-content">
+            <div class="admin-sidebar-section">
+                <div class="admin-sidebar-section-title">Navegación</div>
+                <a href="admin-dashboard.html" class="admin-nav-btn">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="admin-ordenes.html" class="admin-nav-btn">
+                    <i class="fas fa-clipboard-list"></i>
+                    <span>Órdenes</span>
+                </a>
+                <a href="admin-boletos.html" class="admin-nav-btn">
+                    <i class="fas fa-ticket-alt"></i>
+                    <span>Boletos</span>
+                </a>
+                <a href="admin-ruletazo.html" class="admin-nav-btn active">
+                    <i class="fas fa-dharmachakra"></i>
+                    <span>Ruletazo</span>
+                </a>
+            </div>
+            <div class="admin-sidebar-section">
+                <div class="admin-sidebar-section-title">Sistema</div>
+                <a href="admin-configuracion.html" class="admin-nav-btn">
+                    <i class="fas fa-cog"></i>
+                    <span>Configuración</span>
+                </a>
+                <a href="ayuda.html" class="admin-nav-btn">
+                    <i class="fas fa-question-circle"></i>
+                    <span>Ayuda</span>
+                </a>
+            </div>
+        </div>
+    </aside>
+
+    <!-- TOGGLE SIDEBAR BUTTON (MOBILE) -->
+    <button class="admin-sidebar-toggle" id="sidebarToggle">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- MAIN CONTENT -->
+    <div class="admin-main" id="adminMain">
+        <div class="container">
+            <!-- STATS SECTION -->
+            <div class="stats-section" id="statsSection" style="display: none;">
+                <div class="stat-card sorteo-name">
+                    <span class="stat-label"><i class="fas fa-trophy"></i> Sorteo</span>
+                    <span class="stat-value" id="rifaNombre">-</span>
+                </div>
+                <div class="stat-card total-boletos">
+                    <span class="stat-label"><i class="fas fa-hashtag"></i> Total Boletos</span>
+                    <span class="stat-value" id="rifaTotal">-</span>
+                </div>
+                <div class="stat-card vendidos">
+                    <span class="stat-label"><i class="fas fa-check"></i> Vendidos</span>
+                    <span class="stat-value" id="rifaVendidos">-</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label"><i class="fas fa-star"></i> Sorteados</span>
+                    <span class="stat-value" id="rifaSorteados">-</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label"><i class="fas fa-cube"></i> Disponibles</span>
+                    <span class="stat-value" id="rifaDisponibles">-</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label"><i class="fas fa-sliders-h"></i> Dígitos</span>
+                    <span class="stat-value" id="rifaDigitos">-</span>
+                </div>
+            </div>
+
+            <!-- MÁQUINA DE RULETA -->
+            <div class="machine-section" id="machineSection" style="display: none;">
+                <div class="machine-header">
+                    <div class="machine-header-content">
+                        <div class="machine-header-title">
+                            <i class="fas fa-dharmachakra"></i>
+                            Máquina de Ruleta
+                        </div>
+                        <span class="status-badge" id="machineStatus">Listo</span>
+                    </div>
+                </div>
+
+                <div class="machine-body">
+                    <!-- SELECTOR DE PARTICIPANTES (ACORDEÓN) -->
+                    <div class="participants-section">
+                        <button class="accordion-header" id="accordionBtn">
+                            <i class="fas fa-users"></i> Seleccionar Participantes
+                            <i class="fas fa-chevron-down accordion-icon"></i>
+                        </button>
+                        <div class="accordion-content" id="accordionContent">
+                            <div class="participants-options">
+                                <label class="participant-option">
+                                    <input type="radio" name="participants" value="all" class="participant-radio" checked>
+                                    <span class="option-label">
+                                        <span class="option-title">Todos</span>
+                                        <span class="option-desc">Todos los números del rango (<span id="allCount">0</span> números)</span>
+                                    </span>
+                                </label>
+                                <label class="participant-option">
+                                    <input type="radio" name="participants" value="sold" class="participant-radio">
+                                    <span class="option-label">
+                                        <span class="option-title">Vendidos</span>
+                                        <span class="option-desc">Solo números vendidos (<span id="soldCount">0</span> números)</span>
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- DÍGITOS ANIMADOS -->
+                    <div class="digit-display">
+                        <div class="digit-machine" id="digitMachine">
+                            <!-- Se genera dinámicamente -->
+                        </div>
+
+                        <!-- NÚMERO GANADOR -->
+                        <div class="winning-number-display" id="winningDisplay" style="display: none;">
+                            <div class="winning-label">¡NÚMERO GANADOR!</div>
+                            <div class="winning-number" id="winningNumber">-</div>
+                        </div>
+                    </div>
+
+                    <!-- CONTROLES -->
+                    <div class="controls-panel">
+                        <button id="testSpinBtn" class="btn btn-outline" title="Prueba una animación">
+                            <i class="fas fa-flask"></i> Probar Giro
+                        </button>
+                        <button id="performDrawBtn" class="btn btn-success btn-lg" disabled title="Realiza un sorteo oficial">
+                            <i class="fas fa-star"></i> SORTEAR NÚMERO
+                        </button>
+                        <button id="resetMachineBtn" class="btn btn-danger" title="Reinicia la máquina">
+                            <i class="fas fa-redo"></i> Reiniciar
+                        </button>
+                    </div>
+
+                    <div class="draw-info">
+                        <span id="drawCounter">Sorteo #1</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- HISTORIAL DE SORTEOS - ÚLTIMA CARD -->
+            <div class="history-section" id="historySection" style="display: none;">
+                <div class="history-header">
+                    <div class="history-header-content">
+                        <div class="history-header-title">
+                            <i class="fas fa-history"></i>
+                            Historial de Sorteos
+                        </div>
+                        <div class="history-controls">
+                            <button id="exportHistoryBtn" class="btn btn-sm btn-outline">
+                                <i class="fas fa-download"></i> Exportar
+                            </button>
+                            <button id="clearHistoryBtn" class="btn btn-sm btn-danger">
+                                <i class="fas fa-trash"></i> Limpiar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="history-body">
+                    <div class="history-list" id="historyList">
+                        <div class="history-empty">
+                            <i class="fas fa-inbox"></i>
+                            <p>No hay sorteos registrados aún</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DETALLES DE BOLETO -->
+    <div id="ticketModal" class="modal">
+        <div class="modal-content modal-lg">
+            <button class="modal-close" onclick="closeTicketModal()" style="position: absolute; top: 1rem; right: 1rem; z-index: 1001;">&times;</button>
+            <div class="modal-body" id="ticketModalBody">
+                <div class="spinner"><i class="fas fa-spinner fa-spin"></i> Cargando...</div>
+            </div>
+        </div>
+    </div>
+
+        <!-- NOTIFICACIONES -->
+        <div id="notificationContainer" class="notification-container"></div>
+    </div>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script src="js/admin-ruletazo.js"></script>
+
+    <!-- MODAL SELECCIONAR TIPO DE GANADOR -->
+    <div class="modal modal-overlay" id="modalSeleccionarGanador">
+        <div class="modal-content modal-ganador">
+            <div class="modal-header modal-header-center">
+                <h2>🏆 ¿Qué tipo de ganador es?</h2>
+                <button class="modal-close" id="closeModalGanador" aria-label="Cerrar">×</button>
+            </div>
+            
+            <div class="modal-body">
+                <div id="ganadesoresInfo" style="margin-bottom: 1.5rem; padding: 1rem; background: rgba(124, 58, 237, 0.1); border-radius: var(--radius-md);">
+                    <p style="margin: 0; font-weight: 600; color: var(--text-dark);">
+                        Boleto: <span id="ganadesoresNumero" style="color: var(--primary); font-size: 1.2rem;">-</span>
+                    </p>
+                </div>
+
+                <div id="tiposGanadores" class="tipos-ganadores-grid" style="display: grid; gap: 1rem;">
+                    <!-- Se genera dinámicamente con JavaScript -->
+                </div>
+            </div>
+
+            <div class="modal-footer modal-footer-ganador">
+                <button class="btn btn-outline" id="btnCancelarGanador">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL SELECCIONAR LUGAR DEL GANADOR -->
+    <div class="modal modal-overlay" id="modalSeleccionarLugar">
+        <div class="modal-content modal-ganador">
+            <div class="modal-header modal-header-center">
+                <h2>🏅 ¿En qué lugar quedó?</h2>
+                <button class="modal-close" id="closeModalLugar" aria-label="Cerrar">×</button>
+            </div>
+            
+            <div class="modal-body">
+                <div id="lugarInfo" style="margin-bottom: 1.5rem; padding: 1rem; background: rgba(124, 58, 237, 0.1); border-radius: var(--radius-md);">
+                    <p style="margin: 0; font-weight: 600; color: var(--text-dark);">
+                        Boleto: <span id="lugarNumero" style="color: var(--primary); font-size: 1.2rem;">-</span>
+                        | Tipo: <span id="lugarTipo" style="color: var(--primary); font-size: 1rem;">-</span>
+                    </p>
+                </div>
+
+                <div id="lugaresDisponibles" class="lugares-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 0.75rem;">
+                    <!-- Se genera dinámicamente con JavaScript -->
+                </div>
+            </div>
+
+            <div class="modal-footer modal-footer-ganador">
+                <button class="btn btn-outline" id="btnCancelarLugar">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .modal-ganador {
+            max-width: 500px;
+        }
+
+        .tipos-ganadores-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+
+        .tipo-ganador-card {
+            padding: 1.25rem;
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            text-align: center;
+            background: white;
+        }
+
+        .tipo-ganador-card:hover {
+            border-color: var(--primary);
+            background: rgba(124, 58, 237, 0.05);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(124, 58, 237, 0.15);
+        }
+
+        .tipo-ganador-card.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .tipo-ganador-icono {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .tipo-ganador-nombre {
+            font-weight: 700;
+            color: var(--text-dark);
+            font-size: 0.95rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .tipo-ganador-contador {
+            font-size: 0.8rem;
+            color: var(--text-light);
+        }
+
+        .tipo-ganador-contador span {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        /* Estilos para lugares */
+        .lugar-btn {
+            padding: 1rem;
+            border: 2px solid var(--border-color);
+            background: white;
+            color: var(--text-dark);
+            border-radius: 0.5rem;
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+
+        .lugar-btn:hover:not(:disabled) {
+            border-color: var(--primary);
+            background: rgba(124, 58, 237, 0.05);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(124, 58, 237, 0.15);
+        }
+
+        .lugar-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        @media (max-width: 480px) {
+            .tipos-ganadores-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .tipo-ganador-card {
+                padding: 1rem;
+            }
+
+            .tipo-ganador-icono {
+                font-size: 2rem;
+            }
+
+            .tipo-ganador-nombre {
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+
+    <script>
+        // Variables globales del modal
+        let ganadesoresModalNumero = null;
+        let ganadesoresModalCallback = null;
+
+        /**
+         * Abrir modal para seleccionar tipo de ganador
+         * @param {String|Number} numero - Número del boleto ganador
+         * @param {Function} callback - Función a ejecutar cuando se selecciona tipo
+         */
+        window.abrirModalSeleccionarGanador = function(numero, datosCliente, callback) {
+            // Manejo de parámetros - si el segundo parámetro es función, es el callback (backwards compatibility)
+            if (typeof datosCliente === 'function') {
+                callback = datosCliente;
+                datosCliente = {};
+            }
+
+            // Validar parámetros
+            numero = String(numero).trim();
+            if (!numero || isNaN(numero)) {
+                console.error('❌ Número inválido');
+                return;
+            }
+
+            // Guardar estado
+            ganadesoresModalNumero = numero;
+            ganadesoresModalCallback = callback;
+            window.ganadesoresModalDatosCliente = datosCliente || {};
+
+            // Verificar si el número ya es ganador
+            const ganadorExistente = window.GanadoresManager.verificarGanador(numero);
+            if (ganadorExistente) {
+                alert(`⚠️  El número ${numero} ya es ganador de tipo "${ganadorExistente.tipo}"`);
+                return;
+            }
+
+            // Actualizar UI
+            document.getElementById('ganadesoresNumero').textContent = numero;
+
+            // Generar opciones de tipos
+            generarOpciones();
+
+            // Mostrar modal
+            const modal = document.getElementById('modalSeleccionarGanador');
+            if (modal) {
+                modal.classList.add('active');
+            }
+        };
+
+        /**
+         * Generar tarjetas con tipos de ganadores disponibles
+         */
+        function generarOpciones() {
+            const contenedor = document.getElementById('tiposGanadores');
+            contenedor.innerHTML = '';
+
+            const config = window.GanadoresManager.getConfig();
+            const ganadores = window.GanadoresManager.cargarGanadores();
+            const tipos = ['sorteo', 'presorteo', 'ruletazos'];
+
+            tipos.forEach(tipo => {
+                const cantidad = config[tipo];
+                const registrados = ganadores[tipo].length;
+                const completo = registrados >= cantidad;
+
+                const card = document.createElement('div');
+                card.className = `tipo-ganador-card ${completo ? 'disabled' : ''}`;
+                card.innerHTML = `
+                    <span class="tipo-ganador-icono">${window.GanadoresManager.getIconoTipo(tipo)}</span>
+                    <div class="tipo-ganador-nombre">${window.GanadoresManager.getEtiquetaTipo(tipo).split(' ')[1] || 'Ganador'}</div>
+                    <div class="tipo-ganador-contador"><span>${registrados}</span>/${cantidad}</div>
+                `;
+
+                if (!completo) {
+                    card.addEventListener('click', () => {
+                        seleccionarTipo(tipo);
+                    });
+                }
+
+                contenedor.appendChild(card);
+            });
+        }
+
+        /**
+         * Procesar selección de tipo de ganador
+         * @param {String} tipo - Tipo seleccionado
+         */
+        function seleccionarTipo(tipo) {
+            if (!ganadesoresModalNumero || !tipo) {
+                console.error('❌ Datos inválidos');
+                return;
+            }
+
+            // Guardar info para el modal de lugar
+            window.lugarModalNumero = ganadesoresModalNumero;
+            window.lugarModalTipo = tipo;
+            window.lugarModalDatosCliente = window.ganadesoresModalDatosCliente || {};
+            window.lugarModalCallback = ganadesoresModalCallback;
+
+            // Cerrar modal de tipo
+            cerrarModalSeleccionarGanador();
+
+            // Abrir modal de lugar
+            generarOpcionesLugar(tipo);
+            const modalLugar = document.getElementById('modalSeleccionarLugar');
+            if (modalLugar) {
+                modalLugar.classList.add('active');
+            }
+        }
+
+        /**
+         * Generar opciones de lugares disponibles
+         */
+        function generarOpcionesLugar(tipo) {
+            console.log('📋 Generando opciones de lugares...');
+            const contenedor = document.getElementById('lugaresDisponibles');
+            if (!contenedor) {
+                console.error('❌ Contenedor de lugares no encontrado');
+                return;
+            }
+            contenedor.innerHTML = '';
+
+            if (!window.GanadoresManager) {
+                console.error('❌ GanadoresManager no disponible');
+                return;
+            }
+
+            // Actualizar info del modal
+            document.getElementById('lugarNumero').textContent = window.lugarModalNumero;
+            document.getElementById('lugarTipo').textContent = window.GanadoresManager.getEtiquetaTipo(tipo);
+
+            // Obtener config para saber cuántos lugares hay
+            const config = window.GanadoresManager.getConfig();
+            const maxLugares = config[tipo] || 1;
+
+            // Obtener ganadores actuales del tipo para saber qué lugares están ocupados
+            const ganadores = window.GanadoresManager.cargarGanadores();
+            const lugaresOcupados = (ganadores[tipo] || []).map(g => g.lugarGanado).filter(Boolean);
+
+            console.log(`📊 Tipo: ${tipo}, Max lugares: ${maxLugares}, Lugares ocupados:`, lugaresOcupados);
+
+            // Generar botones para cada lugar
+            for (let lugar = 1; lugar <= maxLugares; lugar++) {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'lugar-btn';
+                btn.textContent = formatarLugarOrdenal(lugar);
+                btn.disabled = lugaresOcupados.includes(lugar);
+                btn.onclick = () => seleccionarLugar(lugar);
+                contenedor.appendChild(btn);
+            }
+
+            console.log('✅ Opciones de lugares generadas');
+        }
+
+        /**
+         * Formatear número a ordinal (1er, 2do, 3er, etc)
+         */
+        function formatarLugarOrdenal(num) {
+            const sufijos = {
+                1: 'er',
+                2: 'do',
+                3: 'er',
+                4: 'to',
+                5: 'to',
+                6: 'to',
+                7: 'mo',
+                8: 'vo',
+                9: 'no',
+                10: '°'
+            };
+            
+            if (num <= 10) {
+                return `${num}${sufijos[num] || 'o'} 🥇`;
+            } else {
+                return `${num}° 🥇`;
+            }
+        }
+
+        /**
+         * Procesar selección de lugar
+         * @param {Number} lugar - Lugar seleccionado
+         */
+        function seleccionarLugar(lugar) {
+            console.log('🎯 Seleccionando lugar:', lugar);
+
+            if (!window.lugarModalNumero || !window.lugarModalTipo || isNaN(lugar)) {
+                console.error('❌ Datos inválidos');
+                return;
+            }
+
+            // Agregar ganador con lugar
+            const resultado = window.GanadoresManager.agregarGanador(
+                window.lugarModalNumero,
+                window.lugarModalTipo,
+                window.lugarModalDatosCliente,
+                lugar
+            );
+
+            if (resultado.exito) {
+                console.log('✅', resultado.mensaje);
+                
+                // Ejecutar callback si existe
+                if (typeof window.lugarModalCallback === 'function') {
+                    window.lugarModalCallback(window.lugarModalNumero, window.lugarModalTipo, true);
+                }
+
+                // Mostrar feedback
+                alert(resultado.mensaje);
+
+                // Cerrar modal
+                window.cerrarModalSeleccionarLugar();
+            } else {
+                console.error('❌', resultado.mensaje);
+                alert(resultado.mensaje);
+            }
+        }
+
+        /**
+         * Cerrar modal de lugar
+         */
+        window.cerrarModalSeleccionarLugar = function() {
+            console.log('❌ Cerrando modal de lugar...');
+            const modal = document.getElementById('modalSeleccionarLugar');
+            if (modal) {
+                modal.classList.remove('active');
+            }
+            window.lugarModalNumero = null;
+            window.lugarModalTipo = null;
+            window.lugarModalDatosCliente = null;
+            window.lugarModalCallback = null;
+        };
+
+        /**
+         * Cerrar modal
+         */
+        function cerrarModalSeleccionarGanador() {
+            const modal = document.getElementById('modalSeleccionarGanador');
+            if (modal) {
+                modal.classList.remove('active');
+            }
+            ganadesoresModalNumero = null;
+            ganadesoresModalCallback = null;
+        }
+
+        // Event listeners del modal
+        document.addEventListener('DOMContentLoaded', function() {
+            const closeBtn = document.getElementById('closeModalGanador');
+            const cancelBtn = document.getElementById('btnCancelarGanador');
+            const modal = document.getElementById('modalSeleccionarGanador');
+
+            if (closeBtn) {
+                closeBtn.addEventListener('click', cerrarModalSeleccionarGanador);
+            }
+
+            if (cancelBtn) {
+                cancelBtn.addEventListener('click', cerrarModalSeleccionarGanador);
+            }
+
+            if (modal) {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === modal) {
+                        cerrarModalSeleccionarGanador();
+                    }
+                });
+            }
+
+            // Cerrar con ESC
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && modal && modal.classList.contains('active')) {
+                    cerrarModalSeleccionarGanador();
+                }
+            });
+
+            // Event listeners del modal de lugar
+            const closeLugarBtn = document.getElementById('closeModalLugar');
+            const cancelLugarBtn = document.getElementById('btnCancelarLugar');
+            const modalLugar = document.getElementById('modalSeleccionarLugar');
+
+            if (closeLugarBtn) {
+                closeLugarBtn.addEventListener('click', window.cerrarModalSeleccionarLugar);
+            }
+
+            if (cancelLugarBtn) {
+                cancelLugarBtn.addEventListener('click', window.cerrarModalSeleccionarLugar);
+            }
+
+            if (modalLugar) {
+                modalLugar.addEventListener('click', function(e) {
+                    if (e.target === modalLugar) {
+                        window.cerrarModalSeleccionarLugar();
+                    }
+                });
+            }
+
+            // Cerrar modal de lugar con ESC
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && modalLugar && modalLugar.classList.contains('active')) {
+                    window.cerrarModalSeleccionarLugar();
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>
