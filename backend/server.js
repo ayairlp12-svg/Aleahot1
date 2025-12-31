@@ -1340,7 +1340,7 @@ app.get('/api/boletos/cleanup-orphaned', async (req, res) => {
         // Paso 1: Contar cuántos hay
         const resultado = await db.raw(`
             SELECT COUNT(*) as total FROM boletos_estado
-            WHERE estado = 'reservado'
+            WHERE estado = 'apartado'
             AND (
               numero_orden IS NULL
               OR NOT EXISTS (
@@ -1370,7 +1370,7 @@ app.get('/api/boletos/cleanup-orphaned', async (req, res) => {
                 numero_orden = NULL,
                 reservado_en = NULL,
                 updated_at = NOW()
-            WHERE estado = 'reservado'
+            WHERE estado = 'apartado'
             AND (
               numero_orden IS NULL
               OR NOT EXISTS (
@@ -1413,8 +1413,8 @@ app.get('/api/boletos/sync-full', async (req, res) => {
     try {
         console.log('\n=== SINCRONIZACIÓN COMPLETA DE BOLETOS_ESTADO ===\n');
 
-        // PASO 1: Limpiar boletos reservados huérfanos
-        console.log('1️⃣  Limpiando boletos reservados sin orden válida...');
+        // PASO 1: Limpiar boletos apartados huérfanos
+        console.log('1️⃣  Limpiando boletos apartados sin orden válida...');
         
         const liberarHuerfanos = await db.raw(`
             UPDATE boletos_estado
@@ -1422,7 +1422,7 @@ app.get('/api/boletos/sync-full', async (req, res) => {
                 numero_orden = NULL,
                 reservado_en = NULL,
                 updated_at = NOW()
-            WHERE estado = 'reservado'
+            WHERE estado = 'apartado'
             AND (
               numero_orden IS NULL
               OR NOT EXISTS (
@@ -3974,7 +3974,7 @@ app.post('/api/admin/cleanup-boletos', async (req, res) => {
         // Paso 1: Contar cuántos hay
         const resultado = await db.raw(`
             SELECT COUNT(*) as total FROM boletos_estado
-            WHERE estado = 'reservado'
+            WHERE estado = 'apartado'
             AND (
               numero_orden IS NULL
               OR NOT EXISTS (
@@ -4004,7 +4004,7 @@ app.post('/api/admin/cleanup-boletos', async (req, res) => {
                 numero_orden = NULL,
                 reservado_en = NULL,
                 updated_at = NOW()
-            WHERE estado = 'reservado'
+            WHERE estado = 'apartado'
             AND (
               numero_orden IS NULL
               OR NOT EXISTS (

@@ -11,8 +11,8 @@ exports.up = function(knex) {
     // Número del boleto: llave natural
     table.integer('numero').notNullable().unique();
     
-    // Estado del boleto: 'disponible', 'reservado', 'vendido', 'cancelado'
-    table.enum('estado', ['disponible', 'reservado', 'vendido', 'cancelado']).notNullable().defaultTo('disponible');
+    // Estado del boleto: 'disponible', 'apartado', 'vendido', 'cancelado'
+    table.enum('estado', ['disponible', 'apartado', 'vendido', 'cancelado']).notNullable().defaultTo('disponible');
     
     // Referencia a la orden (si está reservado/vendido)
     table.string('numero_orden', 50).nullable();

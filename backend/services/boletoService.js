@@ -262,7 +262,7 @@ class BoletoService {
           const actualizados = await trx('boletos_estado')
             .whereIn('numero', batch)
             .update({
-              estado: 'reservado',
+              estado: 'apartado',
               numero_orden: ordenId,
               reservado_en: ahora,
               updated_at: ahora
@@ -314,7 +314,7 @@ class BoletoService {
     try {
       const resultado = await db('boletos_estado')
         .where('numero_orden', ordenId)
-        .where('estado', 'reservado')
+        .where('estado', 'apartado')
         .update({
           estado: 'vendido',
           vendido_en: new Date(),
