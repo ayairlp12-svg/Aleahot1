@@ -270,6 +270,13 @@ async function cargarBoletosPublicos() {
                         console.debug(`✅ INSTANTÁNEO: ${data.disponibles} boletos disponibles (${data.queryTime}ms)`);
                     }
                     
+                    // 🚀 CRÍTICO: Marcar como cargado una vez que /stats responde
+                    // Esto permite que el botón de generar se habilite aunque Web Worker siga procesando
+                    window.rifaplusBoletosLoaded = true;
+                    if (typeof actualizarEstadoBotonGenerar === 'function') {
+                        actualizarEstadoBotonGenerar();
+                    }
+                    
                     // Actualizar estado global para mostrar porcentaje
                     if (window.rifaplusConfig && window.rifaplusConfig.estado) {
                         window.rifaplusConfig.estado.boletosVendidos = data.vendidos;
