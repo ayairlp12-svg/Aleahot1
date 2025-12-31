@@ -246,9 +246,14 @@ async function cargarBoletosPublicos() {
         console.debug('📊 Cargando stats de disponibilidad...');
         
         try {
+            const statsController = new AbortController();
+            const statsTimeoutId = setTimeout(() => statsController.abort(), 2000);
+            
             const statsResponse = await fetch(`${endpoint}/api/public/boletos/stats`, {
-                signal: AbortSignal.timeout(2000) // 2 segundos timeout
+                signal: statsController.signal // Compatible con iPhone X
             });
+            
+            clearTimeout(statsTimeoutId);
             
             if (statsResponse.ok) {
                 const statsData = await statsResponse.json();
@@ -267,9 +272,9 @@ async function cargarBoletosPublicos() {
                     
                     // Actualizar estado global para mostrar porcentaje
                     if (window.rifaplusConfig && window.rifaplusConfig.estado) {
-                        window.rifaplusConfig.estado.boletosVendidos = statsData.data.vendidos;
-                        window.rifaplusConfig.estado.boletosApartados = statsData.data.reservados;
-                        window.rifaplusConfig.estado.boletosDisponibles = statsData.data.disponibles;
+                        window.rifaplusConfig.estado.boletosVendidos = data.vendidos;
+                        window.rifaplusConfig.estado.boletosApartados = data.reservados;
+                        window.rifaplusConfig.estado.boletosDisponibles = data.disponibles;
                     }
                 }
             }
