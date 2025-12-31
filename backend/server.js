@@ -183,6 +183,11 @@ app.use('/public', express.static(path.join(__dirname, 'public')));
 // Servir archivos HTML del frontend desde la raíz
 app.use(express.static(path.join(__dirname, '..')));
 
+// Ruta catch-all para SPA: si no encuentra un archivo, sirve index.html
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'index.html'));
+});
+
 /**
  * Middleware: Verificar JWT
  * Usado en endpoints protegidos (/api/admin/*, /api/ordenes POST, PATCH, etc.)
