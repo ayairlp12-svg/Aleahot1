@@ -32,17 +32,17 @@ Object.assign(window.rifaplusConfig, {
      * Incluye identidad visual, contacto y redes sociales
      */
     cliente: {
-        id: "Sorteos_El_Trebol",
-        nombre: "SORTEOS EL TREBOL",
-        eslogan: "La suerte siempre de nuestro lado",
+        id: "Sorteos_Torres",
+        nombre: "SORTEOS Torres",
+        eslogan: "La mejor forma de ganar",
         logo: "images/logo.png",
         imagenPrincipal: "images/ImgPrincipal.png",
         nombreSorteo: "2da Edicion RAM 700 2025",
         colorPrimario: "#080808ff",
         colorSecundario: "#000000ff", 
-        telefono: "459 115 3960",
-        email: "ayairlp12@gmail.com",
-        anioActual: 2025,
+        telefono: "434 106 8932",
+        email: "joseayair16@gmail.com",
+        anioActual: 2026,
         redesSociales: {
             facebook: "https://www.facebook.com/profile.php?id=100008315310869&locale=es_LA",
             facebookUsuario: "Ayair LP",
@@ -151,12 +151,12 @@ Object.assign(window.rifaplusConfig, {
      * Incluye premio, fechas, precios y promociones
      */
     rifa: {
-        titulo: "RAM 700 2025 - 2da Edición de Rifas el Trebol",
-        descripcion: "Llevatela este 6 de enero, completamente nueva 0 kilometros",
+        titulo: "Edicion No. 12 Sorteos Torres - Honda CR-V 2025 por tan solo $2.00 pesitos.",
+        descripcion: "Ademas, el segundo lugar se lleva 150,000 pesos en efectivo, habra presorteo asi como de 10 ruletazos de $1,000 c/u.",
         premios: [
             {
-                nombre: "RAM 700 2025",
-                descripcion: "RAM 700 2025 - COLOR NEGRO BRILLANTE LA MAS EQUIPADA",
+                nombre: "Honda CR-V 2025",
+                descripcion: "Honda CR-V 2025 - Nuevecita color blanca con todo y accesorios.",
                 imagenes: [
                     "images/ImgPrincipal.png",
                     "images/frontal.jpg",
@@ -164,13 +164,13 @@ Object.assign(window.rifaplusConfig, {
                 ]
             }
         ],
-        fechaSorteo: "2026-01-06T20:00:00-06:00",
-        fechaSorteoFormato: "06 de Enero del 2026",
+        fechaSorteo: "2026-01-16T20:00:00-06:00",
+        fechaSorteoFormato: "16 de Enero del 2026",
         horaSorteo: "8:00 PM",
         zonaHoraria: "Hora Centro México",
         modalidadSorteo: "Transmisión en Vivo por Facebook",
-        totalBoletos: 60000,
-        precioBoleto: 15,
+        totalBoletos: 1000000,
+        precioBoleto: 4,
         
         // ===== CONFIGURACIÓN DE EXPIRACIÓN DE ÓRDENES =====
         // ⚠️  IMPORTANTE: Estos valores se usan en:
@@ -194,17 +194,64 @@ Object.assign(window.rifaplusConfig, {
         // (por si necesitas un límite diferente al total)
         maxBoletosApartadosSinPago: null,  // null = sin límite
         
-        // Rangos de 2,000 boletos cada uno
+        // Rangos de 200,000 boletos cada uno (cobertura total 0-999,999)
         rangos: [
-            { id: 'A', nombre: '00001-20,000', inicio: 1, fin: 20000 },
-            { id: 'B', nombre: '20,001-40000', inicio: 20001, fin: 40000 },
-            { id: 'C', nombre: '40,001-60,000', inicio: 40001, fin: 60000 }
+            { id: 'A', nombre: '0-99,999', inicio: 0, fin: 99999 },
+            { id: 'B', nombre: '100,000-199,999', inicio: 100000, fin: 199999 },
+            { id: 'C', nombre: '200,000-299,999', inicio: 200000, fin: 299999 },
+            { id: 'D', nombre: '300,000-399,999', inicio: 300000, fin: 399999 },
+            { id: 'E', nombre: '400,000-499,999', inicio: 400000, fin: 499999 }
+           
         ],
         
-        promociones: [
-            { cantidad: 10, precio: 130, ahorro: 20 },
-            { cantidad: 20, precio: 250, ahorro: 50 }
-        ],
+        // ===== CONFIGURACIÓN DE DESCUENTOS (PRECIOS REDUCIDOS POR VOLUMEN) =====
+        // Habilita/deshabilita descuentos automáticos por cantidad de boletos comprados
+        descuentos: {
+            enabled: false,  // true para activar, false para desactivar
+            reglas: [
+                { cantidad: 10, precio: 35, ahorro: 5 },
+                { cantidad: 20, precio: 70, ahorro: 10 },
+                { cantidad: 50, precio: 175, ahorro: 25 },
+                { cantidad: 100, precio: 350, ahorro: 50 }
+            ]
+        },
+
+        // ===== CONFIGURACIÓN DE OPORTUNIDADES (BOLETOS GRATIS SORPRESA) =====
+        // Asigna boletos extras automáticamente cuando el cliente compra
+        // Completamente configurable: 1 boleto → 8 oportunidades, etc.
+        // Se puede usar CON o SIN promociones
+        oportunidades: {
+            enabled: true,  // true para habilitar, false para deshabilitar
+            rango_visible: { inicio: 0, fin: 499999 },      // Boletos que ve el cliente
+            rango_oculto: { inicio: 500000, fin: 999999 },  // Pool de oportunidades
+            tipo: 'fijo',  // 'dinamico' o 'fijo'
+            
+            // OPCIÓN 1: 'dinamico' - Oportunidades basadas en cantidad de boletos comprados
+            // Ej: compra 1 boleto → 1 oportunidad, compra 10 → 20 oportunidades, etc.
+            // condiciones_dinamicas: [
+            //     {
+            //         cantidad_boletos_minima: 1,
+            //         cantidad_boletos_maxima: 10,
+            //         oportunidades_por_boleto: 1  // 1 boleto comprado = 1 oportunidad
+            //     },
+            //     {
+            //         cantidad_boletos_minima: 11,
+            //         cantidad_boletos_maxima: 50,
+            //         oportunidades_por_boleto: 2  // 11 boletos = 22 oportunidades
+            //     },
+            //     {
+            //         cantidad_boletos_minima: 51,
+            //         cantidad_boletos_maxima: 999999,
+            //         oportunidades_por_boleto: 3  // 51+ boletos = 153+ oportunidades
+            //     }
+            // ],
+
+            // OPCIÓN 2: 'fijo' - Número fijo de oportunidades sin importar cantidad
+            // Descomenta la siguiente línea si prefieres número fijo:
+            oportunidades_por_boleto: 1,  // 1 oportunidad por cada boleto comprado, sin importar cantidad total
+
+            mensajeOportunidad: "¡Felicidades! Se asignaron %oportunidades% boleto(s) de SORPRESA al azar"
+        },
 
         // ===== CONFIGURACIÓN DE BONOS =====
         // Habilita/deshabilita la sección de bonos y define los bonos disponibles
@@ -252,9 +299,9 @@ Object.assign(window.rifaplusConfig, {
         // - Con presorteos: {sorteo: 3, presorteo: 5, ruletazos: 0}
         // - Completo: {sorteo: 3, presorteo: 5, ruletazos: 2}
         ganadores: {
-            sorteo: 1,           // Ganador principal, 2do y 3er lugar (0 para deshabilitar)
-            presorteo: 0,        // Ganadores de presorteos/rifas previas (0 para deshabilitar)
-            ruletazos: 5         // Ganadores de ruletazos (0 para deshabilitar)
+            sorteo: 2,           // Ganador principal, 2do y 3er lugar (0 para deshabilitar)
+            presorteo: 2,        // Ganadores de presorteos/rifas previas (0 para deshabilitar)
+            ruletazos: 10         // Ganadores de ruletazos (0 para deshabilitar)
         },
 
         // Información del sorteo (configurable, aparece en tarjetas)
@@ -363,7 +410,7 @@ Object.assign(window.rifaplusConfig, {
                 return `http://127.0.0.1:${this.puerto}`;
             }
             // En producción (Netlify) → usar Render
-            return 'https://rifas-web-1.onrender.com';
+            return 'http://localhost:5001';
         },
         endpoints: {
             ordenes: '/api/ordenes',
@@ -434,7 +481,7 @@ Object.assign(window.rifaplusConfig, {
     estado: {
         boletosVendidos: 0,
         boletosApartados: 0,
-        boletosDisponibles: 500,
+        boletosDisponibles: 0,
         porcentajeVendido: 0,
         ultimaActualizacion: null
     }
@@ -1631,3 +1678,229 @@ window.addEventListener('ganadesoresActualizados', function(e) {
 
 console.log('✅ [Config] Sistema centralizado de fecha del sorteo inicializado');
 console.log('✅ [Config] Sistema de sincronización de ganadores inicializado');
+
+/**
+ * ============================================================
+ * SISTEMA DINÁMICO DE DESCUENTOS Y OPORTUNIDADES
+ * ============================================================
+ * 
+ * Métodos helper para calcular dinámicamente:
+ * - Descuentos por volumen
+ * - Oportunidades (boletos sorpresa)
+ */
+
+/**
+ * Calcula el descuento aplicable según cantidad de boletos
+ * Basado en las reglas definidas en config.rifa.descuentos
+ * 
+ * @param {number} cantidadBoletos - Cantidad de boletos a comprar
+ * @param {number} precioUnitario - Precio por boleto
+ * @returns {object} { descuentoAplicable, monto, porcentaje, subtotal, total }
+ */
+window.rifaplusConfig.calcularDescuento = function(cantidadBoletos, precioUnitario = null) {
+    precioUnitario = precioUnitario || this.rifa.precioBoleto;
+    
+    // Si descuentos no están habilitados
+    if (!this.rifa.descuentos || !this.rifa.descuentos.enabled) {
+        return {
+            descuentoAplicable: false,
+            monto: 0,
+            porcentaje: 0,
+            subtotal: cantidadBoletos * precioUnitario,
+            total: cantidadBoletos * precioUnitario,
+            mensaje: 'Sin descuento'
+        };
+    }
+
+    const subtotal = cantidadBoletos * precioUnitario;
+    
+    // Buscar la regla que aplique
+    for (const regla of this.rifa.descuentos.reglas) {
+        if (cantidadBoletos >= regla.cantidad_minima && 
+            cantidadBoletos <= regla.cantidad_maxima) {
+            
+            let montoDescuento = 0;
+            let porcentajeDescuento = 0;
+
+            if (this.rifa.descuentos.tipo === 'porcentaje') {
+                porcentajeDescuento = regla.descuento;
+                montoDescuento = Math.floor((subtotal * porcentajeDescuento) / 100);
+            } else if (this.rifa.descuentos.tipo === 'cantidad') {
+                montoDescuento = regla.descuento * cantidadBoletos;
+                porcentajeDescuento = Math.round((montoDescuento / subtotal) * 100);
+            }
+
+            return {
+                descuentoAplicable: true,
+                monto: montoDescuento,
+                porcentaje: porcentajeDescuento,
+                subtotal: subtotal,
+                total: subtotal - montoDescuento,
+                regla: regla,
+                mensaje: `Descuento de ${porcentajeDescuento}% aplicado`
+            };
+        }
+    }
+
+    // Si no hay regla que aplique
+    return {
+        descuentoAplicable: false,
+        monto: 0,
+        porcentaje: 0,
+        subtotal: subtotal,
+        total: subtotal,
+        mensaje: 'Sin descuento aplicable'
+    };
+};
+
+/**
+ * Calcula las oportunidades (boletos sorpresa) según cantidad de boletos comprados
+ * Basado en las reglas definidas en config.rifa.oportunidades
+ * 
+ * @param {number} cantidadBoletos - Cantidad de boletos a comprar
+ * @returns {object} { cantidad, regla, esValido, mensaje }
+ */
+window.rifaplusConfig.calcularOportunidades = function(cantidadBoletos) {
+    // Si oportunidades no están habilitadas
+    if (!this.rifa.oportunidades || !this.rifa.oportunidades.enabled) {
+        return {
+            cantidad: 0,
+            regla: null,
+            esValido: true,
+            mensaje: 'Oportunidades deshabilitadas'
+        };
+    }
+
+    // TIPO FIJO: Siempre la misma cantidad
+    if (this.rifa.oportunidades.tipo === 'fijo' && this.rifa.oportunidades.oportunidades_fijas) {
+        return {
+            cantidad: this.rifa.oportunidades.oportunidades_fijas,
+            regla: null,
+            esValido: true,
+            tipo: 'fijo',
+            mensaje: `Se asignarán ${this.rifa.oportunidades.oportunidades_fijas} boleto(s) sorpresa`
+        };
+    }
+
+    // TIPO DINÁMICO: Basado en cantidad de boletos
+    if (this.rifa.oportunidades.tipo === 'dinamico' && this.rifa.oportunidades.condiciones_dinamicas) {
+        for (const condicion of this.rifa.oportunidades.condiciones_dinamicas) {
+            if (cantidadBoletos >= condicion.cantidad_boletos_minima && 
+                cantidadBoletos <= condicion.cantidad_boletos_maxima) {
+                
+                const cantidadOportunidades = cantidadBoletos * condicion.oportunidades_por_boleto;
+                
+                // Validar que no exceda el rango disponible
+                const rangoDisponible = (this.rifa.oportunidades.rango_oculto.fin - 
+                                        this.rifa.oportunidades.rango_oculto.inicio + 1);
+                
+                if (cantidadOportunidades > rangoDisponible) {
+                    return {
+                        cantidad: 0,
+                        regla: condicion,
+                        esValido: false,
+                        mensaje: `No hay suficientes oportunidades disponibles (${cantidadOportunidades} > ${rangoDisponible})`
+                    };
+                }
+
+                return {
+                    cantidad: cantidadOportunidades,
+                    regla: condicion,
+                    esValido: true,
+                    tipo: 'dinamico',
+                    mensaje: `Se asignarán ${cantidadOportunidades} boleto(s) sorpresa (${condicion.oportunidades_por_boleto}x por boleto comprado)`
+                };
+            }
+        }
+    }
+
+    // Sin oportunidades aplicables
+    return {
+        cantidad: 0,
+        regla: null,
+        esValido: true,
+        mensaje: 'No hay oportunidades aplicables'
+    };
+};
+
+/**
+ * Calcula el resumen COMPLETO de una compra incluyendo descuentos y oportunidades
+ * Esta es la función PRINCIPAL que usa el carrito
+ * 
+ * @param {number} cantidadBoletos - Cantidad de boletos a comprar
+ * @param {number} precioUnitario - Precio por boleto (opcional, usa config.rifa.precioBoleto)
+ * @returns {object} Resumen completo de la compra
+ */
+window.rifaplusConfig.calcularResumenCompra = function(cantidadBoletos, precioUnitario = null) {
+    precioUnitario = precioUnitario || this.rifa.precioBoleto;
+    
+    // Calcular descuentos
+    const descuento = this.calcularDescuento(cantidadBoletos, precioUnitario);
+    
+    // Calcular oportunidades
+    const oportunidades = this.calcularOportunidades(cantidadBoletos);
+    
+    // Resumen completo
+    return {
+        cantidadBoletos: cantidadBoletos,
+        precioUnitario: precioUnitario,
+        subtotal: descuento.subtotal,
+        descuento: {
+            aplicado: descuento.descuentoAplicable,
+            monto: descuento.monto,
+            porcentaje: descuento.porcentaje,
+            mensaje: descuento.mensaje
+        },
+        total: descuento.total,
+        oportunidades: {
+            cantidad: oportunidades.cantidad,
+            aplicado: oportunidades.cantidad > 0,
+            tipo: oportunidades.tipo,
+            mensaje: oportunidades.mensaje,
+            esValido: oportunidades.esValido
+        },
+        resumen: {
+            lineas: [
+                `${cantidadBoletos} boleto(s) × $${precioUnitario} = $${descuento.subtotal}`,
+                descuento.descuentoAplicable ? `Descuento ${descuento.porcentaje}% = -$${descuento.monto}` : null,
+                oportunidades.cantidad > 0 ? `+ ${oportunidades.cantidad} boleto(s) SORPRESA gratis` : null
+            ].filter(l => l !== null),
+            totalFinal: descuento.total,
+            ahorro: descuento.monto
+        }
+    };
+};
+
+/**
+ * Validar que una compra sea válida según las restricciones del sistema
+ * Útil para mostrar errores antes de enviar al backend
+ * 
+ * @param {number} cantidadBoletos - Cantidad de boletos
+ * @returns {object} { esValido, errores, advertencias }
+ */
+window.rifaplusConfig.validarCompra = function(cantidadBoletos) {
+    const errores = [];
+    const advertencias = [];
+
+    if (!cantidadBoletos || cantidadBoletos < 1) {
+        errores.push('Debes seleccionar al menos 1 boleto');
+    }
+
+    if (cantidadBoletos > 10000) {
+        advertencias.push('Compras muy grandes pueden requerir aprobación especial');
+    }
+
+    const oportunidades = this.calcularOportunidades(cantidadBoletos);
+    if (!oportunidades.esValido) {
+        errores.push(oportunidades.mensaje);
+    }
+
+    return {
+        esValido: errores.length === 0,
+        errores: errores,
+        advertencias: advertencias,
+        esCompraValida: errores.length === 0
+    };
+};
+
+console.log('✅ [Config] Sistema de cálculo dinámico (descuentos + oportunidades) inicializado');

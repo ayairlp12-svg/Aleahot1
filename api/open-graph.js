@@ -22,7 +22,7 @@ export default async function handler(req, res) {
         let rifaDescripcion = 'Participa en nuestro sorteo 100% transparente';
         
         try {
-            const backendUrl = process.env.BACKEND_URL || 'https://rifas-web-1.onrender.com';
+            const backendUrl = process.env.BACKEND_URL || 'http://localhost:5001';
             const response = await fetch(`${backendUrl}/api/public/sorteo-info`);
             if (response.ok) {
                 const data = await response.json();

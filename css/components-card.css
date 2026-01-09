@@ -1,0 +1,665 @@
+/* ====================================
+   COMPONENTE: TARJETAS Y CONTENEDORES
+   ==================================== 
+   Archivo consolidado que centraliza todos los estilos de tarjetas,
+   cajas y contenedores del proyecto.
+==================================== */
+
+/* ====================================
+   CONTENEDOR PRINCIPAL
+==================================== */
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1.25rem;
+}
+
+@media (max-width: 1024px) {
+    .container {
+        max-width: 960px;
+    }
+}
+
+@media (max-width: 768px) {
+    .container {
+        max-width: 720px;
+        padding: 0 1rem;
+    }
+}
+
+@media (max-width: 640px) {
+    .container {
+        max-width: 100%;
+        padding: 0 0.75rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        max-width: 100%;
+        padding: 0 0.5rem;
+    }
+}
+
+/* Variantes de contenedor */
+.container-fluid {
+    max-width: 100%;
+    padding: 0 1.25rem;
+}
+
+.container-sm {
+    max-width: 720px;
+}
+
+.container-lg {
+    max-width: 1400px;
+}
+
+/* ====================================
+   TÍTULOS DE SECCIÓN
+==================================== */
+
+.section-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--color-primary);
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    text-align: center;
+}
+
+.section-subtitle {
+    color: var(--text-secondary);
+    margin-bottom: 2rem;
+    text-align: center;
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+/* Responsive titles */
+@media (max-width: 768px) {
+    .section-title {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .section-subtitle {
+        font-size: 0.9rem;
+        margin-bottom: 1.5rem;
+    }
+}
+
+@media (max-width: 640px) {
+    .section-title {
+        font-size: 1.25rem;
+    }
+
+    .section-subtitle {
+        font-size: 0.85rem;
+    }
+}
+
+/* ====================================
+   TARJETA BASE
+==================================== */
+
+.card {
+    background: white;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+    transition: all var(--transition-normal);
+    display: flex;
+    flex-direction: column;
+}
+
+.card:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-2px);
+}
+
+.card-sm {
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+}
+
+.card-lg {
+    border-radius: var(--radius-xl);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+}
+
+/* Tarjeta achatada (minimal) */
+.card-flat {
+    border: 1px solid var(--border-color);
+    box-shadow: none;
+    background: var(--bg-light);
+}
+
+.card-flat:hover {
+    box-shadow: var(--shadow-sm);
+}
+
+/* ====================================
+   HEADER, BODY Y FOOTER DE TARJETA
+==================================== */
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
+}
+
+.card-header h2,
+.card-header h3,
+.card-header h4 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-dark);
+}
+
+.card-body {
+    padding: 1.5rem;
+    flex: 1;
+}
+
+.card-body.large {
+    padding: 2rem;
+}
+
+.card-body.small {
+    padding: 1rem;
+}
+
+.card-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    padding: 1.5rem;
+    border-top: 1px solid var(--border-color);
+    flex-shrink: 0;
+    flex-wrap: wrap;
+}
+
+.card-footer .btn {
+    flex: 1;
+    min-width: 120px;
+}
+
+/* ====================================
+   TARJETA DE CUENTA (Cuentas de pago)
+==================================== */
+
+.cuentas-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+    padding: 2rem 0;
+}
+
+.cuenta-card {
+    background: linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%);
+    border-radius: 16px;
+    padding: 1.5rem;
+    color: white;
+    box-shadow: 0 8px 24px rgba(124, 58, 237, 0.25);
+    transition: all var(--transition-normal);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
+    aspect-ratio: 16 / 10;
+}
+
+.cuenta-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(124, 58, 237, 0.35);
+}
+
+.cuenta-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.1), transparent);
+    border-radius: 50%;
+}
+
+/* Badge de tipo de cuenta */
+.account-type-badge {
+    background: rgba(255, 255, 255, 0.25);
+    padding: 0.375rem 0.75rem;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: inline-block;
+    width: fit-content;
+}
+
+/* ====================================
+   TARJETA DE ORDEN
+==================================== */
+
+.orden-card {
+    background: white;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-color);
+    padding: 1.5rem;
+    box-shadow: var(--shadow-sm);
+    transition: all var(--transition-fast);
+}
+
+.orden-card:hover {
+    box-shadow: var(--shadow-md);
+    border-color: var(--color-primary);
+}
+
+.orden-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.orden-card-status {
+    display: inline-block;
+    padding: 0.375rem 0.75rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.orden-card-status.pendiente {
+    background: rgba(245, 158, 11, 0.1);
+    color: #b45309;
+}
+
+.orden-card-status.confirmada {
+    background: rgba(16, 185, 129, 0.1);
+    color: #047857;
+}
+
+.orden-card-status.cancelada {
+    background: rgba(244, 67, 54, 0.1);
+    color: #b91c1c;
+}
+
+/* ====================================
+   TARJETA DE GANADOR
+==================================== */
+
+.winner-card {
+    background: linear-gradient(135deg, #FFD700 0%, #FFC700 100%);
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+    color: #1a1a1a;
+    box-shadow: 0 10px 30px rgba(255, 215, 0, 0.3);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.winner-card::before {
+    content: '★';
+    position: absolute;
+    font-size: 10rem;
+    opacity: 0.1;
+    top: -2rem;
+    right: -2rem;
+}
+
+.winner-name {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 1rem 0;
+}
+
+/* ====================================
+   TARJETA DE INFORMACIÓN
+==================================== */
+
+.info-card {
+    background: var(--bg-light);
+    border-left: 4px solid var(--color-primary);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    transition: all var(--transition-fast);
+}
+
+.info-card:hover {
+    box-shadow: var(--shadow-sm);
+}
+
+.info-card.warning {
+    border-left-color: #f59e0b;
+    background: rgba(245, 158, 11, 0.05);
+}
+
+.info-card.danger {
+    border-left-color: var(--color-alert);
+    background: rgba(244, 67, 54, 0.05);
+}
+
+.info-card.success {
+    border-left-color: var(--color-primary);
+    background: rgba(16, 185, 129, 0.05);
+}
+
+/* ====================================
+   TARJETA DE ESTADÍSTICAS
+==================================== */
+
+.stat-card {
+    background: white;
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    box-shadow: var(--shadow-md);
+    text-align: center;
+    transition: all var(--transition-normal);
+}
+
+.stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+}
+
+.stat-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--color-primary);
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+}
+
+/* ====================================
+   GRID DE TARJETAS
+==================================== */
+
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+    padding: 1.5rem 0;
+}
+
+.card-grid.compact {
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+}
+
+.card-grid.wide {
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+}
+
+.card-grid.tight {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 0.75rem;
+}
+
+/* Responsive grids */
+@media (max-width: 1024px) {
+    .card-grid {
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    }
+
+    .card-grid.wide {
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .card-grid {
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 1.25rem;
+    }
+
+    .cuentas-grid {
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1.25rem;
+    }
+}
+
+@media (max-width: 640px) {
+    .card-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+
+    .card-grid.wide {
+        grid-template-columns: 1fr;
+    }
+
+    .cuentas-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .card-grid {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+
+    .card {
+        border-radius: var(--radius-md);
+    }
+
+    .card-header,
+    .card-body,
+    .card-footer {
+        padding: 1rem;
+    }
+}
+
+/* ====================================
+   PANEL DE CONTENIDO
+==================================== */
+
+.panel {
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+
+.panel-header {
+    background: var(--bg-light);
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    font-weight: 700;
+}
+
+.panel-body {
+    padding: 1.5rem;
+}
+
+.panel-footer {
+    background: var(--bg-light);
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--border-color);
+    text-align: right;
+}
+
+/* ====================================
+   CAJA DE CONTENIDO
+==================================== */
+
+.box {
+    background: white;
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.box.bordered {
+    border: 1px solid var(--border-color);
+    box-shadow: none;
+}
+
+.box.outlined {
+    background: transparent;
+    border: 2px solid var(--color-primary);
+}
+
+.box.padded {
+    padding: 2rem;
+}
+
+.box.compact {
+    padding: 1rem;
+}
+
+/* ====================================
+   SECTION CON FONDO
+==================================== */
+
+.section {
+    padding: 2rem;
+    margin-bottom: 2rem;
+    border-radius: var(--radius-lg);
+}
+
+.section-primary {
+    background: linear-gradient(135deg, var(--color-primary), var(--color-action));
+    color: white;
+}
+
+.section-secondary {
+    background: var(--bg-light);
+}
+
+.section-light {
+    background: white;
+    border: 1px solid var(--border-color);
+}
+
+@media (max-width: 768px) {
+    .section {
+        padding: 1.5rem;
+    }
+}
+
+/* ====================================
+   ESTILOS ESPECIALES
+==================================== */
+
+/* Tarjeta elevada */
+.card-elevated {
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+/* Tarjeta con acento */
+.card-accent {
+    border-top: 4px solid var(--color-primary);
+}
+
+.card-accent.warning {
+    border-top-color: #f59e0b;
+}
+
+.card-accent.danger {
+    border-top-color: var(--color-alert);
+}
+
+.card-accent.success {
+    border-top-color: var(--color-primary);
+}
+
+/* Tarjeta interactiva */
+.card-interactive {
+    cursor: pointer;
+}
+
+.card-interactive:active {
+    transform: translateY(1px);
+}
+
+/* Tarjeta deshabilitada */
+.card[disabled],
+.card.disabled {
+    opacity: 0.6;
+    pointer-events: none;
+    background: #f5f5f5;
+}
+
+/* ====================================
+   ACCESIBILIDAD
+==================================== */
+
+.card:focus-within {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+/* Reductor de movimiento */
+@media (prefers-reduced-motion: reduce) {
+    .card,
+    .stat-card,
+    .cuenta-card,
+    .winner-card {
+        transition: none !important;
+    }
+
+    .card:hover,
+    .stat-card:hover {
+        transform: none !important;
+    }
+}
+
+/* Modo oscuro ready */
+@media (prefers-color-scheme: dark) {
+    .card {
+        background: #1a1a1a;
+        border-color: #333;
+        color: #f5f5f5;
+    }
+
+    .card-header,
+    .card-footer {
+        border-color: #333;
+    }
+
+    .card-flat {
+        background: #222;
+    }
+
+    .section-secondary {
+        background: #222;
+    }
+
+    .panel {
+        background: #1a1a1a;
+        border-color: #333;
+    }
+
+    .panel-header,
+    .panel-footer {
+        background: #222;
+        border-color: #333;
+    }
+
+    .box {
+        background: #1a1a1a;
+    }
+}

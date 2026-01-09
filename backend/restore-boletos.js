@@ -68,7 +68,7 @@ async function restaurarBoletos() {
             const actualizado = await db('boletos_estado')
                 .whereIn('numero', boletos)
                 .update({
-                    estado: 'reservado',
+                    estado: 'apartado',
                     numero_orden: orden.numero_orden,
                     reservado_en: new Date(),
                     updated_at: new Date()

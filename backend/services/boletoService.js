@@ -72,6 +72,20 @@ class BoletoService {
         return { disponibles: [], conflictos: [] };
       }
 
+      // ===== VALIDAR RANGO DE NÚMEROS =====
+      // Obtener totalBoletos desde config manager (cachea en memoria)
+      const configManager = require('../config-manager').getInstance();
+      const totalBoletos = configManager.totalBoletos;
+      
+      const boletosInvalidos = numeros.filter(num => {
+        const n = Number(num);
+        return isNaN(n) || n < 0 || n >= totalBoletos;
+      });
+      
+      if (boletosInvalidos.length > 0) {
+        throw new Error(`Boletos inválidos (rango válido: 0-${totalBoletos-1}): ${boletosInvalidos.join(', ')}`);
+      }
+
       // Query optimizada: busca solo los boletos solicitados
       const boletos = await db('boletos_estado')
         .whereIn('numero', numeros)
@@ -92,7 +106,7 @@ class BoletoService {
           // SOLO estado 'disponible' puede comprarse
           disponibles.push(num);
         } else {
-          // CUALQUIER otro estado (reservado, vendido, cancelado) = conflicto
+          // CUALQUIER otro estado (apartado, vendido, cancelado) = conflicto
           conflictos.push({
             numero: num,
             estado: boleto.estado,
@@ -262,7 +276,7 @@ class BoletoService {
           const actualizados = await trx('boletos_estado')
             .whereIn('numero', batch)
             .update({
-              estado: 'reservado',
+              estado: 'apartado',
               numero_orden: ordenId,
               reservado_en: ahora,
               updated_at: ahora
@@ -314,7 +328,7 @@ class BoletoService {
     try {
       const resultado = await db('boletos_estado')
         .where('numero_orden', ordenId)
-        .where('estado', 'reservado')
+        .where('estado', 'apartado')
         .update({
           estado: 'vendido',
           vendido_en: new Date(),

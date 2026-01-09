@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' http://127.0.0.1:* http://localhost:* https://gorgeous-heliotrope-5a6b8e.netlify.app https://rifas-web-1.onrender.com; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://fonts.googleapis.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; connect-src 'self' http://127.0.0.1:* http://localhost:* https: https://rifas-web-1.onrender.com https://gorgeous-heliotrope-5a6b8e.netlify.app; img-src 'self' data: https:;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' http://127.0.0.1:* http://localhost:* https://gorgeous-heliotrope-5a6b8e.netlify.app http://localhost:5001; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://fonts.googleapis.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; connect-src 'self' http://127.0.0.1:* http://localhost:* https: http://localhost:5001 https://gorgeous-heliotrope-5a6b8e.netlify.app; img-src 'self' data: https:;">
     <title>SORTEOS YEPE - Gana un iPhone 15 Pro Max 256GB | Rifas 100% Transparentes</title>
     <meta name="description" content="Participa en SORTEOS YEPE del iPhone 15 Pro Max 256GB. Sorteo 100% transparente en vivo. Compra tus boletos de forma segura.">
     <!-- Open Graph Meta Tags (actualizados por JavaScript) -->
@@ -1170,7 +1170,7 @@
             if (!seccion || !contenedor) return;
 
             try {
-                const res = await fetch('https://rifas-web-1.onrender.com/api/ganadores?limit=500');
+                const res = await fetch('http://localhost:5001/api/ganadores?limit=500');
                 if (!res.ok) throw new Error('no_server');
                 const payload = await res.json();
                 const rows = payload && payload.data ? payload.data : [];

@@ -17,7 +17,7 @@ async function fixOrphanedBoletos() {
         const boletosHuerfanos = await db.raw(`
             SELECT be.numero, be.numero_orden, be.estado
             FROM boletos_estado be
-            WHERE be.estado = 'reservado'
+            WHERE be.estado = 'apartado'
             AND (
                 be.numero_orden IS NULL
                 OR NOT EXISTS (

@@ -2084,7 +2084,7 @@
             // Llamar API con timeout y manejo de errores robusto
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
-            const apiBase = window.rifaplusConfig?.backend?.apiBase || 'https://rifas-web-1.onrender.com';
+            const apiBase = window.rifaplusConfig?.backend?.apiBase || 'http://localhost:5001';
 
             fetch(`${apiBase}/api/public/ordenes-cliente?whatsapp=${encodeURIComponent(whatsapp)}`, {
                 signal: controller.signal
@@ -2688,7 +2688,7 @@
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout para upload
 
-                const apiBase = window.rifaplusConfig?.backend?.apiBase || 'https://rifas-web-1.onrender.com';
+                const apiBase = window.rifaplusConfig?.backend?.apiBase || 'http://localhost:5001';
                 const apiUrl = `${apiBase}/api/public/ordenes-cliente/${encodeURIComponent(ordenId)}/comprobante`;
                 const response = await fetch(apiUrl, {
                     method: 'POST',

@@ -297,7 +297,7 @@ async function cargarBoletosPublicos() {
         
         try {
             const statsController = new AbortController();
-            const statsTimeoutId = setTimeout(() => statsController.abort(), 2000);
+            const statsTimeoutId = setTimeout(() => statsController.abort(), 10000);  // Aumentado de 2s a 10s
             
             const statsResponse = await fetch(`${endpoint}/api/public/boletos/stats`, {
                 signal: statsController.signal // Compatible con iPhone X
@@ -312,12 +312,47 @@ async function cargarBoletosPublicos() {
                     // Soportar ambos formatos: con y sin wrapper 'data'
                     const data = statsData.data || statsData;
                     
-                    // ✅ Actualizar UI INMEDIATAMENTE con conteos
+                    // ✅ Calcular disponibles SOLO en rango visible (si oportunidades habilitadas)
+                    const oportunidadesConfig = window.rifaplusConfig && window.rifaplusConfig.rifa && window.rifaplusConfig.rifa.oportunidades;
+                    
+                    let disponiblesEnRango = data.disponibles;
+                    if (oportunidadesConfig && oportunidadesConfig.enabled && oportunidadesConfig.rango_visible) {
+                        const rangoVisible = oportunidadesConfig.rango_visible;
+                        
+                        // Contar solo boletos vendidos/apartados que están en el rango visible
+                        const sold = (window.rifaplusSoldNumbers && Array.isArray(window.rifaplusSoldNumbers)) ? window.rifaplusSoldNumbers : [];
+                        const reserved = (window.rifaplusReservedNumbers && Array.isArray(window.rifaplusReservedNumbers)) ? window.rifaplusReservedNumbers : [];
+                        
+                        let vendidosEnRangoVisible = 0;
+                        let apartadosEnRangoVisible = 0;
+                        
+                        // Contar vendidos en el rango visible
+                        sold.forEach(num => {
+                            const n = Number(num);
+                            if (n >= rangoVisible.inicio && n <= rangoVisible.fin) {
+                                vendidosEnRangoVisible++;
+                            }
+                        });
+                        
+                        // Contar apartados en el rango visible
+                        reserved.forEach(num => {
+                            const n = Number(num);
+                            if (n >= rangoVisible.inicio && n <= rangoVisible.fin) {
+                                apartadosEnRangoVisible++;
+                            }
+                        });
+                        
+                        // Calcular disponibles = total rango visible - vendidos - apartados en ese rango
+                        const tamanoRangoVisible = (rangoVisible.fin - rangoVisible.inicio) + 1;
+                        disponiblesEnRango = Math.max(0, tamanoRangoVisible - vendidosEnRangoVisible - apartadosEnRangoVisible);
+                    }
+                    
+                    // ✅ Actualizar UI con disponibles del rango visible
                     const availabilityNote = document.getElementById('availabilityNote');
                     if (availabilityNote) {
-                        availabilityNote.textContent = `${data.disponibles} boletos disponibles`;
+                        availabilityNote.textContent = `${disponiblesEnRango} boletos disponibles`;
                         availabilityNote.style.display = 'inline-block';
-                        console.debug(`✅ INSTANTÁNEO: ${data.disponibles} boletos disponibles (${data.queryTime}ms)`);
+                        console.debug(`✅ INSTANTÁNEO: ${disponiblesEnRango} boletos disponibles (${data.queryTime}ms)`);
                     }
                     
                     // 🚀 CRÍTICO: Marcar como cargado una vez que /stats responde
@@ -761,152 +796,138 @@ function actualizarNotaDisponibilidad() {
 }
 
 async function generarNumerosAleatoriosMejorado() {
-    
     const inputCantidad = document.getElementById('cantidadNumeros');
     const numerosSuerte = document.getElementById('numerosSuerte');
     const resultado = document.getElementById('maquinaResultado');
+    const btnGenerar = document.getElementById('btnGenerarNumeros');
     
-    if (!inputCantidad || !numerosSuerte) {
+    if (!inputCantidad || !numerosSuerte || !resultado) {
         console.error('❌ Elementos de máquina de la suerte no encontrados');
+        rifaplusUtils.showFeedback('⚠️ Error: No se encontraron los elementos de la máquina', 'error');
         return;
     }
     
     const cantidad = parseInt(inputCantidad.value, 10);
     if (isNaN(cantidad) || cantidad < 1) {
         rifaplusUtils.showFeedback('⚠️ Selecciona al menos 1 número para generar.', 'warning');
-        return [];
-    }
-    const numerosGenerados = [];
-    
-    // Limpiar resultados anteriores
-    numerosSuerte.innerHTML = '';
-    
-    // ⚠️ CRÍTICO: Validar que tengamos datos de vendidos/apartados ANTES de generar
-    // Si están vacíos, esperar un poco a que se procesen o recargar
-    let intentos = 0;
-    const maxIntentos = 50; // 5 segundos máximo (50 * 100ms)
-    
-    while ((!Array.isArray(window.rifaplusSoldNumbers) || !Array.isArray(window.rifaplusReservedNumbers) || 
-            window.rifaplusSoldNumbers.length === 0 || window.rifaplusReservedNumbers.length === 0) && 
-           intentos < maxIntentos) {
-        intentos++;
-        console.debug(`⏳ Esperando datos (intento ${intentos}/${maxIntentos})...`);
-        await new Promise(resolve => setTimeout(resolve, 100));
-    }
-    
-    // Si después de esperar aún están vacíos, recargar
-    if (!Array.isArray(window.rifaplusSoldNumbers) || !Array.isArray(window.rifaplusReservedNumbers)) {
-        console.error('❌ CRÍTICO: Arrays de vendidos/apartados no inicializados después de esperar');
-        rifaplusUtils.showFeedback('⚠️ Datos de boletos aún no listos. Recargando...', 'warning');
-        await cargarBoletosPublicos();
-        // Esperar a que se recarguen
-        await new Promise(resolve => setTimeout(resolve, 500));
-    }
-    
-    // Asegurarnos de tener datos actualizados de vendidos/apartados
-    const btnGenerar = document.getElementById('btnGenerarNumeros');
-    const origText = btnGenerar && btnGenerar.dataset && btnGenerar.dataset.origText ? btnGenerar.dataset.origText : (btnGenerar ? btnGenerar.textContent : null);
-    try {
-        if (btnGenerar) {
-            btnGenerar.disabled = true;
-            btnGenerar.textContent = 'Generando…';
-            btnGenerar.classList && btnGenerar.classList.add('loading');
-        }
-        if (!window.rifaplusBoletosLoaded) {
-            await cargarBoletosPublicos();
-        }
-    } finally {
-        if (btnGenerar) {
-            // Restaurar estado según validación de cantidad y carga
-            btnGenerar.classList && btnGenerar.classList.remove('loading');
-            if (origText) btnGenerar.textContent = origText;
-            // actualizar estado del botón (puede quedar deshabilitado si no hay datos)
-            actualizarEstadoBotonGenerar();
-        }
-    }
-
-    // Generar números únicos que estén disponibles
-    const numerosDisponibles = obtenerNumerosDisponibles();
-    
-    if (numerosDisponibles.length < cantidad) {
-        rifaplusUtils.showFeedback(`⚠️ Solo hay ${numerosDisponibles.length} números disponibles. No hay suficientes para generar ${cantidad} números.`, 'warning');
         return;
     }
     
-    // Usar DocumentFragment para optimizar - agregar múltiples elementos de una vez
-    const fragment = document.createDocumentFragment();
-    
-    // Seleccionar números aleatorios de los disponibles
-    for (let i = 0; i < cantidad; i++) {
-        if (numerosDisponibles.length === 0) break;
-        
-        const randomIndex = Math.floor(Math.random() * numerosDisponibles.length);
-        const numero = numerosDisponibles.splice(randomIndex, 1)[0];
-        numerosGenerados.push(numero);
-        
-        // Crear elemento visual del número
-        const numeroChip = document.createElement('div');
-        numeroChip.className = 'numero-chip';
-        numeroChip.textContent = numero;
-        numeroChip.setAttribute('data-numero', numero);
-        
-        // Agregar al fragment en lugar del DOM directamente
-        fragment.appendChild(numeroChip);
+    // Mostrar estado de carga
+    if (btnGenerar) {
+        btnGenerar.disabled = true;
+        btnGenerar.textContent = '⏳ Generando…';
     }
     
-    // Agregar TODOS los elementos al DOM de una sola vez
-    numerosSuerte.appendChild(fragment);
-    
-    // Guardar números generados para usarlos después
-    numerosSuerte.setAttribute('data-numeros', numerosGenerados.join(','));
-    
-    // Mostrar resultado
-    if (resultado) {
+    try {
+        // Esperar a que se carguen los datos de boletos si no están listos
+        if (!window.rifaplusBoletosLoaded) {
+            console.log('⏳ Esperando datos de boletos...');
+            await cargarBoletosPublicos();
+        }
+        
+        // Obtener números disponibles
+        const numerosDisponibles = obtenerNumerosDisponibles();
+        
+        if (numerosDisponibles.length === 0) {
+            rifaplusUtils.showFeedback('❌ No hay números disponibles en este momento. Recargando datos...', 'error');
+            await cargarBoletosPublicos();
+            rifaplusUtils.showFeedback('Intenta de nuevo.', 'info');
+            return;
+        }
+        
+        if (numerosDisponibles.length < cantidad) {
+            rifaplusUtils.showFeedback(`⚠️ Solo hay ${numerosDisponibles.length} números disponibles. No puedes generar ${cantidad} números.`, 'warning');
+            return;
+        }
+        
+        // Generar números aleatorios
+        const numerosGenerados = [];
+        const disponiblesCopia = [...numerosDisponibles];
+        
+        for (let i = 0; i < cantidad; i++) {
+            const randomIndex = Math.floor(Math.random() * disponiblesCopia.length);
+            const numero = disponiblesCopia.splice(randomIndex, 1)[0];
+            numerosGenerados.push(numero);
+        }
+        
+        // Renderizar números
+        numerosSuerte.innerHTML = '';
+        const fragment = document.createDocumentFragment();
+        
+        numerosGenerados.forEach(numero => {
+            const chip = document.createElement('div');
+            chip.className = 'numero-chip';
+            chip.textContent = numero;
+            chip.setAttribute('data-numero', numero);
+            fragment.appendChild(chip);
+        });
+        
+        numerosSuerte.appendChild(fragment);
+        numerosSuerte.setAttribute('data-numeros', numerosGenerados.join(','));
+        
+        // Mostrar resultado
         resultado.style.display = 'block';
+        console.log('✅ Números generados:', numerosGenerados);
         
         // Scroll suave hacia la sección de resultados (corto)
         setTimeout(() => {
             resultado.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }, 100);
-    }
-    
-    // Números generados
-    
-    // Efecto visual de aparición optimizado
-    const chips = numerosSuerte.querySelectorAll('.numero-chip');
-    
-    // Para muchos boletos (>100), usar CSS animation en lugar de JavaScript
-    if (cantidad > 100) {
-        // Agregar clase que activa animación CSS en masa (sin cascadas)
-        requestAnimationFrame(() => {
-            chips.forEach(chip => {
-                chip.classList.add('fast-appear');
+        
+        // Efecto visual de aparición optimizado
+        const chips = numerosSuerte.querySelectorAll('.numero-chip');
+        
+        // Para muchos boletos (>100), usar CSS animation en lugar de JavaScript
+        if (cantidad > 100) {
+            // Agregar clase que activa animación CSS en masa (sin cascadas)
+            requestAnimationFrame(() => {
+                chips.forEach(chip => {
+                    chip.classList.add('fast-appear');
+                });
             });
-        });
-    } else {
-        // Para cantidades pequeñas, usar cascada para efecto visual mejor
-        chips.forEach((chip, index) => {
-            chip.style.opacity = '0';
-            chip.style.transform = 'scale(0.5)';
-            
-            // Reducir delay: máximo 500ms total (no 50 segundos)
-            const delay = Math.min(index * 30, 500);
-            setTimeout(() => {
-                chip.style.transition = 'all var(--transition-fast)';
-                chip.style.opacity = '1';
-                chip.style.transform = 'scale(1)';
-            }, delay);
-        });
+        } else {
+            // Para cantidades pequeñas, usar cascada para efecto visual mejor
+            chips.forEach((chip, index) => {
+                chip.style.opacity = '0';
+                chip.style.transform = 'scale(0.5)';
+                
+                // Reducir delay: máximo 500ms total (no 50 segundos)
+                const delay = Math.min(index * 30, 500);
+                setTimeout(() => {
+                    chip.style.transition = 'all var(--transition-fast)';
+                    chip.style.opacity = '1';
+                    chip.style.transform = 'scale(1)';
+                }, delay);
+            });
+        }
+        
+        rifaplusUtils.showFeedback(`🎲 ${numerosGenerados.length} números generados correctamente`, 'success');
+        return numerosGenerados;
+        
+    } catch (error) {
+        console.error('❌ Error al generar números:', error);
+        rifaplusUtils.showFeedback(`❌ Error: ${error.message}`, 'error');
+    } finally {
+        // Restaurar botón
+        if (btnGenerar) {
+            btnGenerar.disabled = false;
+            btnGenerar.textContent = 'GENERAR NÚMEROS';
+        }
     }
-    
-    rifaplusUtils.showFeedback(`🎲 ${numerosGenerados.length} números generados correctamente`, 'success');
-    
-    return numerosGenerados;
 }
 
 function obtenerNumerosDisponibles() {
     // Obtener total de boletos DIRECTAMENTE de config.js
     const totalTickets = window.rifaplusConfig.rifa.totalBoletos;
+    
+    // Obtener rango visible (si oportunidades está habilitada)
+    const oportunidadesConfig = window.rifaplusConfig.rifa.oportunidades;
+    let rangoVisible = { inicio: 0, fin: totalTickets - 1 };
+    
+    if (oportunidadesConfig && oportunidadesConfig.enabled && oportunidadesConfig.rango_visible) {
+        rangoVisible = oportunidadesConfig.rango_visible;
+    }
     
     // Intentar obtener arrays de boletos
     const sold = (window.rifaplusSoldNumbers && Array.isArray(window.rifaplusSoldNumbers)) ? window.rifaplusSoldNumbers : [];
@@ -915,13 +936,16 @@ function obtenerNumerosDisponibles() {
     // ⚠️ CRÍTICO SEGURIDAD: Si arrays de vendidos/apartados están vacíos,
     // NO devolver números - es peligroso, podrían ser números ya vendidos/apartados
     if (sold.length === 0 && reserved.length === 0) {
-        console.warn('⚠️  Arrays de vendidos/apartados vacíos - no es seguro generar números');
+        // Mostrar log en DEBUG, no warning (es esperado durante carga inicial)
+        if (window.DEBUG_OPORTUNIDADES) {
+            console.debug('🔄 [OportunidadesService] Esperando datos de boletos del servidor...');
+        }
         return []; // Retornar vacío para forzar recarga
     }
     
-    // Crear un conjunto de todos los números posibles
+    // Crear un conjunto de todos los números VISIBLES (rango_visible.inicio a rango_visible.fin)
     const todosLosNumeros = new Set();
-    for (let i = 1; i <= totalTickets; i++) {
+    for (let i = rangoVisible.inicio; i <= rangoVisible.fin; i++) {
         todosLosNumeros.add(i);
     }
     
@@ -1205,21 +1229,60 @@ function actualizarResumenCompra() {
     // Usar Set global en lugar de contar botones visibles
     const cantidad = selectedNumbersGlobal.size;
     
+    // 🔍 DEBUG MASIVO
+    console.log('%c📊 [actualizarResumenCompra] INICIANDO', 'color: #FF6B6B; font-weight: bold; font-size: 14px');
+    console.log('  ✓ Cantidad de boletos:', cantidad);
+    console.log('  ✓ Boletos seleccionados:', Array.from(selectedNumbersGlobal));
+    console.log('  ✓ window.rifaplusSoldNumbers:', window.rifaplusSoldNumbers?.length || 0, window.rifaplusSoldNumbers);
+    console.log('  ✓ window.rifaplusReservedNumbers:', window.rifaplusReservedNumbers?.length || 0, window.rifaplusReservedNumbers);
+    console.log('  ✓ OportunidadesService disponible:', !!window.OportunidadesService);
+    console.log('  ✓ Oportunidades enabled:', window.rifaplusConfig?.rifa?.oportunidades?.enabled);
+    console.log('  ✓ Config oportunidades:', window.rifaplusConfig?.rifa?.oportunidades);
+    
     cantidadBoletos.textContent = cantidad;
     
     if (numerosSeleccionados) {
         if (cantidad > 0) {
             // Ordenar números seleccionados para visualización
             const numerosOrdenados = Array.from(selectedNumbersGlobal).sort((a, b) => a - b);
+            
+            console.log('  ✓ Números ordenados:', numerosOrdenados);
+            
+            // ✅ Calcular oportunidades si están habilitadas
+            const oportunidadesConfig = window.rifaplusConfig?.rifa?.oportunidades;
+            let oportunidadesPorBoleto = {};
+            
+            if (oportunidadesConfig && oportunidadesConfig.enabled && window.OportunidadesService) {
+                try {
+                    console.log('🎁 [DEBUG] Llamando OportunidadesService.calcularOportunidadesCarrito()...');
+                    const resultado = window.OportunidadesService.calcularOportunidadesCarrito(numerosOrdenados);
+                    console.log('🎁 [DEBUG] Resultado recibido:', resultado);
+                    oportunidadesPorBoleto = resultado.oportunidadesPorBoleto || {};
+                    console.log('🎁 [DEBUG] Oportunidades por boleto:', oportunidadesPorBoleto);
+                } catch (e) {
+                    console.error('❌ Error crítico al calcular oportunidades:', e);
+                    console.error('Stack:', e.stack);
+                }
+            } else {
+                console.warn('⚠️ Oportunidades NO se pueden calcular:', {
+                    'enabled': oportunidadesConfig?.enabled,
+                    'hasService': !!window.OportunidadesService,
+                    'config': oportunidadesConfig
+                });
+            }
+            
+            // Renderizar boletos SIN oportunidades
             numerosSeleccionados.innerHTML = `
                 <div class="lista-numeros">
                     ${numerosOrdenados.map(num => `
-                        <span class="numero-chip" data-numero="${num}">
-                            ${num}
-                            <button class="numero-chip-delete" data-numero="${num}" aria-label="Eliminar boleto ${num}" title="Eliminar boleto ${num}">
-                                ×
-                            </button>
-                        </span>
+                        <div class="numero-chip-container" data-numero="${num}">
+                            <span class="numero-chip" data-numero="${num}">
+                                ${num}
+                                <button class="numero-chip-delete" data-numero="${num}" aria-label="Eliminar boleto ${num}" title="Eliminar boleto ${num}">
+                                    ×
+                                </button>
+                            </span>
+                        </div>
                     `).join('')}
                 </div>
             `;
@@ -1364,7 +1427,7 @@ function renderRange(inicio, fin) {
     grid.innerHTML = '';
 
     // Asegurar que inicio <= fin y que ambos sean enteros
-    inicio = parseInt(inicio, 10) || 1;
+    inicio = parseInt(inicio, 10) || 0;  // DEFAULT: 0 instead of 1
     fin = parseInt(fin, 10) || inicio + 99;
     if (inicio > fin) {
         const t = inicio; inicio = fin; fin = t;

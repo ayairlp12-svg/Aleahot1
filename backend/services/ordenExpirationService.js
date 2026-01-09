@@ -305,6 +305,16 @@ class OrdenExpirationService {
                 return { actualizadosBoletos, boletosVerificacion };
             });
 
+            // ✅ PASO 3: Liberar oportunidades (si existen) - NO BLOQUEANTE
+            try {
+                const OportunidadesOrdenService = require('./oportunidadesOrdenService');
+                const resultOportunidades = await OportunidadesOrdenService.liberarOportunidades(orden.numero_orden);
+                console.log(`  ✅ Oportunidades liberadas: ${resultOportunidades.cantidad}`);
+            } catch (error) {
+                console.warn(`  ⚠️  Error liberando oportunidades (no crítico):`, error.message);
+                // No lanzar error aquí - ya se liberaron los boletos
+            }
+
             console.log(`  ✅ TRANSACCIÓN EXITOSA: ${resultado.actualizadosBoletos} boletos liberados`);
             return { boletosCancelados: resultado.actualizadosBoletos, ordenId: orden.id };
 

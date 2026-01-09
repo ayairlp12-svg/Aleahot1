@@ -991,15 +991,50 @@ async function actualizarBarraProgreso() {
  * Actualiza la interfaz visual con los datos de progreso
  */
 function actualizarInterfazProgreso(boletosVendidos, totalBoletos) {
-    const boletosRestantes = totalBoletos - boletosVendidos;
-    const porcentaje = Math.round((boletosVendidos / totalBoletos) * 100);
+    // ✅ Si oportunidades está habilitada, calcular solo en rango visible
+    const oportunidadesConfig = window.rifaplusConfig && window.rifaplusConfig.rifa && window.rifaplusConfig.rifa.oportunidades;
+    let boletosVendidosEnRango = boletosVendidos;
+    let totalEnRango = totalBoletos;
+    
+    if (oportunidadesConfig && oportunidadesConfig.enabled && oportunidadesConfig.rango_visible) {
+        const rangoVisible = oportunidadesConfig.rango_visible;
+        
+        // Contar solo boletos vendidos/apartados que están en el rango visible
+        const sold = (window.rifaplusSoldNumbers && Array.isArray(window.rifaplusSoldNumbers)) ? window.rifaplusSoldNumbers : [];
+        const reserved = (window.rifaplusReservedNumbers && Array.isArray(window.rifaplusReservedNumbers)) ? window.rifaplusReservedNumbers : [];
+        
+        let vendidosEnRangoVisible = 0;
+        let apartadosEnRangoVisible = 0;
+        
+        // Contar vendidos en el rango visible
+        sold.forEach(num => {
+            const n = Number(num);
+            if (n >= rangoVisible.inicio && n <= rangoVisible.fin) {
+                vendidosEnRangoVisible++;
+            }
+        });
+        
+        // Contar apartados en el rango visible
+        reserved.forEach(num => {
+            const n = Number(num);
+            if (n >= rangoVisible.inicio && n <= rangoVisible.fin) {
+                apartadosEnRangoVisible++;
+            }
+        });
+        
+        boletosVendidosEnRango = vendidosEnRangoVisible + apartadosEnRangoVisible;
+        totalEnRango = (rangoVisible.fin - rangoVisible.inicio) + 1;
+    }
+    
+    const boletosRestantes = totalEnRango - boletosVendidosEnRango;
+    const porcentaje = totalEnRango > 0 ? Math.round((boletosVendidosEnRango / totalEnRango) * 100) : 0;
 
     const elemVendidos = document.getElementById('boletos-vendidos');
     const elemRestantes = document.getElementById('boletos-restantes');
     const elemPorcentaje = document.getElementById('porcentaje-vendido');
     const elemProgressFill = document.getElementById('progress-fill');
 
-    if (elemVendidos) elemVendidos.textContent = boletosVendidos;
+    if (elemVendidos) elemVendidos.textContent = boletosVendidosEnRango;
     if (elemRestantes) elemRestantes.textContent = boletosRestantes;
     if (elemPorcentaje) elemPorcentaje.textContent = `${porcentaje}%`;
 

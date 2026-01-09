@@ -25,7 +25,7 @@ async function sincronizar() {
         console.log('1️⃣  Limpiando boletos reservados sin orden válida...');
         
         const boletosReservados = await db('boletos_estado')
-            .where('estado', 'reservado')
+            .where('estado', 'apartado')
             .select('numero_orden')
             .distinct('numero_orden');
 

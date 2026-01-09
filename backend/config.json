@@ -1,0 +1,38 @@
+{
+  "rifa": {
+    "totalBoletos": 1000000,
+    "precioBoleto": 4,
+    "tiempoApartadoHoras": 4,
+    "intervaloLimpiezaMinutos": 1
+  },
+  "cache": {
+    "enableRedis": false,
+    "ttlSeconds": 300
+  },
+  "rate_limits": {
+    "development": {
+      "general": 10000,
+      "login": 1000,
+      "ordenes": 1000,
+      "windowMs": 900000
+    },
+    "production": {
+      "general": 100,
+      "login": 5,
+      "ordenes": 10,
+      "windowMs": 900000
+    }
+  },
+  "database": {
+    "pool": {
+      "min": 2,
+      "max": 10
+    },
+    "queryTimeout": 30000
+  },
+  "server": {
+    "port": 5001,
+    "compression": true,
+    "trustProxy": true
+  }
+}

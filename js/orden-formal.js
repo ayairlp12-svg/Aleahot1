@@ -159,6 +159,17 @@ function renderizarOrdenFormal(orden) {
     const boletosArray = (orden.boletos || []).map(b => Number(b)).filter(n => !isNaN(n)).sort((a, b) => a - b);
     const boletosStr = boletosArray.join(', ');
     
+    // ✅ OBTENER OPORTUNIDADES SI ESTÁN DISPONIBLES
+    const oportunidadesStorage = JSON.parse(localStorage.getItem('rifaplus_oportunidades') || '{}');
+    const boletosOcultos = oportunidadesStorage.boletosOcultos || [];
+    const oportunidadesHtml = boletosOcultos.length > 0 ? `
+        <div class="orden-oportunidades" style="margin-top: 1.5rem; padding: 1rem; background: linear-gradient(135deg, rgba(124, 58, 237, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%); border-left: 4px solid #7C3AED; border-radius: 0.5rem;">
+            <div class="orden-field-label" style="color: #7C3AED; font-weight: 600;">🎁 Boletos SORPRESA (Oportunidades Asignadas)</div>
+            <div class="orden-boletos-list" style="margin-top: 0.5rem; color: #10B981; font-weight: 600;">${boletosOcultos.join(', ')}</div>
+            <div style="margin-top: 0.5rem; font-size: 0.9rem; color: #666;">Total: ${boletosOcultos.length} boletos extras gratis</div>
+        </div>
+    ` : '';
+    
     // Totales
     const subtotal = orden.totales?.subtotal || 0;
     const descuento = orden.totales?.descuento || 0;
@@ -208,6 +219,7 @@ function renderizarOrdenFormal(orden) {
                         <div class="orden-field-label">Boletos Adquiridos (${boletosArray.length})</div>
                         <div class="orden-boletos-list">${boletosStr}</div>
                     </div>
+                    ${oportunidadesHtml}
                     <div class="orden-totales">
                         <div class="orden-subtotal">
                             <span class="orden-subtotal-label">Subtotal:</span>
@@ -590,7 +602,7 @@ async function guardarOrden() {
         // ⭐ VALIDACIÓN CRÍTICA: Verificar disponibilidad en TIEMPO REAL (sin caché)
         console.log('🔍 Verificando disponibilidad de boletos en tiempo real...');
         try {
-            const apiBase = window.rifaplusConfig?.backend?.apiBase || 'https://rifas-web-1.onrender.com';
+            const apiBase = window.rifaplusConfig?.backend?.apiBase || 'http://localhost:5001';
             const checkResponse = await fetch(`${apiBase}/api/public/boletos`, {
                 method: 'GET',
                 headers: { 'Accept': 'application/json' },
@@ -675,7 +687,23 @@ async function guardarOrden() {
                 return (window.rifaplusConfig?.rifa?.precioBoleto && Number(window.rifaplusConfig.rifa.precioBoleto)) || 15;
             })(),
             metodoPago: 'transferencia',
-            notas: ''
+            notas: '',
+            // ✅ Agregar boletosOcultos (oportunidades)
+            boletosOcultos: (function(){
+                try {
+                    const oportunidadesData = localStorage.getItem('rifaplus_oportunidades');
+                    if (oportunidadesData) {
+                        const oportunidades = JSON.parse(oportunidadesData);
+                        const boletosOcultos = oportunidades.boletosOcultos || [];
+                        console.log('✅ Enviando boletosOcultos:', boletosOcultos);
+                        return boletosOcultos;
+                    }
+                    return [];
+                } catch (e) {
+                    console.warn('⚠️  No se pudieron recuperar boletosOcultos:', e);
+                    return [];
+                }
+            })()
         };
 
         // VALIDACIÓN 6: Consistencia de precio
@@ -687,7 +715,7 @@ async function guardarOrden() {
         }
 
         // ENVÍO AL SERVIDOR CON TIMEOUT Y REINTENTOS
-        const apiBase = window.rifaplusConfig?.backend?.apiBase || 'https://rifas-web-1.onrender.com';
+        const apiBase = window.rifaplusConfig?.backend?.apiBase || 'http://localhost:5001';
         const apiUrl = `${apiBase}/api/ordenes`;
         const maxReintentos = 3;
         let ultimoError = null;

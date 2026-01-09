@@ -1,0 +1,268 @@
+/* ================================================================================
+   CSS SYSTEM - PALETA UNIFICADA GLOBAL
+   ================================================================================
+   
+   Este archivo define la paleta de colores oficial y variables CSS globales.
+   Todas las clases deben usar estas variables en lugar de colores hardcodeados.
+   
+   Actualizado: 3 enero 2026
+   ================================================================================ */
+
+:root {
+    /* ========================================================================== */
+    /* PALETA OFICIAL - 5 COLORES BASE + SOCIALES                               */
+    /* ========================================================================== */
+    
+    /* 🟢 Verde Digital - Éxito, principal, acciones positivas */
+    --color-primary: #00C853;
+    --color-primary-dark: #00A040;
+    --color-primary-light: #66FF00;
+    
+    /* 🟡 Dorado Elegante - Acentos, destacados, premios */
+    --color-secondary: #FFD700;
+    --color-secondary-dark: #FFC000;
+    --color-secondary-light: #FFED4E;
+    
+    /* ⚪ Gris Claro - Fondos, bordes, elementos neutros */
+    --color-neutral: #F5F5F5;
+    --color-neutral-dark: #E0E0E0;
+    --color-neutral-light: #FAFAFA;
+    
+    /* 🔵 Azul Profundo - Headers, acciones primarias, texto importante */
+    --color-action: #0B1E3C;
+    --color-action-dark: #050D1A;
+    --color-action-light: #1A3A52;
+    
+    /* 🔴 Rojo Suave - Errores, alertas, estados negativos */
+    --color-alert: #F44336;
+    --color-alert-dark: #D32F2F;
+    --color-alert-light: #EF5350;
+    
+    /* ========================================================================== */
+    /* COLORES SOCIALES - MANTENER SEPARADOS                                    */
+    /* ========================================================================== */
+    
+    --color-social-facebook: #1877F2;
+    --color-social-whatsapp: #25D366;
+    --color-social-instagram: #E4405F;
+    --color-social-twitter: #1DA1F2;
+    
+    /* ========================================================================== */
+    /* ALIAS DE COMPATIBILIDAD CON CÓDIGO EXISTENTE                             */
+    /* (Mantener para no romper código existente)                                */
+    /* ========================================================================== */
+    
+    --primary: var(--color-action);           /* Azul profundo */
+    --primary-dark: var(--color-action-dark); /* Azul más oscuro */
+    --primary-light: var(--color-secondary);  /* Dorado (acentos) */
+    --secondary: var(--color-secondary);      /* Dorado */
+    --success: var(--color-primary);          /* Verde */
+    --danger: var(--color-alert);             /* Rojo */
+    
+    /* ========================================================================== */
+    /* ESCALA DE GRISES                                                         */
+    /* ========================================================================== */
+    
+    --text-dark: #1f2937;        /* Texto principal (casi negro) */
+    --text-light: #6b7280;       /* Texto secundario (gris medio) */
+    --text-lighter: #9CA3AF;     /* Texto deshabilitado (gris claro) */
+    --bg-light: var(--color-neutral);  /* Fondo claro (componentes) */
+    --bg-white: #ffffff;         /* Blanco puro */
+    --border-color: #e5e7eb;     /* Bordes */
+    
+    /* ========================================================================== */
+    /* SISTEMA DE ESPACIADO                                                     */
+    /* ========================================================================== */
+    
+    --spacing-xs: 0.25rem;    /* 4px */
+    --spacing-sm: 0.5rem;     /* 8px */
+    --spacing-md: 1rem;       /* 16px */
+    --spacing-lg: 1.5rem;     /* 24px */
+    --spacing-xl: 2rem;       /* 32px */
+    --spacing-2xl: 3rem;      /* 48px */
+    
+    /* ========================================================================== */
+    /* SISTEMA DE BORDER RADIUS                                                 */
+    /* ========================================================================== */
+    
+    --radius-sm: 0.25rem;     /* Ligeramente redondeado */
+    --radius-md: 0.5rem;      /* Redondeado */
+    --radius-lg: 0.75rem;     /* Bastante redondeado */
+    --radius-xl: 1rem;        /* Muy redondeado */
+    --radius-full: 9999px;    /* Circular/píldora */
+    
+    /* ========================================================================== */
+    /* SISTEMA DE TRANSICIONES                                                  */
+    /* ========================================================================== */
+    
+    --transition-fast: 150ms ease;     /* Hover, cambios rápidos */
+    --transition-normal: 200ms ease;   /* Transiciones estándar */
+    --transition-slow: 300ms ease;     /* Animaciones suaves */
+    
+    /* ========================================================================== */
+    /* SISTEMA DE SOMBRAS                                                       */
+    /* ========================================================================== */
+    
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    
+    /* ========================================================================== */
+    /* TIPOGRAFÍA                                                               */
+    /* ========================================================================== */
+    
+    --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-size-xs: 0.75rem;       /* 12px */
+    --font-size-sm: 0.875rem;      /* 14px */
+    --font-size-base: 1rem;        /* 16px */
+    --font-size-lg: 1.125rem;      /* 18px */
+    --font-size-xl: 1.25rem;       /* 20px */
+    --font-size-2xl: 1.5rem;       /* 24px */
+    --font-size-3xl: 1.875rem;     /* 30px */
+    
+    --font-weight-normal: 400;
+    --font-weight-medium: 500;
+    --font-weight-semibold: 600;
+    --font-weight-bold: 700;
+    
+    /* ========================================================================== */
+    /* Z-INDEX SCALE                                                            */
+    /* ========================================================================== */
+    
+    --z-dropdown: 1000;
+    --z-modal: 1050;
+    --z-modal-backdrop: 1040;
+    --z-tooltip: 1070;
+    --z-notification: 1080;
+}
+
+/* ============================================================================== */
+/* CLASES GLOBALES DE UTILIDAD                                                  */
+/* ============================================================================== */
+
+/* Colores de Fondo */
+.bg-primary {
+    background-color: var(--color-primary);
+}
+
+.bg-secondary {
+    background-color: var(--color-secondary);
+}
+
+.bg-neutral {
+    background-color: var(--color-neutral);
+}
+
+.bg-action {
+    background-color: var(--color-action);
+}
+
+.bg-alert {
+    background-color: var(--color-alert);
+}
+
+/* Colores de Texto */
+.text-primary {
+    color: var(--color-primary);
+}
+
+.text-secondary {
+    color: var(--color-secondary);
+}
+
+.text-action {
+    color: var(--color-action);
+}
+
+.text-alert {
+    color: var(--color-alert);
+}
+
+.text-dark {
+    color: var(--text-dark);
+}
+
+.text-light {
+    color: var(--text-light);
+}
+
+/* Bordes */
+.border-primary {
+    border-color: var(--color-primary);
+}
+
+.border-secondary {
+    border-color: var(--color-secondary);
+}
+
+.border-alert {
+    border-color: var(--color-alert);
+}
+
+/* Espaciado Utilities */
+.p-sm { padding: var(--spacing-sm); }
+.p-md { padding: var(--spacing-md); }
+.p-lg { padding: var(--spacing-lg); }
+
+.m-sm { margin: var(--spacing-sm); }
+.m-md { margin: var(--spacing-md); }
+.m-lg { margin: var(--spacing-lg); }
+
+/* Transiciones */
+.transition-fast {
+    transition: all var(--transition-fast);
+}
+
+.transition-normal {
+    transition: all var(--transition-normal);
+}
+
+.transition-slow {
+    transition: all var(--transition-slow);
+}
+
+/* Shadows */
+.shadow-sm {
+    box-shadow: var(--shadow-sm);
+}
+
+.shadow-md {
+    box-shadow: var(--shadow-md);
+}
+
+.shadow-lg {
+    box-shadow: var(--shadow-lg);
+}
+
+.shadow-xl {
+    box-shadow: var(--shadow-xl);
+}
+
+/* ============================================================================== */
+/* REFERENCIAS Y NOTAS                                                          */
+/* ============================================================================== */
+
+/*
+ * 🎨 GUÍA DE COLORES:
+ * 
+ * --color-primary (#00C853):   Éxito, botones principales, checkmarks
+ * --color-secondary (#FFD700): Acentos, destacados, premios, dorado elegante
+ * --color-neutral (#F5F5F5):   Fondos, bordes, elementos desenfatizados
+ * --color-action (#0B1E3C):    Headers, botones de acción, texto importante
+ * --color-alert (#F44336):     Errores, alertas, estados negativos
+ * 
+ * 🌐 COLORES SOCIALES:
+ * Mantener en variables separadas para no contaminar paleta oficial.
+ * Úsalos SOLO para iconos/botones de redes sociales.
+ * 
+ * 📝 CONVENCIÓN DE NOMBRADO:
+ * - --color-{nombre}: Color base
+ * - --color-{nombre}-dark: Versión más oscura (hover, active)
+ * - --color-{nombre}-light: Versión más clara (disabled, background)
+ * 
+ * ⚠️ IMPORTANTE:
+ * Nunca hardcodees colores en nuevos estilos.
+ * SIEMPRE usa estas variables CSS.
+ * Si necesitas un color que no existe, agregalo como variable aquí.
+ */

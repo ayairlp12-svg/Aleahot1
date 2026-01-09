@@ -193,12 +193,43 @@ function actualizarVistaCarritoGlobal() {
     // Crear lista de boletos ordenados
     const numerosOrdenados = [...selectedNumbers].sort((a, b) => a - b);
     const precioUnitario = obtenerPrecioDinamico();
+    
+    console.log('%c🛒 [actualizarVistaCarritoGlobal] CARRITO', 'color: #4ECDC4; font-weight: bold; font-size: 14px');
+    console.log('  ✓ Números ordenados:', numerosOrdenados);
+    console.log('  ✓ Oportunidades config:', window.rifaplusConfig?.rifa?.oportunidades);
+    console.log('  ✓ OportunidadesService:', !!window.OportunidadesService);
+    
+    // ✅ CALCULAR OPORTUNIDADES SI ESTÁN HABILITADAS
+    const oportunidadesConfig = window.rifaplusConfig?.rifa?.oportunidades;
+    let oportunidadesPorBoleto = {};
+    
+    if (oportunidadesConfig && oportunidadesConfig.enabled && window.OportunidadesService) {
+        try {
+            console.log('🎁 [CARRITO] Calculando oportunidades...');
+            const resultado = window.OportunidadesService.calcularOportunidadesCarrito(numerosOrdenados);
+            oportunidadesPorBoleto = resultado.oportunidadesPorBoleto || {};
+            console.log('🎁 [CARRITO] Oportunidades calculadas:', oportunidadesPorBoleto);
+        } catch (e) {
+            console.error('❌ Error al calcular oportunidades en carrito:', e);
+            console.error('Stack:', e.stack);
+        }
+    } else {
+        console.warn('⚠️ [CARRITO] No se pueden calcular oportunidades:', {
+            enabled: oportunidadesConfig?.enabled,
+            hasService: !!window.OportunidadesService
+        });
+    }
 
     // Usar DocumentFragment para agregar todos los items de una sola vez (más rápido)
     const fragment = document.createDocumentFragment();
     const contenedor = document.createElement('div');
     
     numerosOrdenados.forEach(numero => {
+        // Obtener oportunidades para este boleto
+        const oportunidades = oportunidadesPorBoleto[numero] || [];
+        
+        console.log(`  ✓ Boleto #${numero} → ${oportunidades.length} oportunidades: ${oportunidades.join(', ')}`);
+        
         const itemHtml = `
             <div class="carrito-item" data-numero="${numero}">
                 <div class="carrito-item-numero">
@@ -209,6 +240,14 @@ function actualizarVistaCarritoGlobal() {
                     <i class="fas fa-trash carrito-item-trash" aria-hidden="true"></i>
                 </button>
             </div>
+            ${oportunidades.length > 0 ? `<div class="carrito-item carrito-item-oportunidades-container" data-numero="${numero}">
+                <div class="carrito-item-numero" style="flex: 1;">
+                    <span class="carrito-item-oportunidades-text" style="display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-check carrito-item-oportunidades-check"></i>
+                        <strong>Oportunidades:</strong> ${oportunidades.join(', ')}
+                    </span>
+                </div>
+            </div>` : ''}
         `;
         contenedor.insertAdjacentHTML('beforeend', itemHtml);
     });

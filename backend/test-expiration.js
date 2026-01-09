@@ -66,13 +66,13 @@ async function testExpiration() {
             await db('boletos_estado')
                 .where('numero', numero)
                 .update({
-                    estado: 'reservado',
+                    estado: 'apartado',
                     numero_orden: numeroOrden,
                     reservado_en: new Date()
                 });
         }
         
-        log(`   ✓ ${boletosTest.length} boletos marcados como 'reservado'`);
+        log(`   ✓ ${boletosTest.length} boletos marcados como 'apartado'`);
 
         // 3. Verificar que la orden existe y está pendiente
         log('\n3️⃣  Verificando estado inicial...', 'bright');

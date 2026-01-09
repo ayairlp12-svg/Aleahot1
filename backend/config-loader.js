@@ -55,7 +55,8 @@ function cargarConfigJavaScript() {
             intervaloLimpiezaMinutos: extraerValor('intervaloLimpiezaMinutos'),
             advertenciaExpirationHoras: extraerValor('advertenciaExpirationHoras'),
             maxBoletosApartadosSinPago: extraerValor('maxBoletosApartadosSinPago'),
-            precioBoleto: extraerValor('precioBoleto')
+            precioBoleto: extraerValor('precioBoleto'),
+            totalBoletos: extraerValor('totalBoletos')
         };
     } catch (error) {
         console.warn('⚠️  No se pudo cargar config.js:', error.message);
@@ -86,7 +87,12 @@ function obtenerConfigExpiracion() {
         // NUEVA: Precio del boleto dinámico desde config.js
         precioBoleto: parseInt(process.env.PRECIO_BOLETO) 
             || config.precioBoleto 
-            || 15
+            || 15,
+        
+        // NUEVA: Total de boletos desde config.js
+        totalBoletos: parseInt(process.env.TOTAL_BOLETOS)
+            || config.totalBoletos
+            || 1000000
     };
 }
 

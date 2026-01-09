@@ -73,7 +73,7 @@ async function limpiarOrdenesCarceladas() {
                 // Liberar boletos
                 const actualizado = await db('boletos_estado')
                     .whereIn('numero', boletos)
-                    .whereIn('estado', ['reservado', 'vendido'])
+                    .whereIn('estado', ['apartado', 'vendido'])
                     .update({
                         estado: 'disponible',
                         numero_orden: null,
