@@ -183,8 +183,8 @@ function abrirModalSeleccionCuenta() {
             cerrarModalSeleccionCuenta();
             
             // Paso 3: Generar y mostrar orden formal
-            setTimeout(() => {
-                mostrarOrdenFormal(cuentaSeleccionada);
+            setTimeout(async () => {
+                await mostrarOrdenFormal(cuentaSeleccionada);
             }, 300);
         });
     });
@@ -229,9 +229,9 @@ function cerrarModalSeleccionCuenta() {
 /**
  * mostrarOrdenFormal - Prepara y muestra la orden formal de compra
  * @param {Object} cuenta - Objeto con datos de la cuenta bancaria
- * @returns {void}
+ * @returns {Promise<void>}
  */
-function mostrarOrdenFormal(cuenta) {
+async function mostrarOrdenFormal(cuenta) {
     if (!clienteCheckout) {
         console.error('No hay datos de cliente');
         return;
@@ -256,19 +256,51 @@ function mostrarOrdenFormal(cuenta) {
     
     localStorage.setItem('rifaplus_boletos', JSON.stringify(boletos));
     
-    // ✅ CALCULAR Y GUARDAR OPORTUNIDADES
-    const oportunidadesConfig = window.rifaplusConfig?.rifa?.oportunidades;
-    if (oportunidadesConfig && oportunidadesConfig.enabled) {
-        const oportunidadesService = window.OportunidadesService || window.oportunidadesService;
-        if (oportunidadesService && typeof oportunidadesService.calcularOportunidadesCarrito === 'function') {
-            const resultadoOportunidades = oportunidadesService.calcularOportunidadesCarrito(boletos);
-            localStorage.setItem('rifaplus_oportunidades', JSON.stringify({
-                boletosOcultos: resultadoOportunidades.boletosOcultos || [],
-                oportunidadesPorBoleto: resultadoOportunidades.oportunidadesPorBoleto || {},
-                cantidad: (resultadoOportunidades.boletosOcultos || []).length
-            }));
-            console.log('✅ Oportunidades calculadas y guardadas:', resultadoOportunidades);
+    // ✅ GENERAR Y GUARDAR OPORTUNIDADES (ROBUSTO CON VALIDACIONES)
+    console.log('🎁 [flujo-compra] Iniciando generación de oportunidades...');
+    let resultadoOpp = null;
+    
+    try {
+        // Verificar que OportunidadesManager está disponible
+        // ✅ ESTRATEGIA CORRECTA: PRIMERO recuperar lo que generó carrito-global.js
+        console.log('🔧 [flujo-compra] Intentando recuperar oportunidades de localStorage...');
+        try {
+            const oportunidadesGuardadas = localStorage.getItem('rifaplus_oportunidades');
+            if (oportunidadesGuardadas) {
+                const datos = JSON.parse(oportunidadesGuardadas);
+                if (datos.boletosOcultos && Array.isArray(datos.boletosOcultos) && datos.boletosOcultos.length > 0) {
+                    console.log(`✅ [flujo-compra] Recuperadas ${datos.boletosOcultos.length} oportunidades desde carrito-global.js`);
+                    console.log(`   Generador usado: ${datos.generador || 'v3'}`);
+                    resultadoOpp = { success: true, boletosOcultos: datos.boletosOcultos };
+                } else {
+                    console.warn('⚠️  [flujo-compra] Datos en localStorage no tienen boletosOcultos válidos, usando fallback');
+                    resultadoOpp = { success: false, boletosOcultos: [], error: 'datos_inválidos_fallback' };
+                }
+            } else {
+                console.warn('⚠️  [flujo-compra] No hay oportunidades guardadas en localStorage, usando fallback');
+                resultadoOpp = { success: false, boletosOcultos: [], error: 'no_guardadas_fallback' };
+            }
+        } catch (parseError) {
+            console.error('❌ [flujo-compra] Error recuperando oportunidades:', parseError);
+            resultadoOpp = { success: false, boletosOcultos: [], error: 'parse_error_fallback' };
         }
+        
+        // ✅ Si FALLÓ recuperar del localStorage, NO intentar generar (en lugar de eso, log de error)
+        if (!resultadoOpp?.success) {
+            console.error('❌ [flujo-compra] NO HAY OPORTUNIDADES DISPONIBLES - carrito-global.js NO generó correctamente');
+        }
+    } catch (errorCapturado) {
+        console.error('❌ [flujo-compra] Error inesperado:', errorCapturado);
+        resultadoOpp = { success: false, boletosOcultos: [], error: 'error_general' };
+    }
+    
+    // Procesar resultado
+    if (resultadoOpp?.success) {
+        console.log(`✅ [flujo-compra] Oportunidades guardadas: ${resultadoOpp.boletosOcultos.length}`);
+    } else if (resultadoOpp?.razon === 'deshabilitadas') {
+        console.log('ℹ️  [flujo-compra] Oportunidades deshabilitadas');
+    } else if (resultadoOpp?.error) {
+        console.warn(`⚠️  [flujo-compra] Oportunidades con error, continuando: ${resultadoOpp.error}`);
     }
     
     // Guardar totales
@@ -381,6 +413,7 @@ function mostrarOrdenFormalManual(orden) {
                     <div style="font-family: 'Courier New', monospace; font-size:0.95rem;">${orden.cuenta.accountNumber || orden.cuenta.numero || '-'}</div>
                     ${orden.cuenta.numero_referencia ? `<div style="font-size:0.88rem; color:var(--text-light);">Referencia: ${orden.cuenta.numero_referencia}</div>` : ''}
                     <div style="font-size:0.88rem; color:var(--text-dark);">Beneficiario: ${orden.cuenta.beneficiary || orden.cuenta.titular || '-'}</div>
+                </div>
             </div>
         </div>
     `;

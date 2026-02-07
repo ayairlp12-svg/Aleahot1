@@ -274,7 +274,7 @@ const GanadoresManager = {
                     ...g,
                     icono: this.getIconoTipo(tipo),
                     etiqueta: this.getEtiquetaTipo(tipo),
-                    numeroFormateado: String(g.numero).padStart(5, '0')
+                    numeroFormateado: window.rifaplusConfig.formatearNumeroBoleto(g.numero)
                 }));
             }
         }

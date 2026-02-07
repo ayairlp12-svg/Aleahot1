@@ -33,13 +33,59 @@ Object.assign(window.rifaplusConfig, {
      */
     cliente: {
         id: "Sorteos_Torres",
-        nombre: "SORTEOS Torres",
+        nombre: "Sorteos Torres",
         eslogan: "La mejor forma de ganar",
         logo: "images/logo.png",
         imagenPrincipal: "images/ImgPrincipal.png",
-        nombreSorteo: "2da Edicion RAM 700 2025",
-        colorPrimario: "#080808ff",
-        colorSecundario: "#000000ff", 
+        nombreSorteo: "RAM 1200 2025 + $150,000 Pesos",
+        nombreEdicion: "Edicion No. 16",
+        
+        /**
+         * 🎨 SISTEMA DE COLORES COMPLETO
+         * ================================
+         * Edita estos colores para cambiar el tema de la web completamente
+         * Se aplica automáticamente a toda la interfaz
+         * 
+         * PALETAS RECOMENDADAS:
+         * 
+         * 1. AZUL Y TEAL (Original):
+         *    primary: "#0f172a"
+         *    secondary: "#06b6d4"
+         *    accent: "#06b6d4"
+         * 
+         * 2. NEGRO Y ROJO (Actual):
+         *    primary: "#1A1A1A"
+         *    secondary: "#E63946"
+         *    accent: "#FF3D3D"
+         * 
+         * 3. VERDE Y ORO:
+         *    primary: "#1a4d2e"
+         *    secondary: "#d4af37"
+         *    accent: "#f4a261"
+         * 
+         * 4. PÚRPURA Y ROSA:
+         *    primary: "#2d1b4e"
+         *    secondary: "#c4556e"
+         *    accent: "#f26ba6"
+         * 
+         * 5. NARANJA Y AZUL:
+         *    primary: "#1a2a4a"
+         *    secondary: "#ff8c42"
+         *    accent: "#2196f3"
+         */
+        colorPrimario: "#1A1A1A",      // Color principal (botones, headers)
+        colorSecundario: "#E63946",    // Color secundario (botones rojos, acentos)
+        colorAccento: "#FF3D3D",       // Color de acento (highlights, borders)
+        
+        // Colores adicionales (ya no se usan para fondos/texto)
+        colorExito: "#FF3D3D",         // Rojo para éxito
+        colorPeligro: "#FF3D3D",       // Rojo para peligro
+        colorAdvertencia: "#FF6B6B",   // Rojo claro para advertencia
+        colorTexto: "#1F2937",         // Texto oscuro (nunca se usa, pero aquí está)
+        colorTextoSecundario: "#6B7280", // Texto gris (nunca se usa, pero aquí está)
+        colorFondo: "#FFFFFF",         // Fondo blanco (nunca se usa, pero aquí está)
+        colorFondoSecundario: "#F5F5F5", // Fondo gris (nunca se usa, pero aquí está)
+        
         telefono: "434 106 8932",
         email: "joseayair16@gmail.com",
         anioActual: 2026,
@@ -69,6 +115,73 @@ Object.assign(window.rifaplusConfig, {
     },
 
     /* ============================================================ */
+    /* SECCIÓN 1.5: CONFIGURACIÓN DE SEO Y METADATOS               */
+    /* ============================================================ */
+
+    /**
+     * ⚠️  IMPORTANTE PARA OPTIMIZAR SEO:
+     * 
+     * Edita esta sección para cambiar:
+     * - Títulos que aparecen en navegador y redes sociales
+     * - Descripciones para Google, Facebook, Twitter
+     * - Imágenes para compartir en redes
+     * - URLs base de la web
+     * 
+     * Los metadatos se inyectan dinámicamente en TODAS las páginas
+     * NO necesitas editar HTML, TODO es configuración aquí
+     */
+    seo: {
+        // URL base de la web (sin "/" al final)
+        urlBase: "https://rifas-web.vercel.app",
+        
+        // Dominio actual para validaciones
+        dominio: "rifas-web.vercel.app",
+        
+        // Título principal - Aparece en pestaña del navegador y en Google
+        titulo: "Sorteos Torres - RAM 1200 2025 + $150,000 | Rifas 100% Transparentes",
+        
+        // Descripción para Google y redes sociales (155-160 caracteres ideal)
+        descripcion: "Participa en el sorteo de RAM 1200 2025 + $150,000. 100% transparente, transmisión en vivo. Compra tus boletos desde $8 MXN.",
+        
+        // Palabras clave (SEO)
+        palabrasLlave: "sorteo, rifa, RAM 1200, transparente, en vivo, ganador, sorteos México",
+        
+        // Imagen principal para compartir en redes
+        imagen: "/images/ImgPrincipal.png",
+        
+        // Open Graph - Para Facebook y WhatsApp
+        openGraph: {
+            titulo: "Sorteos Torres - ¡Gana RAM 1200 2025 + $150,000!",
+            descripcion: "Participa en nuestro sorteo 100% transparente. Transmisión en vivo. Boletos desde $8 MXN con 3 oportunidades extras.",
+            imagen: "/images/ImgPrincipal.png",
+            tipo: "website",
+            locale: "es_MX"
+        },
+        
+        // Twitter Card - Para compartir en Twitter/X
+        twitter: {
+            card: "summary_large_image",
+            titulo: "Sorteos Torres - ¡Gana RAM 1200 2025!",
+            descripcion: "Participa en el sorteo más transparente de Mexico. Transmisión en vivo 09 de Febrero.",
+            imagen: "/images/ImgPrincipal.png",
+            creador: "@sorteos_torres"
+        },
+        
+        // Autor y copyright
+        autor: "Sorteos Torres",
+        copyright: "© 2026 Sorteos Torres. Todos los derechos reservados.",
+        
+        // Datos de contacto estructurado (Schema.org)
+        contacto: {
+            tipo: "Organization",
+            nombre: "Sorteos Torres",
+            telefono: "434 106 8932",
+            email: "joseayair16@gmail.com",
+            enlace: "https://rifas-web.vercel.app"
+        }
+    },
+
+    /* ============================================================ */
     /* SECCIÓN 1B: PALETA DE COLORES (PROFESIONAL)                 */
     /* ============================================================ */
 
@@ -79,28 +192,28 @@ Object.assign(window.rifaplusConfig, {
      */
     tema: {
         // Colores principales - PALETA PROFESIONAL MODERNA
-        // Azul oscuro elegante + Teal brillante + Blanco minimalista
+        // Negro elegante + Rojo vivo + Blanco minimalista
         colores: {
             // Primario: botones, headers, acentos principales
-            primary: "#0f172a",         // Azul oscuro elegante - headers, botones
-            primaryDark: "#051425",     // Azul oscuro aún más profundo - sombras
-            primaryLight: "#06b6d4",    // Teal brillante - acentos, highlights
+            primary: "#1A1A1A",         // Negro elegante - headers, botones
+            primaryDark: "#0D0D0D",     // Negro aún más profundo - sombras
+            primaryLight: "#FF3D3D",    // Rojo vivo - acentos, highlights
             
             // Secundario: acentos, highlights
-            secondary: "#06b6d4",       // Teal - botones secundarios, acciones
-            secondaryDark: "#0891b2",   // Teal más oscuro (hover)
+            secondary: "#E63946",       // Rojo - botones secundarios, acciones
+            secondaryDark: "#D62828",   // Rojo más oscuro (hover)
             
             // Estados generales
-            success: "#10b981",         // Verde suave pero visible
-            successDark: "#059669",     // Verde más oscuro
-            danger: "#ef4444",          // Rojo suave pero visible
-            dangerDark: "#dc2626",      // Rojo más oscuro
+            success: "#FF3D3D",         // Rojo vivo
+            successDark: "#D62828",     // Rojo más oscuro
+            danger: "#FF3D3D",          // Rojo vivo
+            dangerDark: "#D62828",      // Rojo más oscuro
             
             // Estados de boletos
             disponible: "#f8fafc",      // Gris ultra claro
-            seleccionado: "#06b6d4",    // Teal
-            apartado: "#06b6d4",        // Teal
-            vendido: "#0f172a",         // Azul oscuro
+            seleccionado: "#e11223ba",    // Rojo
+            apartado: "#4d060c",        // Rojo
+            vendido: "#1A1A1A",         // Negro
             
             // Texto
             textDark: "#1f2937",        // Gris oscuro - texto principal
@@ -151,12 +264,12 @@ Object.assign(window.rifaplusConfig, {
      * Incluye premio, fechas, precios y promociones
      */
     rifa: {
-        titulo: "Edicion No. 12 Sorteos Torres - Honda CR-V 2025 por tan solo $2.00 pesitos.",
-        descripcion: "Ademas, el segundo lugar se lleva 150,000 pesos en efectivo, habra presorteo asi como de 10 ruletazos de $1,000 c/u.",
+        titulo: "RAM 1200 2025 como nueva + 150,000 pesos",
+        descripcion: "Llevatela este 09 de Febrero en base al ganador de la Loteria Nacional, Ademas tenemos presorteo y 20 ruletazos a lo largo del sorteo, participa con solo $8 pesitos y te llevas 3 oportunidades extras de ganar",
         premios: [
             {
-                nombre: "Honda CR-V 2025",
-                descripcion: "Honda CR-V 2025 - Nuevecita color blanca con todo y accesorios.",
+                nombre: "RAM 1200 2025",
+                descripcion: "RAM 1200 2025 - Nuevecita con todo y accesorios. Primer lugar.",
                 imagenes: [
                     "images/ImgPrincipal.png",
                     "images/frontal.jpg",
@@ -164,13 +277,22 @@ Object.assign(window.rifaplusConfig, {
                 ]
             }
         ],
-        fechaSorteo: "2026-01-16T20:00:00-06:00",
-        fechaSorteoFormato: "16 de Enero del 2026",
+        fechaSorteo: "2026-02-09T20:00:00-06:00",
+        fechaSorteoFormato: "09 de Febrero del 2026",
         horaSorteo: "8:00 PM",
+        fechaPresorteo: "2026-02-05T20:00:00-06:00",
+        fechaPresorteoFormato: "05 de Febrero del 2026",
+        horaPresorteo: "8:00 PM",
         zonaHoraria: "Hora Centro México",
         modalidadSorteo: "Transmisión en Vivo por Facebook",
-        totalBoletos: 1000000,
-        precioBoleto: 4,
+        totalBoletos: 250000,
+        precioBoleto: 8,
+        
+        // ===== CONFIGURACIÓN DE OPORTUNIDADES =====
+        // Arquitectura 1M: 250k boletos + 750k oportunidades
+        oportunidadesHabilitadas: true,
+        totalOportunidades: 750000,
+        promediooportunidadesPorOrden: 30,
         
         // ===== CONFIGURACIÓN DE EXPIRACIÓN DE ÓRDENES =====
         // ⚠️  IMPORTANTE: Estos valores se usan en:
@@ -194,14 +316,14 @@ Object.assign(window.rifaplusConfig, {
         // (por si necesitas un límite diferente al total)
         maxBoletosApartadosSinPago: null,  // null = sin límite
         
-        // Rangos de 200,000 boletos cada uno (cobertura total 0-999,999)
+        // Rangos para 250,000 boletos visibles (de un total de 1,000,000)
+        // Total: 1M (250k visible + 750k oportunidades)
         rangos: [
-            { id: 'A', nombre: '0-99,999', inicio: 0, fin: 99999 },
-            { id: 'B', nombre: '100,000-199,999', inicio: 100000, fin: 199999 },
-            { id: 'C', nombre: '200,000-299,999', inicio: 200000, fin: 299999 },
-            { id: 'D', nombre: '300,000-399,999', inicio: 300000, fin: 399999 },
-            { id: 'E', nombre: '400,000-499,999', inicio: 400000, fin: 499999 }
-           
+            { id: 'A', nombre: '000000-049999', inicioFormato: '000000', finFormato: '049999', inicio: 0, fin: 49999 },
+            { id: 'B', nombre: '050000-099999', inicioFormato: '050000', finFormato: '099999', inicio: 50000, fin: 99999 },
+            { id: 'C', nombre: '100000-149999', inicioFormato: '100000', finFormato: '149999', inicio: 100000, fin: 149999 },
+            { id: 'D', nombre: '150000-199999', inicioFormato: '150000', finFormato: '199999', inicio: 150000, fin: 199999 },
+            { id: 'E', nombre: '200000-249999', inicioFormato: '200000', finFormato: '249999', inicio: 200000, fin: 249999 }
         ],
         
         // ===== CONFIGURACIÓN DE DESCUENTOS (PRECIOS REDUCIDOS POR VOLUMEN) =====
@@ -216,14 +338,28 @@ Object.assign(window.rifaplusConfig, {
             ]
         },
 
+        // ===== CONFIGURACIÓN DE PROMOCIONES DE OPORTUNIDADES =====
+        // Muestra ejemplos atractivos de cuántas oportunidades gana el cliente
+        // Por ejemplo: "Compra 2 boletos → Gana 4 oportunidades"
+        // Se mostrarán como cards en la sección de promociones si oportunidades están habilitadas
+        promocionesOportunidades: {
+            enabled: true,  // true para mostrar sección, false para ocultar
+            ejemplos: [
+                { boletos: 1, oportunidades: 4 },
+                { boletos: 5, oportunidades: 20 },
+                { boletos: 10, oportunidades: 40 },
+                { boletos: 50, oportunidades: 200 }
+            ]
+        },
+
         // ===== CONFIGURACIÓN DE OPORTUNIDADES (BOLETOS GRATIS SORPRESA) =====
         // Asigna boletos extras automáticamente cuando el cliente compra
         // Completamente configurable: 1 boleto → 8 oportunidades, etc.
         // Se puede usar CON o SIN promociones
         oportunidades: {
             enabled: true,  // true para habilitar, false para deshabilitar
-            rango_visible: { inicio: 0, fin: 499999 },      // Boletos que ve el cliente
-            rango_oculto: { inicio: 500000, fin: 999999 },  // Pool de oportunidades
+            rango_visible: { inicio: 0, fin: 249999 },      // Boletos que ve el cliente (250k)
+            rango_oculto: { inicio: 250000, fin: 999999 },  // Pool de oportunidades (750k)
             tipo: 'fijo',  // 'dinamico' o 'fijo'
             
             // OPCIÓN 1: 'dinamico' - Oportunidades basadas en cantidad de boletos comprados
@@ -248,7 +384,7 @@ Object.assign(window.rifaplusConfig, {
 
             // OPCIÓN 2: 'fijo' - Número fijo de oportunidades sin importar cantidad
             // Descomenta la siguiente línea si prefieres número fijo:
-            oportunidades_por_boleto: 1,  // 1 oportunidad por cada boleto comprado, sin importar cantidad total
+            oportunidades_por_boleto: 3,  // 3 oportunidades por cada boleto comprado, sin importar cantidad total
 
             mensajeOportunidad: "¡Felicidades! Se asignaron %oportunidades% boleto(s) de SORPRESA al azar"
         },
@@ -290,6 +426,30 @@ Object.assign(window.rifaplusConfig, {
             ]
         },
 
+        // ===== CONFIGURACIÓN DE BONIFICACIONES (OFERTAS ESPECIALES) =====
+        // Sección simple y profesional de bonos e incentivos
+        bonificaciones: {
+            enabled: true,  // true para mostrar sección, false para ocultar
+            items: [
+                {
+                    titulo: "iPhone 17 Pro Max",
+                    condicion: "Antes del 14 de febrero"
+                },
+                {
+                    titulo: "Bono $50,000",
+                    condicion: "Compra 100+ boletos"
+                },
+                {
+                    titulo: "Bono $100,000",
+                    condicion: "Compra 200+ boletos"
+                },
+                {
+                    titulo: "Combo Total",
+                    condicion: "200+ boletos antes del 14"
+                }
+            ]
+        },
+
         // ===== CONFIGURACIÓN DE GANADORES =====
         // Define cuántos ganadores habrá de cada tipo
         // Si alguno es 0, ese tipo no aparecerá
@@ -300,21 +460,71 @@ Object.assign(window.rifaplusConfig, {
         // - Completo: {sorteo: 3, presorteo: 5, ruletazos: 2}
         ganadores: {
             sorteo: 2,           // Ganador principal, 2do y 3er lugar (0 para deshabilitar)
-            presorteo: 2,        // Ganadores de presorteos/rifas previas (0 para deshabilitar)
-            ruletazos: 10         // Ganadores de ruletazos (0 para deshabilitar)
+            presorteo: 1,        // Ganadores de presorteos/rifas previas (0 para deshabilitar)
+            ruletazos: 20         // Ganadores de ruletazos (0 para deshabilitar)
+        },
+
+        // ===== CONFIGURACIÓN DE PREMIOS =====
+        // Define todos los premios del sorteo de forma dinámica
+        // Se mostrarán en una sección visual entre el countdown y la info del sorteo
+        sistemaPremios: {
+            enabled: true,  // true para mostrar sección, false para ocultar
+            
+            // PREMIOS DEL SORTEO PRINCIPAL (1er, 2do, 3er lugar, etc.)
+            sorteo: [
+                {
+                    posicion: 1,
+                    nombre: "Primer Lugar",
+                    premio: "RAM 1200 2025",
+                    descripcion: "Vehículo completamente nuevo con accesorios",
+                    icono: "🥇"
+                },
+                {
+                    posicion: 2,
+                    nombre: "Segundo Lugar",
+                    premio: "$150,000 en efectivo",
+                    descripcion: "Dinero en efectivo directo a tu cuenta",
+                    icono: "🥈"
+                }
+            ],
+
+            // PREMIOS DE PRESORTEO (Sorteos previos o adicionales)
+            presorteo: [
+                {
+                    posicion: 1,
+                    nombre: "Presorteo 26 de Enero",
+                    premio: "$100,000 en efectivo",
+                    descripcion: "Ganador del presorteo del 26 de Enero",
+                    icono: "💵"
+                }
+            ],
+
+            // PREMIOS DE RULETAZOS (Múltiples premios pequeños)
+            ruletazos: [
+                {
+                    evento: "Presorteo 05 Febrero",
+                    cantidad: 10,
+                    premio: "$1,000 cada uno",
+                    icono: "🎰"
+                },
+                {
+                    evento: "Sorteo Principal 09 Febrero",
+                    cantidad: 10,
+                    premio: "$1,000 cada uno",
+                    icono: "🎰"
+                }
+            ],
+
+            // Mensaje motivacional
+            mensaje: "Múltiples oportunidades de ganar premios extraordinarios"
         },
 
         // Información del sorteo (configurable, aparece en tarjetas)
         infoRifa: [
             {
                 icono: '🗓️',
-                titulo: 'Fecha del Sorteo',
-                contenido: 'dinamico-fecha'
-            },
-            {
-                icono: '⏰',
-                titulo: 'Hora',
-                contenido: 'dinamico-hora'
+                titulo: 'Fecha y Hora del Sorteo',
+                contenido: 'dinamico-fecha-hora'
             },
             {
                 icono: '📍',
@@ -323,8 +533,8 @@ Object.assign(window.rifaplusConfig, {
             },
             {
                 icono: '🎯',
-                titulo: 'Total de Boletos',
-                contenido: 'dinamico-boletos'
+                titulo: 'Total de Emisiones',
+                contenido: 'dinamico-emisiones'
             }
         ]
     },
@@ -341,8 +551,8 @@ Object.assign(window.rifaplusConfig, {
     sorteoActivo: {
         estado: 'activo', // 'activo' | 'proximo' | 'finalizado'
         id: 'sorteo_001',
-        nombre: 'RAM 700 2025',
-        fechaCierre: new Date('2026-01-06T20:00:00'),
+        nombre: 'RAM 1200 2025 - Edición 20',
+        fechaCierre: new Date('2026-01-31T20:00:00'),
         fechaCierreFormato: 'martes, 6 de enero, 2026 - 8:00 p.m.',
         
         /**
@@ -458,14 +668,27 @@ Object.assign(window.rifaplusConfig, {
             },
             {
                 id: 3,
-                nombreBanco: 'OXXO, Farmacias del Ahorro, 7Eleven',
+                nombreBanco: 'OXXO',
                 accountNumber: '4489 4567 0121 89561',
-                numero_referencia: 'ID de tu orden de compra',
-                beneficiary: 'Pago en efectivo',
-                accountType: 'Efectivo',
-                paymentType: 'efectivo',
-                instructions: 'Numero de cuenta: 4597 2456 0911 6578 Banco: BBVA'
-                             
+                numero_referencia: 'Tu número de orden o nombre completo',
+                beneficiary: 'Sortel Torres',
+                paymentType: 'efectivo'
+            },
+            {
+                id: 4,
+                nombreBanco: 'Farmacias del Ahorro',
+                accountNumber: '4489 4567 0121 89561',
+                numero_referencia: 'Tu número de orden o nombre completo',
+                beneficiary: 'Sortel Torres',
+                paymentType: 'efectivo'
+            },
+            {
+                id: 5,
+                nombreBanco: '7-Eleven',
+                accountNumber: '4489 4567 0121 89561',
+                numero_referencia: 'Tu número de orden o nombre completo',
+                beneficiary: 'Sortel Torres',
+                paymentType: 'efectivo'
             }
         ]
     },
@@ -822,82 +1045,301 @@ window.rifaplusConfig.emitirEvento = function(evento, datos) {
 
 
 /**
- * Aplicar configuración visual (colores, logo, título)
+ * SISTEMA DE COLORES PROFESIONAL - CENTRALIZADO EN UN SOLO LUGAR
+ * ============================================================
+ * 
+ * ⚠️  PARA CAMBIAR COLORES:
+ * 
+ * 1. Edita en js/config.js (línea ~80):
+ *    - colorPrimario (headers, botones principales)
+ *    - colorSecundario (botones rojos, acentos)
+ *    - colorAccento (highlights, borders)
+ * 
+ * 2. Recarga la página - ¡LISTO! Los colores se aplican automáticamente
+ * 
+ * 3. NO EDITES CSS FILES - todo viene de aquí
+ * 
+ * ============================================================
+ */
+
+/**
+ * Función interna: Generar paleta de colores derivados
+ * Toma 3 colores base y genera variaciones automáticamente
+ */
+window.rifaplusConfig._generarPaleta = function(primary, secondary, accent) {
+    return {
+        // Colores base
+        primary: primary,
+        secondary: secondary,
+        accent: accent,
+        
+        // Variaciones
+        primaryDark: this._oscurecer(primary, 30),
+        primaryLight: accent,
+        secondaryDark: this._oscurecer(secondary, 15),
+        
+        // Aliases para compatibilidad
+        'color-primary': accent,
+        'color-primary-dark': primary,
+        'color-secondary': secondary,
+        'color-action': secondary,
+        'color-alert': accent,
+    };
+};
+
+/**
+ * Función interna: Oscurecer un color (hex)
+ */
+window.rifaplusConfig._oscurecer = function(hex, percent) {
+    const num = parseInt(hex.replace("#", ""), 16);
+    const r = Math.max(0, (num >> 16) - percent);
+    const g = Math.max(0, ((num >> 8) & 0x00FF) - percent);
+    const b = Math.max(0, (num & 0x0000FF) - percent);
+    return "#" + ((r << 16) | (g << 8) | b).toString(16).padStart(6, "0");
+};
+
+/**
+ * Aplicar configuración visual - SISTEMA CENTRALIZADO DE COLORES
+ * Esta es la ÚNICA función que genera CSS de colores
  */
 window.rifaplusConfig.aplicarConfiguracion = function() {
     try {
-        // Aplicar variables CSS si existen
-        const root = document.documentElement;
-        if (this.cliente && this.cliente.colorPrimario) {
-            root.style.setProperty('--primary', this.cliente.colorPrimario);
+        // ============================================================
+        // PASO 1: GENERAR PALETA DE COLORES DESDE VALORES BASE
+        // ============================================================
+        
+        const paleta = this._generarPaleta(
+            this.cliente.colorPrimario || '#1A1A1A',
+            this.cliente.colorSecundario || '#E63946',
+            this.cliente.colorAccento || '#FF3D3D'
+        );
+        
+        // ============================================================
+        // PASO 2: GENERAR CSS DINÁMICO ÚNICO Y LIMPIO
+        // ============================================================
+        
+        const styleId = 'rifaplus-theme-system';
+        let styleElement = document.getElementById(styleId);
+        
+        if (styleElement) {
+            styleElement.remove();
         }
-        if (this.cliente && this.cliente.colorSecundario) {
-            root.style.setProperty('--primary-600', this.cliente.colorSecundario);
-            root.style.setProperty('--secondary', this.cliente.colorSecundario);
+        
+        styleElement = document.createElement('style');
+        styleElement.id = styleId;
+        styleElement.innerHTML = this._generarCssCompleto(paleta);
+        
+        // ============================================================
+        // PASO 3: INYECTAR AL HEAD (máxima prioridad)
+        // ============================================================
+        
+        if (document.head.firstChild) {
+            document.head.insertBefore(styleElement, document.head.firstChild);
+        } else {
+            document.head.appendChild(styleElement);
         }
-
-        // Actualizar todos los logos en la página
-        const logoElements = document.querySelectorAll('[data-logo-src]');
-        if (this.cliente && this.cliente.logo) {
-            logoElements.forEach(logoEl => {
-                const img = logoEl.querySelector('img');
-                if (img) {
-                    img.src = this.cliente.logo;
-                    img.alt = this.cliente.nombre || 'Logo';
-                }
-            });
-        }
-
-        // Actualizar título del documento si es página principal
-        if (this.cliente && this.cliente.nombre) {
-            // Solo cambiar título si está en la página principal (no en admin panel)
-            if (!document.title.includes('Panel')) {
-                document.title = `${this.cliente.nombre} - Gana ${this.rifa.titulo}`;
-            }
-        }
-
-        // Actualizar metadescripción dinámicamente
-        const metaDesc = document.querySelector('meta[name="description"]');
-        if (metaDesc && this.cliente && this.rifa) {
-            metaDesc.setAttribute('content', `Participa en ${this.cliente.nombre}. Gana un ${this.rifa.titulo}. Sorteo 100% transparente en vivo.`);
-        }
-
-        // ===== ACTUALIZAR OPEN GRAPH META TAGS =====
-        // Para que las redes sociales muestren información actualizada
-        if (this.cliente && this.rifa) {
-            const ogTitle = document.querySelector('meta[property="og:title"]');
-            if (ogTitle) ogTitle.setAttribute('content', `${this.cliente.nombre} - Gana ${this.rifa.titulo}`);
-            
-            const ogDesc = document.querySelector('meta[property="og:description"]');
-            if (ogDesc) ogDesc.setAttribute('content', `Participa en ${this.cliente.nombre}. ${this.rifa.descripcion}. Sorteo 100% transparente en vivo.`);
-            
-            const ogImage = document.querySelector('meta[property="og:image"]');
-            if (ogImage && this.rifa.premios[0]?.imagenes[0]) {
-                const imgUrl = new URL(this.rifa.premios[0].imagenes[0], window.location.href).href;
-                ogImage.setAttribute('content', imgUrl);
-            }
-            
-            const twitterTitle = document.querySelector('meta[name="twitter:title"]');
-            if (twitterTitle) twitterTitle.setAttribute('content', `${this.cliente.nombre} - Gana ${this.rifa.titulo}`);
-            
-            const twitterDesc = document.querySelector('meta[name="twitter:description"]');
-            if (twitterDesc) twitterDesc.setAttribute('content', `Participa en ${this.cliente.nombre}. ${this.rifa.descripcion}. Sorteo 100% transparente en vivo.`);
-            
-            const twitterImage = document.querySelector('meta[name="twitter:image"]');
-            if (twitterImage && this.rifa.premios[0]?.imagenes[0]) {
-                const imgUrl = new URL(this.rifa.premios[0].imagenes[0], window.location.href).href;
-                twitterImage.setAttribute('content', imgUrl);
-            }
-            
-            console.log('✅ Open Graph meta tags actualizados dinámicamente');
-        }
-
-        // Aplicar colores a elementos específicos si existen
-        this.aplicarColorAElementos();
-
-    } catch (e) {
-        console.warn('Error aplicando configuración:', e);
+        
+        // Log de confirmación
+        console.log('✅ [RifaPlus] Sistema de colores aplicado correctamente');
+        console.log('   Primary: ' + paleta.primary);
+        console.log('   Secondary: ' + paleta.secondary);
+        console.log('   Accent: ' + paleta.accent);
+        
+    } catch (error) {
+        console.error('❌ Error al aplicar configuración:', error);
     }
+};
+
+/**
+ * Función interna: Generar TODA la inyección CSS (sin duplicados)
+ * ESTA ES LA ÚNICA FUENTE DE CSS DE COLORES
+ */
+window.rifaplusConfig._generarCssCompleto = function(paleta) {
+    return `
+/* ═══════════════════════════════════════════════════════════════ */
+/* SISTEMA CENTRALIZADO DE COLORES - RIFAPLUS THEME ENGINE        */
+/* 🎨 Source: js/config.js (líneas ~80-120)                       */
+/* ⚠️  Para cambiar colores, edita SOLO los valores en config.js   */
+/* ═══════════════════════════════════════════════════════════════ */
+
+/* ─────────────────────────────────────────────────────────────── */
+/* 1. VARIABLES CSS ROOT - SINGLE SOURCE OF TRUTH                  */
+/* ─────────────────────────────────────────────────────────────── */
+
+:root {
+    /* Colores principales */
+    --primary: ${paleta.primary} !important;
+    --primary-dark: ${paleta.primaryDark} !important;
+    --primary-light: ${paleta.primaryLight} !important;
+    --secondary: ${paleta.secondary} !important;
+    --secondary-dark: ${paleta.secondaryDark} !important;
+    
+    /* Aliases de compatibilidad */
+    --primary-400: ${paleta.accent} !important;
+    --primary-500: ${paleta.secondary} !important;
+    --primary-600: ${paleta.secondary} !important;
+    --color-primary: ${paleta.accent} !important;
+    --color-primary-dark: ${paleta.primary} !important;
+    --color-secondary: ${paleta.secondary} !important;
+    --color-action: ${paleta.secondary} !important;
+    --color-alert: ${paleta.accent} !important;
+}
+
+/* ─────────────────────────────────────────────────────────────── */
+/* 2. HEADERS Y NAVEGACIÓN                                         */
+/* ─────────────────────────────────────────────────────────────── */
+
+.header, .navbar, .topbar, .admin-header {
+    background: ${paleta.primary} !important;
+    color: #FFFFFF !important;
+}
+
+.header *, .navbar *, .topbar *, .admin-header * {
+    color: inherit !important;
+}
+
+/* ─────────────────────────────────────────────────────────────── */
+/* 3. BOTONES PRIMARIOS                                            */
+/* ─────────────────────────────────────────────────────────────── */
+
+.btn-primary, .btn-continuar {
+    background: ${paleta.primary} !important;
+    color: #FFFFFF !important;
+    border: 2px solid ${paleta.accent} !important;
+}
+
+.btn-primary:hover, .btn-continuar:hover {
+    background: ${paleta.primary} !important;
+    border-color: ${paleta.accent} !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+    transform: translateY(-2px) !important;
+}
+
+/* ─────────────────────────────────────────────────────────────── */
+/* 4. BOTONES SECUNDARIOS Y ACENTOS                                */
+/* ─────────────────────────────────────────────────────────────── */
+
+.btn-secondary, .btn-action {
+    background: ${paleta.secondary} !important;
+    color: #FFFFFF !important;
+    border-color: ${paleta.secondary} !important;
+}
+
+.btn-secondary:hover, .btn-action:hover {
+    background: ${paleta.accent} !important;
+    border-color: ${paleta.accent} !important;
+}
+
+/* ─────────────────────────────────────────────────────────────── */
+/* 5. BOTONES ESPECIALES (copiar, descargar, etc)                  */
+/* ─────────────────────────────────────────────────────────────── */
+
+.btn-copiar {
+    background: ${paleta.secondary} !important;
+}
+
+.btn-copiar:hover {
+    background: ${paleta.accent} !important;
+}
+
+.btn-descargar {
+    background: ${paleta.primary} !important;
+}
+
+.btn-descargar:hover {
+    background: ${paleta.accent} !important;
+}
+
+/* ─────────────────────────────────────────────────────────────── */
+/* 6. UTILIDADES - CLASES DE COLOR                                 */
+/* ─────────────────────────────────────────────────────────────── */
+
+.text-info, .text-primary {
+    color: ${paleta.secondary} !important;
+}
+
+.bg-info {
+    background-color: ${paleta.secondary} !important;
+}
+
+.badge {
+    background: ${paleta.secondary} !important;
+    color: #FFFFFF !important;
+}
+
+/* ─────────────────────────────────────────────────────────────── */
+/* 7. SECCIÓN DE BONIFICACIONES (SIMPLE Y CLÁSICA)                 */
+/* ─────────────────────────────────────────────────────────────── */
+
+.bonificaciones-section {
+    padding: 2.5rem 0;
+    background: linear-gradient(180deg, #f5f7fa 0%, #ffffff 100%);
+}
+
+.bonificaciones-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--primary-dark);
+    text-align: center;
+    margin: 0 0 2rem 0;
+    letter-spacing: -0.5px;
+}
+
+.bonificaciones-cards {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+@media (max-width: 1024px) {
+    .bonificaciones-cards {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.25rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .bonificaciones-title {
+        font-size: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .bonificaciones-cards {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+}
+
+/* ─────────────────────────────────────────────────────────────── */
+/* 8. ELEMENTOS DE INTERFAZ                                        */
+/* ─────────────────────────────────────────────────────────────── */
+
+.promo-card-grande::before {
+    background: ${paleta.primary} !important;
+}
+
+.promo-card-grande:hover {
+    border-color: ${paleta.primary} !important;
+}
+
+.promo-card-precio {
+    color: ${paleta.primary} !important;
+}
+
+.section-title {
+    color: ${paleta.primary} !important;
+}
+
+.countdown-section {
+    background: linear-gradient(135deg, ${paleta.primary} 0%, ${paleta.primaryDark} 100%) !important;
+}
+
+/* FIN DEL TEMA CENTRALIZADO - No hay más CSS de colores en otro lado */
+/* ═══════════════════════════════════════════════════════════════ */
+    `;
 };
 
 /**
@@ -905,7 +1347,7 @@ window.rifaplusConfig.aplicarConfiguracion = function() {
  * (Los colores se aplican automáticamente via CSS, este método no hace nada actualmente)
  */
 window.rifaplusConfig.aplicarColorAElementos = function() {
-    // Ya no es necesario - los colores se aplican via root.style.setProperty() en aplicarConfiguracion()
+    // Ya no es necesario - los colores se aplican dinámicamente en aplicarConfiguracion()
 };
 
 // ====================================
@@ -948,6 +1390,11 @@ try {
 // ====================================
 // INICIALIZACIÓN AUTOMÁTICA MEJORADA
 // ====================================
+
+// Aplicar estilos INMEDIATAMENTE (antes de DOMContentLoaded)
+if (window.rifaplusConfig && typeof window.rifaplusConfig.aplicarConfiguracion === 'function') {
+    window.rifaplusConfig.aplicarConfiguracion();
+}
 
 document.addEventListener('DOMContentLoaded', function() {
     // Inicializar sistema completo (defensivo)
@@ -1625,7 +2072,7 @@ window.rifaplusConfig._transformarGanadoresTipo = function(ganadores) {
 
     return ganadores.map((ganador, index) => ({
         posicion: ganador.posicion || (index + 1),
-        numeroOrden: String(ganador.numero).padStart(5, '0'),  // Formato: SY-XXXXX → pero tomamos el número
+        numeroOrden: this.formatearNumeroBoleto(ganador.numero),  // ✅ Usar función centralizada
         nombre: ganador.nombre_cliente || '-',
         apellido: ganador.apellido_cliente || '',
         nombreParcial: this._generarNombreParcial(ganador.nombre_cliente, ganador.apellido_cliente),
@@ -1714,32 +2161,37 @@ window.rifaplusConfig.calcularDescuento = function(cantidadBoletos, precioUnitar
 
     const subtotal = cantidadBoletos * precioUnitario;
     
-    // Buscar la regla que aplique
+    // Buscar la regla que aplique (buscar la mayor cantidad que sea <= cantidadBoletos)
+    let reglaAplicable = null;
+    
     for (const regla of this.rifa.descuentos.reglas) {
-        if (cantidadBoletos >= regla.cantidad_minima && 
-            cantidadBoletos <= regla.cantidad_maxima) {
-            
-            let montoDescuento = 0;
-            let porcentajeDescuento = 0;
-
-            if (this.rifa.descuentos.tipo === 'porcentaje') {
-                porcentajeDescuento = regla.descuento;
-                montoDescuento = Math.floor((subtotal * porcentajeDescuento) / 100);
-            } else if (this.rifa.descuentos.tipo === 'cantidad') {
-                montoDescuento = regla.descuento * cantidadBoletos;
-                porcentajeDescuento = Math.round((montoDescuento / subtotal) * 100);
+        // Si la cantidad de boletos es >= cantidad en la regla
+        if (cantidadBoletos >= regla.cantidad) {
+            // Usar esta regla si es la mayor que hemos visto hasta ahora
+            if (!reglaAplicable || regla.cantidad > reglaAplicable.cantidad) {
+                reglaAplicable = regla;
             }
-
-            return {
-                descuentoAplicable: true,
-                monto: montoDescuento,
-                porcentaje: porcentajeDescuento,
-                subtotal: subtotal,
-                total: subtotal - montoDescuento,
-                regla: regla,
-                mensaje: `Descuento de ${porcentajeDescuento}% aplicado`
-            };
         }
+    }
+
+    // Si hay una regla aplicable
+    if (reglaAplicable) {
+        // El precio en la regla es el precio total para esa cantidad
+        // Calcular el precio por boleto: precio / cantidad
+        const precioConDescuentoPorBoleto = reglaAplicable.precio / reglaAplicable.cantidad;
+        const totalConDescuento = precioConDescuentoPorBoleto * cantidadBoletos;
+        const montoDescuento = subtotal - totalConDescuento;
+        const porcentajeDescuento = Math.round((montoDescuento / subtotal) * 100);
+
+        return {
+            descuentoAplicable: true,
+            monto: montoDescuento,
+            porcentaje: porcentajeDescuento,
+            subtotal: subtotal,
+            total: totalConDescuento,
+            regla: reglaAplicable,
+            mensaje: `${reglaAplicable.cantidad}+ boletos: $${(reglaAplicable.precio / reglaAplicable.cantidad).toFixed(2)}/boleto`
+        };
     }
 
     // Si no hay regla que aplique
@@ -1903,4 +2355,104 @@ window.rifaplusConfig.validarCompra = function(cantidadBoletos) {
     };
 };
 
+/**
+ * FUNCIÓN AUXILIAR: Obtiene el rango máximo de boletos que el usuario puede buscar/ver
+ * Dinámico según si las oportunidades están habilitadas
+ * 
+ * Si oportunidades está HABILITADA:
+ *   - Retorna rango_visible.fin (el rango visible al cliente, típicamente 0-499,999)
+ * 
+ * Si oportunidades está DESHABILITADA:
+ *   - Retorna totalBoletos (todos los boletos disponibles)
+ * 
+ * @returns {number} El rango máximo de búsqueda/visualización
+ */
+window.rifaplusConfig.obtenerRangoMaximoBoletos = function() {
+    // Si oportunidades está habilitada, usar rango_visible
+    if (this.rifa.oportunidades && this.rifa.oportunidades.enabled && this.rifa.oportunidades.rango_visible) {
+        return this.rifa.oportunidades.rango_visible.fin;
+    }
+    
+    // Por defecto, usar total de boletos
+    return this.rifa.totalBoletos;
+};
+
+/**
+ * FUNCIÓN AUXILIAR: Obtiene el rango inicial de boletos
+ * Dinámico según si las oportunidades están habilitadas
+ * 
+ * Si oportunidades está HABILITADA:
+ *   - Retorna rango_visible.inicio (típicamente 0)
+ * 
+ * Si oportunidades está DESHABILITADA:
+ *   - Retorna 1 (los boletos comienzan en 1)
+ * 
+ * @returns {number} El rango inicial
+ */
+window.rifaplusConfig.obtenerRangoMinimoBoletos = function() {
+    if (this.rifa.oportunidades && this.rifa.oportunidades.enabled && this.rifa.oportunidades.rango_visible) {
+        return this.rifa.oportunidades.rango_visible.inicio;
+    }
+    return 1;
+};
+
+/**
+ * FUNCIÓN CENTRALIZADA: Formatea un número de boleto u oportunidad con dígitos dinámicos
+ * Se adapta automáticamente según totalBoletos en config.js
+ * 
+ * NOTA: Se usa para AMBOS boletos (0-249999) y oportunidades (250000-999999)
+ * Por eso no validamos rango estricto - solo formateamos el número
+ * 
+ * EJEMPLO:
+ * Si totalBoletos = 250000 (6 dígitos):
+ *   formatearNumeroBoleto(123) → "000123"
+ *   formatearNumeroBoleto(599805) → "599805" (oportunidad, también 6 dígitos)
+ * 
+ * Si totalBoletos = 1000000 (7 dígitos):
+ *   formatearNumeroBoleto(123) → "0000123"
+ * 
+ * @param {number|string} numero - Número de boleto u oportunidad a formatear
+ * @returns {string} Número formateado con ceros a la izquierda
+ */
+window.rifaplusConfig.formatearNumeroBoleto = function(numero) {
+    const totalBoletos = this.rifa?.totalBoletos || 250000;
+    const digitos = String(totalBoletos - 1).length;
+    const num = parseInt(numero, 10);
+    
+    // Validación mínima: solo verificar que sea un número válido
+    if (isNaN(num) || num < 0) {
+        console.warn(`⚠️ [formatearNumeroBoleto] Número inválido: ${numero}`);
+        return '?'.repeat(digitos); // Mostrar signos de interrogación si es inválido
+    }
+    
+    return String(num).padStart(digitos, '0');
+};
+
 console.log('✅ [Config] Sistema de cálculo dinámico (descuentos + oportunidades) inicializado');
+console.log('✅ [Config] Funciones auxiliares de rango dinámico registradas (obtenerRangoMaximoBoletos, obtenerRangoMinimoBoletos)');
+console.log('✅ [Config] Función centralizada de formateo de boletos registrada (formatearNumeroBoleto)');
+
+/**
+ * FUNCIÓN DEBUG: Muestra los colores actuales aplicados
+ * Útil para verificar que los colores se están aplicando correctamente
+ * Ejecuta en consola: window.rifaplusConfig.mostrarColoresAplicados()
+ */
+window.rifaplusConfig.mostrarColoresAplicados = function() {
+    const root = document.documentElement;
+    const estilos = getComputedStyle(root);
+    
+    console.log('🎨 COLORES APLICADOS ACTUALMENTE:');
+    console.log('═════════════════════════════════════════');
+    console.log('Primario:', this.cliente.colorPrimario, '→', root.style.getPropertyValue('--primary').trim() || 'No aplicado');
+    console.log('Secundario:', this.cliente.colorSecundario, '→', root.style.getPropertyValue('--secondary').trim() || 'No aplicado');
+    console.log('Acento:', this.cliente.colorAccento, '→', root.style.getPropertyValue('--color-primary').trim() || 'No aplicado');
+    console.log('Éxito:', this.cliente.colorExito, '→', root.style.getPropertyValue('--success').trim() || 'No aplicado');
+    console.log('Peligro:', this.cliente.colorPeligro, '→', root.style.getPropertyValue('--danger').trim() || 'No aplicado');
+    console.log('Advertencia:', this.cliente.colorAdvertencia, '→', root.style.getPropertyValue('--warning').trim() || 'No aplicado');
+    console.log('Texto:', this.cliente.colorTexto, '→', root.style.getPropertyValue('--text-dark').trim() || 'No aplicado');
+    console.log('Texto Secundario:', this.cliente.colorTextoSecundario, '→', root.style.getPropertyValue('--text-light').trim() || 'No aplicado');
+    console.log('Fondo:', this.cliente.colorFondo, '→', root.style.getPropertyValue('--bg-white').trim() || 'No aplicado');
+    console.log('Fondo Secundario:', this.cliente.colorFondoSecundario, '→', root.style.getPropertyValue('--bg-light').trim() || 'No aplicado');
+    console.log('═════════════════════════════════════════');
+    console.log('✅ Si ves valores en la derecha, los colores están correctamente aplicados');
+};

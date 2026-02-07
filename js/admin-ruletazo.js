@@ -15,22 +15,11 @@ class RuletazoMachine {
     }
 
     /**
-     * Calcula cantidad de dígitos necesarios según el rango
+     * Formatea número con ceros iniciales según config.js
      */
-    calculateDigits(maxNumber) {
-        if (maxNumber <= 9) return 1;
-        if (maxNumber <= 99) return 2;
-        if (maxNumber <= 999) return 3;
-        if (maxNumber <= 9999) return 4;
-        if (maxNumber <= 99999) return 5;
-        return 6;
-    }
-
-    /**
-     * Formatea número con ceros iniciales
-     */
-    formatNumber(num, digits) {
-        return String(num).padStart(digits, '0');
+    formatNumber(num) {
+        // ✅ Usar función centralizada de config.js
+        return window.rifaplusConfig.formatearNumeroBoleto(num);
     }
 
     /**

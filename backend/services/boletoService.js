@@ -7,9 +7,11 @@
  * - Transacciones para prevenir race conditions
  * - Reservas temporales durante checkout
  * - Expiración automática de reservas
+ * - Retry automático con backoff exponencial
  */
 
 const db = require('../db');
+const retryService = require('./retryService');
 
 class BoletoService {
   /**
@@ -152,7 +154,8 @@ class BoletoService {
     // VALIDACIÓN 3: Convertir todos a números y validar
     const numerosValidos = numeros.map(n => {
       const num = Number(n);
-      if (isNaN(num) || num <= 0 || !Number.isInteger(num)) {
+      // ⭐ CORREGIDO: Permitir 0 como número válido (rango comienza en 0, no en 1)
+      if (isNaN(num) || num < 0 || !Number.isInteger(num)) {
         throw new Error(`Número de boleto inválido: ${n}`);
       }
       return num;
@@ -193,56 +196,67 @@ class BoletoService {
           .first();
 
         if (ordenExistente) {
-          throw new Error('DUPLICATE_ORDER');
+          // ⚠️ ORDEN DUPLICADA: Probablemente fue por un reintento tras falso negativo de timeout
+          console.warn(`[BoletoService] ORDEN DUPLICADA DETECTADA: ${ordenId}`, {
+            fecha_anterior: ordenExistente.created_at,
+            cliente_anterior: ordenExistente.nombre_cliente,
+            boletos_anterior: ordenExistente.cantidad_boletos
+          });
+          throw {
+            code: 'DUPLICATE_ORDER',
+            message: `Orden ${ordenId} ya existe en el sistema`,
+            ordenExistente: {
+              numero: ordenExistente.numero_orden,
+              fecha: ordenExistente.created_at,
+              cliente: ordenExistente.nombre_cliente,
+              cantidad: ordenExistente.cantidad_boletos
+            }
+          };
         }
 
-        // PASO 2: Verificar disponibilidad de todos los boletos CON LOCK
-        const boletosActuales = await trx('boletos_estado')
+        // PASO 2: ✅ OPTIMIZADO - Una sola query SQL para verificar y crear boletos faltantes
+        // PASO 2: ✅ OPTIMIZADO - Verificar y crear boletos faltantes
+        const ahora = new Date();
+        console.log(`[BoletoService] Verificando ${numerosValidos.length} boletos...`);
+        
+        // PASO 2.1: Verificar cuáles existen
+        const boletosExistentes = await trx('boletos_estado')
           .whereIn('numero', numerosValidos)
-          .forUpdate()  // LOCK exclusivo en PostgreSQL
           .select('numero', 'estado');
 
-        // Verificar que existan TODOS, si no existen CREARLOS
-        const numerosEncontrados = new Set(boletosActuales.map(b => b.numero));
-        const faltantes = numerosValidos.filter(n => !numerosEncontrados.has(n));
-        
-        // Si hay boletos faltantes, crearlos automáticamente como disponibles (en batches)
+        const numerosExistentes = new Set(boletosExistentes.map(b => b.numero));
+        const faltantes = numerosValidos.filter(n => !numerosExistentes.has(n));
+
+        // PASO 2.2: Crear solo los boletos faltantes (si hay)
         if (faltantes.length > 0) {
-          const ahora = new Date();
-          const BATCH_CREATE = 1000;  // Reducido de 5000 a 1000 para mejor rendimiento
+          console.log(`[BoletoService] Creando ${faltantes.length} boletos faltantes...`);
           
-          for (let i = 0; i < faltantes.length; i += BATCH_CREATE) {
-            const batch = faltantes.slice(i, i + BATCH_CREATE);
-            const boletosParaCrear = batch.map(numero => ({
+          // Insertar en batches para mejor rendimiento
+          const BATCH_SIZE = 5000;
+          for (let i = 0; i < faltantes.length; i += BATCH_SIZE) {
+            const batch = faltantes.slice(i, i + BATCH_SIZE);
+            const batchRows = batch.map(numero => ({
               numero: numero,
               estado: 'disponible',
               created_at: ahora,
               updated_at: ahora
             }));
             
-            await trx('boletos_estado').insert(boletosParaCrear);
+            try {
+              await trx('boletos_estado').insert(batchRows);
+              console.log(`[BoletoService] Insertados ${batch.length} boletos`);
+            } catch (insertError) {
+              // Si falla por duplicate, ignorar (el boleto ya existe)
+              if (insertError.code === '23505') {
+                console.log(`[BoletoService] Algunos boletos en batch ya existen (ignorado)`);
+              } else {
+                throw insertError;
+              }
+            }
           }
-          
-          console.log(`[BoletoService] Creados ${faltantes.length} boletos faltantes`);
-          
-          // Re-cargar los boletos ahora que todos existen
-          const boletosActualesRe = await trx('boletos_estado')
-            .whereIn('numero', numerosValidos)
-            .forUpdate()
-            .select('numero', 'estado');
-          
-          boletosActuales.length = 0;
-          boletosActuales.push(...boletosActualesRe);
         }
 
-        // Verificar que TODOS sean disponibles
-        const conflictos = boletosActuales.filter(b => b.estado !== 'disponible');
-        if (conflictos.length > 0) {
-          const conflictosStr = conflictos.map(c => `${c.numero}(${c.estado})`).join(', ');
-          throw new Error(`Boletos no disponibles: ${conflictosStr}`);
-        }
-
-        // PASO 3: Crear orden
+        // ✅ PASO 3: VERIFICACIÓN ATÓMICA - Crear orden ANTES de actualizar boletos
         const ordenData = {
           numero_orden: ordenId,
           cantidad_boletos: numerosValidos.length,
@@ -266,35 +280,75 @@ class BoletoService {
         const insertResult = await trx('ordenes').insert(ordenData);
         console.log('[BoletoService] Orden insertada:', { ordenId, registros: insertResult });
 
-        // PASO 4: Actualizar estado de boletos (ATÓMICO) - En batches para mejor performance
-        const BATCH_SIZE = 1000;  // Aumentado de 5000 a 1000 para mejor paralelismo
-        let totalActualizados = 0;
-        const ahora = new Date();
+        // ✅ PASO 4: ACTUALIZACIÓN ATÓMICA CON CONDICIÓN (PROTEGE CONTRA RACE CONDITIONS)
+        // 🔐 CRÍTICO: Solo actualiza si el boleto sigue siendo 'disponible'
+        //    Si alguien lo apartó en el milisegundo anterior, no será actualizado
+        const ahoraPaso4 = new Date();
+        console.log(`[BoletoService] Actualizando ${numerosValidos.length} boletos con protección atómica...`);
+        
+        // UPDATE ATÓMICO: Solo actualiza boletos que SIGUEN siendo 'disponible'
+        const resultUpdate = await trx.raw(
+          `UPDATE boletos_estado
+           SET 
+             estado = 'apartado',
+             numero_orden = ?,
+             reservado_en = ?,
+             updated_at = ?
+           WHERE numero = ANY(?::int[])
+           AND estado = 'disponible'
+           RETURNING numero, estado, numero_orden`,
+          [ordenId, ahoraPaso4, ahoraPaso4, numerosValidos]
+        );
 
-        for (let i = 0; i < numerosValidos.length; i += BATCH_SIZE) {
-          const batch = numerosValidos.slice(i, i + BATCH_SIZE);
-          const actualizados = await trx('boletos_estado')
-            .whereIn('numero', batch)
-            .update({
-              estado: 'apartado',
-              numero_orden: ordenId,
-              reservado_en: ahora,
-              updated_at: ahora
-            });
-          totalActualizados += actualizados;
+        // Contar cuántos boletos se actualizaron realmente
+        const boletosActualizados = resultUpdate.rows || [];
+        const totalActualizados = boletosActualizados.length;
+        const boletosActualizadosSet = new Set(boletosActualizados.map(b => b.numero));
+
+        // ✅ VERIFICAR: ¿Se actualizaron todos los solicitados?
+        const boletosConflicto = numerosValidos.filter(n => !boletosActualizadosSet.has(n));
+
+        if (boletosConflicto.length > 0) {
+          // ❌ RACE CONDITION DETECTADA: Algunos boletos fueron apartados por otro cliente
+          console.warn('[BoletoService] CONFLICTO DETECTADO:', {
+            ordenId,
+            esperados: numerosValidos.length,
+            actualizados: totalActualizados,
+            conflictos: boletosConflicto
+          });
+
+          // Consultar quién apartó los boletos conflictivos para contexto
+          const boletosConflictoInfo = await trx('boletos_estado')
+            .whereIn('numero', boletosConflicto)
+            .select('numero', 'estado', 'numero_orden', 'reservado_en');
+
+          console.log('[BoletoService] Info de boletos conflictivos:', boletosConflictoInfo);
+
+          // ROLLBACK automático de la transacción
+          // Calcular maxDigitos basado en totalBoletos
+          const configManager = require('../config-manager').getInstance();
+          const maxDigitos = String(configManager.totalBoletos - 1).length;
+          
+          throw {
+            code: 'BOLETOS_CONFLICTO',
+            message: `${boletosConflicto.length} boleto(s) fueron apartado(s) hace unos momentos por otro cliente`,
+            boletosConflicto: boletosConflicto,
+            boletosDisponibles: numerosValidos.filter(n => boletosActualizadosSet.has(n)),
+            boletosConflictoInfo: boletosConflictoInfo,
+            totalEsperados: numerosValidos.length,
+            totalActualizados: totalActualizados,
+            maxDigitos: maxDigitos
+          };
         }
 
-        if (totalActualizados !== numerosValidos.length) {
-          throw new Error(
-            `Inconsistencia: se actualizaron ${totalActualizados} boletos de ${numerosValidos.length}`
-          );
-        }
-
-        console.log('[BoletoService] Orden completada:', { 
+        console.log('[BoletoService] Orden completada exitosamente:', { 
           ordenId, 
           boletos: numerosValidos.length,
           total: ordenData.total
         });
+
+        // ✅ IMPORTANTE: Las oportunidades se asignan EN BACKGROUND desde server.js
+        // NO se asignan aquí para no retrasar la respuesta
 
         return {
           success: true,
@@ -308,13 +362,23 @@ class BoletoService {
         console.error('[BoletoService] Error en transacción:', {
           ordenId,
           error: transactionError.message,
-          code: transactionError.code
+          code: transactionError.code || transactionError.code || 'UNKNOWN'
         });
+        
+        // Si es un objeto con estructura de error personalizada (DUPLICATE_ORDER), re-lanzar tal cual
+        if (typeof transactionError === 'object' && transactionError.code) {
+          throw transactionError;
+        }
+        
         throw transactionError;
       }
     }).catch(error => {
       // Capturar errores de transacción fallida
-      console.error('[BoletoService] Error crítico:', error.message);
+      console.error('[BoletoService] Error crítico:', {
+        message: error?.message || error,
+        code: error?.code || 'UNKNOWN',
+        ordenId
+      });
       throw error;
     });
   }
@@ -347,14 +411,15 @@ class BoletoService {
 
   /**
    * Cancelar orden: volver boletos a disponibles
+   * ✅ MEJORADO: Triple validación para evitar boletos huérfanos
    * @param {string} ordenId - ID de la orden
-   * @returns {Promise<{success: boolean}>}
+   * @returns {Promise<{success: boolean, boletosLiberados: number}>}
    */
   static async cancelarOrden(ordenId) {
     return db.transaction(async (trx) => {
       try {
-        // Cambiar boletos a disponibles
-        await trx('boletos_estado')
+        // PASO 1: Cambiar boletos a disponibles (por numero_orden)
+        const actualizado = await trx('boletos_estado')
           .where('numero_orden', ordenId)
           .update({
             estado: 'disponible',
@@ -363,7 +428,28 @@ class BoletoService {
             updated_at: new Date()
           });
 
-        // Cambiar orden a cancelada
+        console.log(`[BoletoService.cancelarOrden] PASO 1: ${actualizado} boletos liberados`);
+
+        // PASO 2: PROTECCIÓN: Verificar que NO haya quedado ningún boleto en estado 'apartado' con esta orden
+        const huerfanos = await trx('boletos_estado')
+          .where('numero_orden', ordenId)
+          .where('estado', 'apartado')
+          .count('* as cnt');
+
+        if (huerfanos[0].cnt > 0) {
+          console.warn(`⚠️  [PROTECCIÓN] ${huerfanos[0].cnt} boletos apartados aún vinculados a orden ${ordenId}`);
+          // Limpiar los que quedaron
+          await trx('boletos_estado')
+            .where('numero_orden', ordenId)
+            .update({
+              estado: 'disponible',
+              numero_orden: null,
+              reservado_en: null,
+              updated_at: new Date()
+            });
+        }
+
+        // PASO 3: Cambiar orden a cancelada
         await trx('ordenes')
           .where('numero_orden', ordenId)
           .update({
@@ -371,7 +457,9 @@ class BoletoService {
             updated_at: new Date()
           });
 
-        return { success: true };
+        console.log(`[BoletoService.cancelarOrden] Orden ${ordenId} cancelada`);
+
+        return { success: true, boletosLiberados: actualizado };
       } catch (error) {
         throw error;
       }

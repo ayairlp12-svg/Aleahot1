@@ -3,7 +3,11 @@
     "totalBoletos": 1000000,
     "precioBoleto": 4,
     "tiempoApartadoHoras": 4,
-    "intervaloLimpiezaMinutos": 1
+    "intervaloLimpiezaMinutos": 1,
+    "oportunidades": {
+      "enabled": true,
+      "multiplicador": 3
+    }
   },
   "cache": {
     "enableRedis": false,

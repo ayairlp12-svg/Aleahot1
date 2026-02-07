@@ -51,53 +51,31 @@ function calcularTotalConPromociones(cantidad, precioBoleto = null) {
         };
     }
 
-    let totalFinal = 0;
-    let montoDescuento = 0;
-    let boletosRestantes = cantidad;
-    let promocionAplicada = null;
-
-    // Obtener promociones desde config, ordenadas por cantidad (descendente)
-    const promociones = (window.rifaplusConfig?.rifa?.promociones || [])
-        .sort((a, b) => b.cantidad - a.cantidad);
-
-    // Aplicar promociones de mayor a menor cantidad
-    for (const promo of promociones) {
-        if (boletosRestantes >= promo.cantidad) {
-            // Cuántas promociones de este tipo caben
-            const cantidadPromos = Math.floor(boletosRestantes / promo.cantidad);
-            
-            // Calcular costo
-            totalFinal += cantidadPromos * promo.precio;
-            
-            // Calcular descuento
-            const precioNormalPromo = cantidadPromos * promo.cantidad * precioBoleto;
-            montoDescuento += precioNormalPromo - (cantidadPromos * promo.precio);
-            
-            // Actualizar boletos restantes
-            boletosRestantes -= cantidadPromos * promo.cantidad;
-            
-            // Guardar promoción aplicada
-            if (!promocionAplicada) {
-                promocionAplicada = promo;
-            }
-        }
+    // Usar la función centralizada de cálculo de descuentos si está disponible
+    if (window.rifaplusConfig && typeof window.rifaplusConfig.calcularDescuento === 'function') {
+        const resultado = window.rifaplusConfig.calcularDescuento(cantidad, precioBoleto);
+        return {
+            cantidadBoletos: cantidad,
+            precioUnitario: precioBoleto,
+            subtotal: resultado.subtotal,
+            descuentoMonto: resultado.monto,
+            descuentoPorcentaje: resultado.porcentaje,
+            totalFinal: resultado.total,
+            promocionAplicada: resultado.regla || null,
+            descuentoAplicable: resultado.descuentoAplicable
+        };
     }
 
-    // Agregar boletos sueltos a precio normal
-    totalFinal += boletosRestantes * precioBoleto;
-
+    // Fallback si config no está disponible
     const subtotal = cantidad * precioBoleto;
-
     return {
         cantidadBoletos: cantidad,
         precioUnitario: precioBoleto,
         subtotal: subtotal,
-        descuentoMonto: montoDescuento,
-        descuentoPorcentaje: montoDescuento > 0 
-            ? ((montoDescuento / subtotal) * 100).toFixed(2)
-            : 0,
-        totalFinal: totalFinal,
-        promocionAplicada: promocionAplicada
+        descuentoMonto: 0,
+        descuentoPorcentaje: 0,
+        totalFinal: subtotal,
+        promocionAplicada: null
     };
 }
 

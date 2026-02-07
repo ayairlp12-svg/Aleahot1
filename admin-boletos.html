@@ -285,19 +285,31 @@
             color: white;
         }
 
+        .orden-estado-badge.oportunidad-badge {
+            background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+            color: white;
+            font-size: 0.6rem;
+            min-width: 90px;
+            margin-left: var(--spacing-xs);
+            box-shadow: 0 2px 8px rgba(168, 85, 247, 0.3);
+        }
+
         .orden-header-top-right {
             text-align: right;
             flex: 1 1 auto;
-            min-width: 150px;
+            min-width: auto;
+            max-width: 220px;
+            flex-shrink: 0;
         }
 
         .orden-id-numero {
-            font-size: 1.25rem;
+            font-size: 1rem;
             font-weight: 700;
             color: var(--primary);
             font-family: 'Courier New', monospace;
             margin-bottom: var(--spacing-xs);
-            word-break: break-all;
+            word-break: break-word;
+            white-space: normal;
         }
 
         .orden-fecha-hora {
@@ -392,6 +404,49 @@
             overflow-wrap: break-word;
         }
 
+        /* ===== CAMPO DE WHATSAPP CON TOGGLE ===== */
+        .whatsapp-toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .whatsapp-valor {
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            color: #0084ff;
+            font-weight: 600;
+            letter-spacing: 2px;
+            user-select: none;
+        }
+        
+        .whatsapp-valor:hover {
+            opacity: 0.8;
+        }
+
+        .whatsapp-toggle-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.4rem;
+            border-radius: 0.375rem;
+            transition: all 0.2s ease;
+            color: #25D366;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .whatsapp-toggle-btn:hover {
+            background: #E8F5E9;
+            transform: scale(1.15);
+        }
+
+        .whatsapp-toggle-btn:active {
+            transform: scale(0.95);
+        }
+
         /* ===== MENSAJE DE DISPONIBLE ===== */
         .orden-disponible-message {
             padding: var(--spacing-lg) var(--spacing-md);
@@ -426,17 +481,24 @@
             .orden-header-top {
                 padding: var(--spacing-sm);
                 gap: var(--spacing-sm);
-                flex-direction: column;
+                flex-direction: row;
+                align-items: flex-start;
             }
 
-            .orden-header-top-left,
-            .orden-header-top-right {
+            .orden-header-top-left {
+                flex: 1;
                 min-width: auto;
-                width: 100%;
             }
 
             .orden-header-top-right {
-                text-align: left;
+                flex-shrink: 0;
+                min-width: auto;
+                text-align: right;
+                max-width: 140px;
+            }
+
+            .orden-id-numero {
+                font-size: 0.85rem;
             }
 
             .orden-datos-grid {
@@ -1209,7 +1271,8 @@
                 <input 
                     type="number" 
                     id="searchBoleto" 
-                    placeholder="Ingresa número de boleto..."
+                    placeholder="Cargando rango de boletos..."
+                    min="0"
                     onkeypress="if(event.key === 'Enter') buscarBoleto()"
                 >
                 <button onclick="buscarBoleto()">
@@ -1265,6 +1328,80 @@
 
         function goToPanel() {
             window.location.href = 'admin-dashboard.html';
+        }
+
+        // ===== OBTENER RANGO DINÁMICO DE BOLETOS =====
+        /**
+         * Obtiene el rango de boletos basado en la configuración del sorteo actual
+         * Soporta: Oportunidades (250k visible) o configuración normal (totalBoletos)
+         * @returns {Object} { inicio, fin, total, tipo }
+         */
+        function obtenerRangoBoletos() {
+            try {
+                const config = window.rifaplusConfig?.rifa;
+                if (!config) {
+                    console.warn('⚠️ Config no disponible, usando valores por defecto');
+                    return { inicio: 0, fin: 249999, total: 250000, tipo: 'default' };
+                }
+
+                // Caso 1: Oportunidades habilitadas → usar rango_visible
+                if (config.oportunidades?.enabled && config.oportunidades?.rango_visible) {
+                    const rango = config.oportunidades.rango_visible;
+                    const total = (rango.fin - rango.inicio) + 1;
+                    console.debug('[admin-boletos] Usando rango visible (oportunidades):', rango, 'Total:', total);
+                    return {
+                        inicio: rango.inicio,
+                        fin: rango.fin,
+                        total: total,
+                        tipo: 'oportunidades'
+                    };
+                }
+
+                // Caso 2: Sin oportunidades → usar totalBoletos
+                const totalBoletos = config.totalBoletos || 250000;
+                console.debug('[admin-boletos] Usando totalBoletos (sin oportunidades):', totalBoletos);
+                return {
+                    inicio: 0,
+                    fin: totalBoletos - 1,
+                    total: totalBoletos,
+                    tipo: 'normal'
+                };
+            } catch (error) {
+                console.error('[admin-boletos] Error obteniendo rango:', error);
+                return { inicio: 0, fin: 249999, total: 250000, tipo: 'error' };
+            }
+        }
+
+        /**
+         * Inicializa el input de búsqueda con valores dinámicos
+         * Se ejecuta cuando la página carga
+         */
+        function inicializarSearchContainer() {
+            try {
+                const rangoInfo = obtenerRangoBoletos();
+                const inputBoleto = document.getElementById('searchBoleto');
+                
+                if (!inputBoleto) {
+                    console.warn('[admin-boletos] Input searchBoleto no encontrado');
+                    return;
+                }
+
+                // Actualizar atributos del input
+                inputBoleto.setAttribute('min', rangoInfo.inicio);
+                inputBoleto.setAttribute('max', rangoInfo.fin);
+                
+                // Actualizar placeholder con rango dinámico
+                const placeholderText = `Buscar boleto (${rangoInfo.inicio.toLocaleString()} - ${rangoInfo.fin.toLocaleString()})`;
+                inputBoleto.setAttribute('placeholder', placeholderText);
+                
+                console.debug('[admin-boletos] ✅ Search container inicializado:', {
+                    rango: `${rangoInfo.inicio} - ${rangoInfo.fin}`,
+                    total: rangoInfo.total,
+                    tipo: rangoInfo.tipo
+                });
+            } catch (error) {
+                console.error('[admin-boletos] Error inicializando search container:', error);
+            }
         }
 
         // ===== INIT CONFIG =====
@@ -1368,25 +1505,25 @@
             const input = document.getElementById('searchBoleto').value.trim();
             
             if (!input) {
-                showError('Ingresa un número de boleto');
+                showError('Ingresa un número de boleto u oportunidad');
                 return;
             }
 
             // Validar que sea un número válido
             const num = Number(input);
-            if (isNaN(num) || num <= 0) {
+            if (isNaN(num) || num < 0) {
                 showError('Ingresa un número válido');
                 return;
             }
 
             hideMessages();
 
-            // Buscar el boleto directamente en el backend
+            // Usar endpoint INTELIGENTE que busca boletos Y oportunidades
             try {
-                const resBoleto = await fetchWithAuth(`${API_BASE}/api/admin/boleto-simple/${num}`);
+                const resBoleto = await fetchWithAuth(`${API_BASE}/api/admin/numero-inteligente/${num}`);
                 
                 if (!resBoleto || !resBoleto.ok) {
-                    showError(`Boleto #${num} no encontrado`);
+                    showError(`Número #${num} no encontrado`);
                     document.getElementById('ticketResult').classList.remove('active');
                     return;
                 }
@@ -1394,20 +1531,23 @@
                 const dataBoleto = await resBoleto.json();
                 
                 if (!dataBoleto.success || !dataBoleto.data) {
-                    showError(`Boleto #${num} no encontrado`);
+                    showError(`Número #${num} no encontrado`);
                     document.getElementById('ticketResult').classList.remove('active');
                     return;
                 }
                 
                 const boleto = dataBoleto.data;
-                console.log('Boleto encontrado:', boleto);
+                const esOportunidad = dataBoleto.es_oportunidad || false;
+                
+                // Agregar flag para renderizar badge en la tarjeta
+                boleto.es_oportunidad = esOportunidad;
                 
                 currentBoleto = boleto;
                 renderTicket(boleto);
                 document.getElementById('ticketResult').classList.add('active');
             } catch (err) {
-                console.error('Error buscando boleto:', err);
-                showError('Error al buscar boleto');
+                console.error('Error buscando número:', err);
+                showError('Error al buscar número');
             }
         }
 
@@ -1422,7 +1562,8 @@
                 }
 
                 // Extraer y validar datos con fallbacks
-                const numeroFormato = String(boleto.numero || '0').padStart(5, '0');
+                // ✅ DINÁMICO: Usar función centralizada de config.js para formatear número
+                const numeroFormato = window.rifaplusConfig.formatearNumeroBoleto(boleto.numero);
                 
                 // ✅ ARREGLADO: Determinar estado correctamente
                 // El estado viene de estado_orden (pendiente, comprobante_recibido, confirmada, etc)
@@ -1451,15 +1592,18 @@
                 const esApartado = estadoBoleto === 'apartado';
                 const esDisponible = estadoBoleto === 'disponible';
                 
-                console.log(`✅ Renderizando boleto #${numeroFormato}`);
-                console.log(`   Orden: ${numeroOrdenRaw || '—'}, Estado Orden: ${estadoOrden || '—'}`);
-                console.log(`   Estado Boleto: ${estadoBoleto} (vendido:${esVendido}, apartado:${esApartado}, disponible:${esDisponible})`);
-                
-                // Datos del cliente con validación - USAR SIEMPRE LOS CAMPOS DEL BOLETO
+                // Datos del cliente
                 const nombreCliente = sanitizeText(boleto.nombre_cliente || 'Sin especificar');
                 const apellidoCliente = sanitizeText(boleto.apellido_cliente || 'Sin especificar');
                 const estadoCliente = sanitizeText(boleto.estado_cliente || 'N/A');
                 const ciudadCliente = sanitizeText(boleto.ciudad_cliente || 'N/A');
+                
+                let telefonoCliente = boleto.telefono || '';
+                telefonoCliente = String(telefonoCliente).trim();
+                if (!telefonoCliente || telefonoCliente.length === 0) {
+                    telefonoCliente = 'Sin especificar';
+                }
+                
                 const cantidadBoletos = Math.max(1, parseInt(boleto.cantidad_boletos) || 1);
                 const totalPago = Math.max(0, parseFloat(boleto.total) || 0);
                 
@@ -1481,13 +1625,16 @@
                 // Determinar estado badge
                 const { estadoBadgeClass, estadoBadgeText } = getEstadoInfo(estadoBoleto);
                 
+                // Determinar si es oportunidad
+                const esOportunidad = boleto.es_oportunidad || false;
+                
                 // Generar HTML
-                let html = construirHeaderBoleto(logoOrganizador, numeroFormato, fechaCreacion, horaCreacion, estadoBadgeClass, estadoBadgeText);
+                let html = construirHeaderBoleto(logoOrganizador, numeroFormato, fechaCreacion, horaCreacion, estadoBadgeClass, estadoBadgeText, esOportunidad);
                 html += construirNombreSorteo(nombreSorteo);
                 html += construirImagenPrincipal(imagenPrincipal);
                 
                 if (!esDisponible) {
-                    html += construirDatosCliente(nombreCliente, apellidoCliente, estadoCliente, ciudadCliente);
+                    html += construirDatosCliente(nombreCliente, apellidoCliente, estadoCliente, ciudadCliente, telefonoCliente);
                     html += construirDatosOrden(numeroOrdenDisplay, cantidadBoletos, fechaComprobante, horaComprobante);
                 } else {
                     html += construirMensajeDisponible();
@@ -1563,7 +1710,14 @@
         }
 
         // FUNCIONES CONSTRUCTORAS - HTML
-        function construirHeaderBoleto(logo, numero, fecha, hora, estadoClase, estadoTexto) {
+        function construirHeaderBoleto(logo, numero, fecha, hora, estadoClase, estadoTexto, esOportunidad = false) {
+            // Si es oportunidad, mostrar badge especial
+            const badgeOportunidad = esOportunidad ? `
+                <div class="orden-estado-badge oportunidad-badge">
+                    ⭐ OPORTUNIDAD
+                </div>
+            ` : '';
+            
             return `
                 <div class="orden-header-top">
                     <div class="orden-header-top-left">
@@ -1577,6 +1731,7 @@
                         <div class="orden-estado-badge ${estadoClase}">
                             ${estadoTexto}
                         </div>
+                        ${badgeOportunidad}
                     </div>
                     <div class="orden-header-top-right">
                         <div class="orden-id-numero">#${numero}</div>
@@ -1605,7 +1760,33 @@
             `;
         }
 
-        function construirDatosCliente(nombre, apellido, estado, ciudad) {
+        function construirDatosCliente(nombre, apellido, estado, ciudad, telefono) {
+            // Generar ID único para este toggle
+            const toggleId = 'whatsapp-toggle-' + Date.now() + Math.random();
+            
+            // Validación del teléfono
+            let telefonoValidado = String(telefono || '').trim();
+            let telefonoMostrado = '••••••••••••••••';
+            let botonDeshabilitado = '';
+            let esValido = false;
+            
+            if (telefonoValidado && telefonoValidado !== 'Sin especificar' && telefonoValidado !== 'N/A') {
+                const soloDigitos = telefonoValidado.replace(/[^0-9]/g, '');
+                
+                if (soloDigitos.length >= 10) {
+                    telefonoValidado = soloDigitos;
+                    const ultimos2 = soloDigitos.slice(-2);
+                    telefonoMostrado = '••••••••' + ultimos2;
+                    esValido = true;
+                } else {
+                    telefonoMostrado = 'Inválido';
+                    botonDeshabilitado = 'disabled';
+                }
+            } else {
+                telefonoMostrado = 'No disponible';
+                botonDeshabilitado = 'disabled';
+            }
+            
             return `
                 <div class="orden-seccion">
                     <div class="orden-seccion-titulo">👤 Cliente</div>
@@ -1621,6 +1802,17 @@
                         <div class="orden-dato">
                             <span class="orden-dato-label">Ciudad:</span>
                             <span class="orden-dato-valor">${ciudad}</span>
+                        </div>
+                        <div class="orden-dato orden-dato-full">
+                            <span class="orden-dato-label">
+                                <i class="fab fa-whatsapp" style="color: #25D366; margin-right: 6px;"></i>WhatsApp:
+                            </span>
+                            <div class="whatsapp-toggle-container">
+                                <span class="whatsapp-valor" id="${toggleId}" data-telefono="${telefonoValidado}" data-valido="${esValido}" onclick="abrirWhatsapp('${telefonoValidado}', '${estado}')" style="cursor: pointer; color: #0084ff; text-decoration: underline;">${telefonoMostrado}</span>
+                                <button class="whatsapp-toggle-btn" onclick="toggleWhatsapp('${toggleId}', '${telefonoValidado}')" title="Mostrar/Ocultar número" ${botonDeshabilitado} style="${botonDeshabilitado ? 'opacity: 0.5; cursor: not-allowed;' : ''}">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1784,6 +1976,58 @@
             hideSuccessAfterDelay();
         }
 
+        // ===== FUNCIONES PARA TOGGLE DE WHATSAPP =====
+        /**
+         * Toggle para ocultar/mostrar número de WhatsApp - VERSIÓN ROBUSTA
+         * @param {string} elementId - ID del elemento donde mostrar
+         * @param {string} numeroWhatsapp - Número a mostrar/ocultar
+         */
+        function toggleWhatsapp(elementId, numeroWhatsapp) {
+            const elemento = document.getElementById(elementId);
+            if (!elemento) return;
+            
+            let numeroProcesado = String(numeroWhatsapp || '').trim().replace(/[^0-9]/g, '');
+            if (!numeroProcesado || numeroProcesado.length === 0) return;
+            
+            const esVisible = !elemento.textContent.includes('•');
+            
+            if (esVisible) {
+                const ultimos2 = numeroProcesado.slice(-2);
+                elemento.textContent = '••••••••' + ultimos2;
+            } else {
+                elemento.textContent = numeroProcesado;
+            }
+            
+            const btn = document.querySelector(`button[onclick="toggleWhatsapp('${elementId}', '${numeroWhatsapp}')"]`);
+            if (btn) {
+                const icon = btn.querySelector('i');
+                if (icon) {
+                    if (esVisible) {
+                        icon.classList.remove('fa-eye-slash');
+                        icon.classList.add('fa-eye');
+                    } else {
+                        icon.classList.remove('fa-eye');
+                        icon.classList.add('fa-eye-slash');
+                    }
+                }
+            }
+        }
+        
+        function abrirWhatsapp(numeroWhatsapp, estado) {
+            let numero = String(numeroWhatsapp || '').trim().replace(/[^0-9]/g, '');
+            if (numero.length !== 10) return;
+            
+            const estadoLower = (String(estado || '').trim().toLowerCase());
+            const estadosUSA = ['california', 'texas', 'florida', 'new york', 'pennsylvania', 
+                               'illinois', 'ohio', 'georgia', 'north carolina', 'arizona',
+                               'ca', 'tx', 'fl', 'ny', 'pa', 'il', 'oh', 'ga', 'nc', 'az',
+                               'usa', 'united states', 'estados unidos de america'];
+            
+            const prefijo = estadosUSA.some(e => estadoLower.includes(e)) ? '+1' : '+52';
+            const url = `https://wa.me/${prefijo}${numero}`;
+            window.open(url, '_blank');
+        }
+
         function hideMessages() {
             const errorMsg = document.getElementById('errorMessage');
             const successMsg = document.getElementById('successMessage');
@@ -1871,6 +2115,10 @@
             try {
                 await cargarBoletos();
                 configurarToggleBoletosSoldVisibility();
+                
+                // 🔥 NUEVO: Inicializar search container con rango dinámico
+                inicializarSearchContainer();
+                
                 const searchInput = document.getElementById('searchBoleto');
                 if (searchInput) {
                     searchInput.focus();

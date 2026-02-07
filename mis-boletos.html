@@ -4,8 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self' http://127.0.0.1:* http://localhost:*; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://fonts.googleapis.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; connect-src 'self' http://127.0.0.1:* http://localhost:* https:; img-src 'self' data: https:;">
-    <title>Mis Boletos - SORTEOS YEPE iPhone 15 Pro Max</title>
-    <link rel="stylesheet" href="css/styles.css?v=20251221.09">
+    <!-- METADATOS DINÁMICOS - Inyectados por js/meta-inyector.js desde config.js -->
+    <title>Mis Boletos - Sorteos Torres RAM 1200 2025</title>
+    <link rel="stylesheet" href="css/styles.css?v=20251228.15">
+
     <link rel="preload" as="image" href="images/logo.png" fetchpriority="high">
     <link rel="icon" href="images/logo.png" sizes="32x32">
     <link rel="apple-touch-icon" href="images/logo.png">
@@ -14,6 +16,9 @@
     <link rel="stylesheet" href="css/orden-formal.css?v=20251221.09">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- ✅ PRIMERO: Inyector de metadatos (se ejecuta ANTES que todo) -->
+    <script src="js/config.js"></script>
+    <script src="js/meta-inyector.js"></script>
     <script src="js/theme-loader.js?v=20251216"></script>
     <script>
         (function limpiarCacheYFechas() {
@@ -23,6 +28,8 @@
     <script src="js/config.js?v=1766990666"></script>
     <script src="js/theme-dynamic.js"></script>
     <script src="js/boletos-loader.js"></script>
+    <!-- ⚡ PERFORMANCE OPTIMIZATION: Rendering optimizer for 50+ cards -->
+    <script src="js/performance-rendering-optimizer.js"></script>
 </head>
 <body>
     <!-- HEADER CON MENÚ -->
@@ -179,6 +186,42 @@
             </section>
         </div>
     </main>
+
+    <!-- MODAL CONFIRMACIÓN COMPROBANTE RECIBIDO -->
+    <div class="modal modal-overlay" id="modalComprobanteConfirmado">
+        <div class="modal-content modal-contacto" style="text-align: center;">
+            <div class="modal-body" style="padding: 2rem;">
+                <div style="margin-bottom: 1.5rem;">
+                    <i class="fas fa-check-circle" style="font-size: 4rem; color: #10b981; animation: scaleIn 0.5s ease-out;"></i>
+                </div>
+                
+                <h2 style="color: #10b981; margin-bottom: 0.5rem;">✅ ¡Comprobante Recibido!</h2>
+                
+                <p style="font-size: 1.1rem; color: var(--text-dark); margin-bottom: 1rem;">
+                    Gracias por tu comprobante de pago
+                </p>
+                
+                <div style="background: rgba(16, 185, 129, 0.1); border-left: 4px solid #10b981; padding: 1rem; border-radius: 4px; margin-bottom: 1.5rem; text-align: left;">
+                    <p style="color: #065f46; font-weight: 500; margin: 0;">
+                        🔍 <strong>Tu comprobante está siendo revisado</strong>
+                    </p>
+                    <p style="color: #047857; margin-top: 0.5rem; font-size: 0.95rem;">
+                        Nuestro equipo validará tu pago lo antes posible. Una vez confirmado, tus boletos aparecerán en tu cuenta.
+                    </p>
+                </div>
+
+                <div style="background: rgba(59, 130, 246, 0.1); padding: 1rem; border-radius: 4px; margin-bottom: 1.5rem;">
+                    <p style="color: #1e3a8a; font-size: 0.9rem; margin: 0;">
+                        📱 <strong>Mientras tanto</strong>, puedes continuar comprando más boletos o esperar la confirmación.
+                    </p>
+                </div>
+
+                <button class="btn btn-primary" id="btnCerrarComprobanteConfirmado" style="width: 100%;">
+                    Entendido, volver a mis órdenes
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- MODAL SUBIR COMPROBANTE -->
     <div class="modal modal-overlay" id="modalComprobante">
@@ -354,6 +397,15 @@
             const anio = config.cliente.anioActual || new Date().getFullYear();
             footerCopyright.innerHTML = `&copy; ${anio} <strong>${config.cliente.nombre}</strong>. Todos los derechos reservados.`;
         }
+
+        // Animar botón flotante solo los primeros 2 segundos
+        const btnFlotante = document.querySelector('.btn-flotante-comprobante');
+        if (btnFlotante) {
+            btnFlotante.classList.add('bounce-animate');
+            setTimeout(() => {
+                btnFlotante.classList.remove('bounce-animate');
+            }, 2000);
+        }
     });
     </script>
 
@@ -362,18 +414,18 @@
     <div class="modal-carrito-overlay" id="carritoModal">
         <div class="modal-carrito">
             <div class="modal-carrito-header">
-                <h2>🛒 Tu Carrito</h2>
+                <h2>Tu Carrito 🛒</h2>
                 <button class="modal-carrito-close" id="closeCarrito" aria-label="Cerrar carrito">×</button>
             </div>
             
             <div class="modal-carrito-body">
                 <div class="carrito-vacio" id="carritoVacio">
                     <div class="carrito-vacio-content">
-                        <p class="carrito-vacio-icon">🎯</p>
+                        <img src="images/logo.png" alt="Logo" class="carrito-logo">
                         <p class="carrito-vacio-titulo">Tu carrito está vacío</p>
                         <p class="carrito-vacio-subtitulo">¡Comienza a seleccionar tus boletos favoritos!</p>
                         <button class="btn btn-primary btn-carrito-comprar" id="btnIrAComprar">
-                            🎫 Ir a Comprar Boletos
+                            Ir a Comprar Boletos
                         </button>
                     </div>
                 </div>
@@ -436,10 +488,9 @@
     <div class="modal-orden-formal" id="modalOrdenFormal">
         <div class="orden-formal-container">
             <div class="orden-formal-header">
-                <h2>📄 Orden de Pago</h2>
-                <p style="font-size: 0.9rem; opacity: 0.9; margin-bottom: 8px;">✓ Te recomendamos descargar la orden de pago o tomarle captura de pantalla para tener evidencia de su compra</p>
-                <p>Después haga click en "Continuar" para guardar su orden en el sistema</p>
-                <button class="modal-close" id="closeOrdenFormal" aria-label="Cerrar">×</button>
+                <h2>Orden de Pago</h2>
+                <p style="font-size: 0.9rem; opacity: 0.9; margin-bottom: 8px;">A continuación se muestra el resumen de su orden de pago con los datos bancarios para realizar su compra. Puede descargar o tomar una captura de pantalla de esta orden para tener constancia de su transacción.</p>
+                <p>Haga click en "Apartar boletos" para confirmar y guardar su orden en el sistema.</p>
             </div>
             <div class="orden-formal-content">
                 <div id="contenidoOrdenFormal"></div>
@@ -449,7 +500,7 @@
                     <i class="fas fa-download"></i> Descargar
                 </button>
                 <button class="btn btn-primary" id="btnContinuarOrdenFormal">
-                    <i class="fas fa-lock-open"></i> Apartar boletos
+                    <i class="fas fa-check"></i> Apartar boletos
                 </button>
             </div>
         </div>
@@ -458,6 +509,7 @@
     <!-- SCRIPTS -->
     <script src="js/main.js"></script>
     <script src="js/calculo-precios.js?v=20251230.1"></script>
+
     <script src="js/carrito-global.js?v=1766990666"></script>
     <script src="js/flujo-compra.js?v=1766990666"></script>
     <script src="js/orden-formal.js"></script>
@@ -677,6 +729,36 @@
             }
         }
 
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(var(--primary-rgb, 66, 135, 245), 0.7);
+            }
+            50% {
+                box-shadow: 0 0 0 10px rgba(var(--primary-rgb, 66, 135, 245), 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(var(--primary-rgb, 66, 135, 245), 0);
+            }
+        }
+
+        @keyframes scaleIn {
+            0% {
+                transform: scale(0);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.1);
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .btn-pulse {
+            animation: pulse 2s infinite;
+        }
+
         /* ACORDEÓN DE INSTRUCCIONES */
         .instrucciones-acordeon {
             display: flex;
@@ -833,16 +915,20 @@
             border-radius: var(--radius-lg);
             box-shadow: var(--shadow-md);
             overflow: hidden;
-            transition: all var(--transition-fast);
+            transition: box-shadow var(--transition-fast);
             display: flex;
             flex-direction: column;
-            animation: slideInUp 0.5s ease-out both;
+            /* OPTIMIZACIONES DE RENDIMIENTO */
+            contain: layout style paint;
+            will-change: box-shadow;
+            backface-visibility: hidden;
+            transform: translateZ(0);
         }
 
-        .orden-card:nth-child(1) { animation-delay: 0.1s; }
-        .orden-card:nth-child(2) { animation-delay: 0.2s; }
-        .orden-card:nth-child(3) { animation-delay: 0.3s; }
-        .orden-card:nth-child(n+4) { animation-delay: 0.4s; }
+        .orden-card:nth-child(1) { }
+        .orden-card:nth-child(2) { }
+        .orden-card:nth-child(3) { }
+        .orden-card:nth-child(n+4) { }
 
         .orden-card:hover {
             box-shadow: var(--shadow-lg);
@@ -851,24 +937,33 @@
         /* Header Superior Compacto */
         .orden-header-top {
             background: white;
-            padding: 1rem 1.5rem;
+            padding: 0.75rem 1rem;
             border-bottom: 1px solid var(--border-color);
             display: flex;
             justify-content: space-between;
             align-items: center;
+            /* OPTIMIZACION: Evitar reflow en header */
+            contain: layout;
         }
 
         .orden-header-top-left {
             display: flex;
             align-items: center;
-            gap: 0.75rem;
+            gap: 0.35rem;
+            flex-wrap: wrap;
+            /* OPTIMIZACION: Evitar reflow en children */
+            contain: content;
         }
 
         .orden-header-top-left img {
-            width: 50px;
-            height: 50px;
+            width: 40px;
+            height: 40px;
             object-fit: contain;
             border-radius: var(--radius-sm);
+            /* OPTIMIZACION: Evitar reflow de imagen */
+            flex-shrink: 0;
+            contain: strict;
+            display: block;
         }
 
         .orden-header-top-right {
@@ -876,17 +971,28 @@
             flex-direction: column;
             align-items: flex-end;
             gap: 0.25rem;
+            min-width: auto;
+            max-width: 180px;
+            flex-shrink: 0;
+            /* OPTIMIZACION: Evitar reflow */
+            contain: content;
         }
 
         .orden-id-numero {
             font-weight: 700;
             color: var(--text-dark);
-            font-size: 1.1rem;
+            font-size: 0.85rem;
+            word-break: break-word;
+            white-space: normal;
+            text-align: right;
         }
 
         .orden-fecha-hora {
-            font-size: 0.85rem;
+            font-size: 0.7rem;
             color: var(--text-light);
+            word-break: break-word;
+            white-space: normal;
+            text-align: right;
         }
 
         /* Sección de Organización - Removida, solo logo en header */
@@ -902,16 +1008,17 @@
             grid-template-rows: auto 1fr;
             overflow: hidden;
             position: relative;
-            min-height: 220px;
+            min-height: 350px;
+            /* OPTIMIZACION: Evitar reflow de imagen */
         }
 
         .orden-imagen-principal-titulo {
-            font-size: 1.2rem;
+            font-size: 0.95rem;
             font-weight: 700;
             color: var(--text-dark);
             text-align: center;
-            padding: 0.75rem 1rem;
-            line-height: 1.3;
+            padding: 0.5rem 0.6rem;
+            line-height: 1.2;
             min-height: auto;
             display: flex;
             align-items: center;
@@ -927,17 +1034,23 @@
             object-fit: contain;
             padding: 1rem;
             background: white;
+            display: block;
         }
 
-        /* Estado Badge - Más visible */
+        @media (max-width: 480px) {
+            .orden-imagen-principal {
+                min-height: 200px;
+            }
+        }
         .orden-estado-badge {
             display: inline-block;
-            padding: 0.5rem 1rem;
+            padding: 0.4rem 0.8rem;
             border-radius: var(--radius-full);
-            font-size: 0.9rem;
+            font-size: 0.75rem;
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            white-space: nowrap;
         }
 
         .orden-estado-badge.pendiente {
@@ -964,12 +1077,12 @@
         .orden-header {
             background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
             color: white;
-            padding: 1rem 1.5rem;
+            padding: 0.75rem 1rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 1rem;
+            gap: 0.75rem;
         }
 
         .orden-id-fecha {
@@ -978,13 +1091,13 @@
         }
 
         .orden-id {
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             opacity: 0.9;
-            margin-bottom: 0.25rem;
+            margin-bottom: 0.15rem;
         }
 
         .orden-fecha {
-            font-size: 1rem;
+            font-size: 0.95rem;
             font-weight: 600;
         }
 
@@ -1014,47 +1127,59 @@
 
         /* Body de la Orden */
         .orden-body {
-            padding: 1rem 1.5rem;
+            padding: 0.75rem 1rem;
+            /* OPTIMIZACION: Evitar reflow en elementos anidados */
+            contain: layout;
         }
 
         /* Secciones de Datos */
         .orden-seccion {
-            margin-bottom: 1.25rem;
+            margin-bottom: 0.9rem;
         }
 
         .orden-seccion-titulo {
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             font-weight: 700;
             color: var(--primary);
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            margin-bottom: 0.75rem;
-            padding-bottom: 0.5rem;
+            margin-bottom: 0.5rem;
+            padding-bottom: 0.4rem;
             border-bottom: 2px solid var(--border-color);
         }
 
         .orden-info {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 1rem;
-            margin-bottom: 1rem;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+            /* OPTIMIZACION: Evitar reflow en grid children */
+            contain: content;
         }
 
         .orden-info-item {
             display: flex;
-            flex-direction: column;
+            flex-direction: row;
+            align-items: baseline;
+            gap: 0.3rem;
+            flex-wrap: wrap;
         }
 
         .orden-info-label {
-            font-size: 0.8rem;
+            font-size: 0.65rem;
             color: var(--text-light);
-            margin-bottom: 0.2rem;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.3px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .orden-info-label::after {
+            content: ': ';
         }
 
         .orden-info-value {
-            font-size: 1rem;
+            font-size: 0.8rem;
             font-weight: 600;
             color: var(--text-dark);
         }
@@ -1064,37 +1189,37 @@
             background: linear-gradient(135deg, #F0F9FF 0%, #F8FAFC 100%);
             border: 2px solid var(--primary-light);
             border-radius: var(--radius-md);
-            padding: 1rem;
-            margin-top: 1rem;
+            padding: 0.75rem;
+            margin-top: 0.75rem;
         }
 
         .orden-pago-concepto {
-            font-size: 0.9rem;
+            font-size: 0.75rem;
             color: var(--text-light);
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.4rem;
         }
 
         .orden-pago-cuenta {
             display: flex;
             align-items: center;
-            gap: 0.75rem;
+            gap: 0.5rem;
             background: white;
-            padding: 0.75rem;
+            padding: 0.5rem;
             border-radius: var(--radius-sm);
-            margin-bottom: 0.75rem;
+            margin-bottom: 0.5rem;
             border: 1px solid var(--border-color);
         }
 
         .orden-pago-numero {
             font-family: 'Courier New', monospace;
             font-weight: 700;
-            font-size: 1.1rem;
+            font-size: 0.85rem;
             color: var(--text-dark);
             flex: 1;
         }
 
         .orden-pago-total {
-            font-size: 1.4rem;
+            font-size: 1.15rem;
             font-weight: 700;
             color: var(--primary);
             text-align: center;
@@ -1105,13 +1230,13 @@
             background: none;
             border: 1px solid var(--border-color);
             color: var(--primary);
-            padding: 0.5rem 1rem;
+            padding: 0.4rem 0.75rem;
             border-radius: var(--radius-sm);
-            font-size: 0.9rem;
+            font-size: 0.8rem;
             cursor: pointer;
             transition: all var(--transition-fast);
             display: inline-block;
-            margin-top: 1rem;
+            margin-top: 0.5rem;
         }
 
         .btn-mas-opciones:hover {
@@ -1120,29 +1245,92 @@
         }
 
         .orden-boletos {
-            margin-bottom: 1rem;
+            margin-bottom: 0.75rem;
         }
 
         .orden-boletos-titulo {
             font-weight: 600;
             color: var(--text-dark);
-            margin-bottom: 0.5rem;
-            font-size: 0.9rem;
+            margin-bottom: 0.4rem;
+            font-size: 0.8rem;
         }
 
         .orden-boletos-lista {
             display: flex;
             flex-wrap: wrap;
-            gap: 0.4rem;
+            gap: 0.3rem;
+            /* OPTIMIZACION: Evitar reflow con contenedores */
+            contain: content;
         }
 
         .boleto-numero {
-            background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary) 100%);
+            background: var(--primary);
             color: white;
-            padding: 0.35rem 0.7rem;
+            padding: 0.25rem 0.55rem;
             border-radius: var(--radius-md);
-            font-size: 0.8rem;
+            font-size: 0.7rem;
             font-weight: 600;
+            /* OPTIMIZACION: Evitar reflow/repaint */
+            flex-shrink: 0;
+            will-change: auto;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .boleto-numero i {
+            font-size: 0.65rem;
+        }
+
+        /* Sección de Oportunidades */
+        .orden-oportunidades {
+            margin-top: 0.75rem;
+        }
+
+        .orden-oportunidades-titulo {
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 0.4rem;
+            font-size: 0.8rem;
+        }
+
+        .orden-oportunidades-lista {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            /* OPTIMIZACION: Evitar reflow con contenedores */
+            contain: content;
+        }
+
+        .oportunidad-numero {
+            background: rgba(var(--primary-rgb, 66, 135, 245), 0.12);
+            color: var(--primary);
+            padding: 0.3rem 0.65rem;
+            border-radius: var(--radius-md);
+            font-size: 0.7rem;
+            font-weight: 600;
+            border: 1.5px solid rgba(var(--primary-rgb, 66, 135, 245), 0.3);
+            backdrop-filter: blur(2px);
+            transition: background-color 0.2s ease, color 0.2s ease;
+            /* OPTIMIZACION: Evitar reflow */
+            flex-shrink: 0;
+            will-change: auto;
+        }
+
+        .oportunidad-numero:hover {
+            background: rgba(var(--primary-rgb, 66, 135, 245), 0.18);
+            border-color: rgba(var(--primary-rgb, 66, 135, 245), 0.5);
+        }
+
+        /* Estilos para items de boletos y oportunidades */
+        .ticket-item {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .ticket-item:hover {
+            transform: scale(1.05);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15) !important;
         }
 
         /* Enlace a más opciones de pago */
@@ -1151,10 +1339,10 @@
             color: var(--primary);
             text-decoration: none;
             font-weight: 600;
-            font-size: 0.95rem;
-            padding: 0.5rem 0;
+            font-size: 0.8rem;
+            padding: 0.3rem 0;
             border-bottom: 2px solid transparent;
-            transition: all var(--transition-fast);
+            transition: color var(--transition-fast), border-bottom-color var(--transition-fast);
         }
 
         .orden-pago-enlace:hover {
@@ -1166,10 +1354,10 @@
         .btn-copiar {
             background: none;
             border: none;
-            padding: 0.5rem 0.75rem;
+            padding: 0.35rem 0.5rem;
             cursor: pointer;
             color: var(--primary);
-            font-size: 0.9rem;
+            font-size: 0.8rem;
             border-radius: var(--radius-sm);
             transition: all var(--transition-fast);
             display: inline-flex;
@@ -1180,7 +1368,7 @@
         .btn-copiar:hover {
             background: rgba(15, 58, 125, 0.1);
             color: var(--primary-dark);
-            transform: scale(1.1);
+            transform: scale(1.05);
         }
 
         .btn-copiar:active {
@@ -1188,19 +1376,21 @@
         }
 
         .btn-copiar i {
-            font-size: 0.85rem;
+            font-size: 0.75rem;
         }
 
         /* Acciones de la Orden */
         .orden-acciones {
             display: flex;
-            gap: 1rem;
+            gap: 0.75rem;
             flex-wrap: wrap;
         }
 
         .orden-acciones .btn {
             flex: 1;
-            min-width: 150px;
+            min-width: 120px;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.85rem;
         }
 
         /* Sin órdenes */
@@ -1341,26 +1531,43 @@
             }
 
             .orden-header-top {
-                flex-direction: column;
-                align-items: flex-start;
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
                 gap: 0.75rem;
             }
 
             .orden-header-top-right {
-                align-items: flex-start;
+                align-items: flex-end;
+                min-width: auto;
+                flex: 0 1 auto;
             }
 
             .orden-imagen-principal {
-                min-height: 170px;
+                min-height: 60px;
             }
 
             .orden-imagen-principal-titulo {
-                font-size: 1rem;
-                padding: 0.4rem 0.75rem;
+                font-size: 0.95rem;
+                padding: 0.5rem 0.6rem;
             }
 
             .orden-info {
-                grid-template-columns: 1fr;
+                grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            }
+
+            .orden-info-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.1rem;
+            }
+
+            .orden-info-label {
+                white-space: normal;
+            }
+
+            .orden-info-label::after {
+                content: '';
             }
 
             .orden-pago-resumen {
@@ -1540,25 +1747,30 @@
             }
 
             .orden-imagen-principal {
-                min-height: 150px;
+                min-height: 60px;
             }
 
             .orden-imagen-principal-titulo {
                 font-size: 0.95rem;
-                padding: 0.4rem 0.6rem;
+                padding: 0.5rem 0.6rem;
             }
 
-            .orden-header {
-                padding: 0.75rem 1rem;
-                gap: 0.75rem;
+            .orden-info {
+                grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
             }
 
-            .orden-id {
-                font-size: 0.8rem;
+            .orden-info-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.1rem;
             }
 
-            .orden-fecha {
+            .orden-info-label {
                 font-size: 0.95rem;
+            }
+
+            .orden-info-label::after {
+                content: '';
             }
 
             .orden-body {
@@ -1587,6 +1799,7 @@
             }
 
             .boleto-numero {
+                background: var(--primary);
                 font-size: 0.75rem;
                 padding: 0.3rem 0.6rem;
             }
@@ -1660,17 +1873,32 @@
 
             .orden-header-top {
                 padding: 0.6rem 1rem;
-                flex-direction: column;
+                flex-direction: row;
                 gap: 0.5rem;
+                align-items: flex-start;
             }
 
             .orden-header-top-left {
-                width: 100%;
+                flex: 1;
                 gap: 0.5rem;
             }
 
             .orden-header-top-right {
-                width: 100%;
+                flex-shrink: 0;
+                min-width: auto;
+                max-width: 120px;
+            }
+
+            .orden-id-numero {
+                font-size: 0.75rem;
+            }
+
+            .orden-fecha-hora {
+                font-size: 0.65rem;
+            }
+
+            .orden-fecha-hora {
+                font-size: 0.7rem;
             }
 
             .orden-header-top-left img {
@@ -1687,22 +1915,16 @@
             }
 
             .orden-imagen-principal {
-                min-height: 130px;
+                min-height: 60px;
             }
 
             .orden-imagen-principal-titulo {
-                font-size: 0.85rem;
-                padding: 0.3rem 0.5rem;
+                font-size: 0.95rem;
+                padding: 0.5rem 0.6rem;
             }
 
-            .orden-header {
-                padding: 0.6rem;
-                flex-direction: column;
-                gap: 0.5rem;
-            }
-
-            .orden-body {
-                padding: 0.75rem;
+            .orden-info {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
             }
 
             .orden-seccion {
@@ -1715,12 +1937,20 @@
                 padding-bottom: 0.5rem;
             }
 
-            .orden-info {
-                grid-template-columns: 1fr;
-                gap: 0.75rem;
+            .orden-info-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.1rem;
             }
 
-            .orden-info-item {
+            .orden-info-label {
+                font-size: 0.65rem;
+                white-space: normal;
+            }
+
+            .orden-info-label::after {
+                content: '';
+            }
                 gap: 0.2rem;
             }
 
@@ -1747,6 +1977,7 @@
             }
 
             .boleto-numero {
+                background: var(--primary);
                 font-size: 0.7rem;
                 padding: 0.25rem 0.5rem;
             }
@@ -2128,6 +2359,7 @@
                         console.log('✅ Órdenes recibidas del backend:');
                         console.log('Primera orden:', data[0]);
                         console.log('Campos disponibles:', Object.keys(data[0]));
+                        console.log('🎁 Oportunidades en primera orden:', data[0].oportunidades);
                     }
 
                     if (data.length > 0) {
@@ -2219,16 +2451,27 @@
                 // Validar estado (protección contra XSS e inyección)
                 const estadoValidado = validarEstadoOrden(orden.estado);
 
-                // Sanear boletos
+                // Sanear boletos y formatear con padding dinámico
                 const boletosList = orden.boletos && Array.isArray(orden.boletos)
-                    ? orden.boletos
-                        .filter(b => b) // Filtrar null/undefined
-                        .map(b => {
-                            // Escapar para evitar XSS
-                            const boletoSanitizado = String(b).replace(/[^a-zA-Z0-9\-]/g, '');
-                            return `<div class="boleto-numero">#${boletoSanitizado}</div>`;
-                        })
-                        .join('')
+                    ? (() => {
+                        // Obtener número de dígitos dinámicamente desde config
+                        const totalBoletos = window.rifaplusConfig?.rifa?.totalBoletos || 1000000;
+                        const digitos = String(totalBoletos - 1).length;
+                        
+                        const boletosFormato = orden.boletos
+                            .filter(b => b) // Filtrar null/undefined
+                            .map(b => {
+                                // Convertir a número para extraer solo dígitos
+                                const boletoNum = parseInt(String(b).replace(/[^0-9]/g, ''), 10);
+                                if (isNaN(boletoNum)) return null;
+                                // Aplicar padding dinámico basado en config
+                                return String(boletoNum).padStart(digitos, '0');
+                            })
+                            .filter(b => b !== null)
+                            .sort();
+                        const boletosHTML = boletosFormato.map(num => `<div style="border: 1px solid #1a1a1a; border-radius: 3px; padding: 4px 6px; background: linear-gradient(135deg, #f5f5f5 0%, #ffffff 100%); font-weight: 700; color: #1a1a1a; text-align: center; font-size: 0.65rem; letter-spacing: 0.5px; transition: all 0.2s ease; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 1px 2px rgba(0,0,0,0.08);" class="ticket-item">${num}</div>`).join('');
+                        return `<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(55px, 1fr)); gap: 8px; margin-top: 8px; width: 100%;">${boletosHTML}</div>`;
+                    })()
                     : '<div style="color: var(--text-light);">-</div>';
 
                 // CALCULAR TOTAL DE FORMA ROBUSTA (NO CONFIAR EN orden.total)
@@ -2273,7 +2516,14 @@
                 const tipoPago = orden.tipo_pago || orden.metodo_pago || 'No especificado';
                 const numeroCuenta = orden.detalles_pago || '-';
                 const banco = orden.nombre_banco || '-';
-                const nombreBeneficiario = orden.nombre_beneficiario || '-';
+                
+                // Obtener nombre del beneficiario: primero de la orden, si no, de la primera cuenta configurada
+                let nombreBeneficiario = orden.nombre_beneficiario || '';
+                if (!nombreBeneficiario && window.rifaplusConfig?.tecnica?.bankAccounts?.[0]?.beneficiary) {
+                    nombreBeneficiario = window.rifaplusConfig.tecnica.bankAccounts[0].beneficiary;
+                }
+                nombreBeneficiario = nombreBeneficiario || '-';
+                
                 const comprobanteSubido = orden.comprobante_path ? true : false;
                 const referencia = orden.numero_referencia || '-';
 
@@ -2281,15 +2531,17 @@
                 let botonesAccion = '';
                 if (estadoValidado === 'pendiente') {
                     botonesAccion = `
-                        <button class="btn btn-primary" onclick="abrirModalComprobante('${ordenId.replace(/'/g, '')}', '${totalFormato.replace(/'/g, '')}')">
+                        <button class="btn btn-primary btn-pulse" onclick="abrirModalComprobante('${ordenId.replace(/'/g, '')}', '${totalFormato.replace(/'/g, '')}')">
                             <i class="fas fa-upload"></i> Subir Comprobante
                         </button>
                     `;
                 } else if (estadoValidado === 'comprobante_recibido') {
                     botonesAccion = `
-                        <button class="btn btn-outline" disabled style="cursor: not-allowed;">
-                            <i class="fas fa-clock"></i> Pendiente de Confirmación
-                        </button>
+                        <div style="display: flex; justify-content: center;">
+                            <button class="btn btn-outline" disabled style="cursor: not-allowed; display: flex; align-items: center; gap: 0.5rem;">
+                                Pendiente de Confirmación <i class="fas fa-clock"></i>
+                            </button>
+                        </div>
                     `;
                 } else if (estadoValidado === 'confirmada') {
                     botonesAccion = `
@@ -2300,9 +2552,11 @@
                     `;
                 } else if (estadoValidado === 'cancelada') {
                     botonesAccion = `
-                        <button class="btn btn-outline" disabled style="cursor: not-allowed;">
-                            <i class="fas fa-times-circle"></i> Orden Cancelada
-                        </button>
+                        <div style="display: flex; justify-content: center;">
+                            <button class="btn btn-outline" disabled style="cursor: not-allowed; display: flex; align-items: center; gap: 0.5rem;">
+                                Orden Cancelada <i class="fas fa-times-circle"></i>
+                            </button>
+                        </div>
                     `;
                 }
 
@@ -2313,7 +2567,7 @@
                         <div class="orden-header-top-left">
                             <img src="${logoOrganizador}" alt="Logo" onerror="this.src='images/logo.png'">
                             <div class="orden-estado-badge ${estadoValidado}">
-                                ${estadoValidado.replace('_', ' ').toUpperCase()}
+                                ${estadoValidado === 'comprobante_recibido' ? 'EN REVISIÓN' : estadoValidado.replace('_', ' ').toUpperCase()}
                             </div>
                         </div>
                         <div class="orden-header-top-right">
@@ -2338,16 +2592,16 @@
                                     <div class="orden-info-label">Nombre</div>
                                     <div class="orden-info-value">${nombreCliente} ${apellidosCliente}</div>
                                 </div>
-                                ${estadoCliente ? `
-                                <div class="orden-info-item">
-                                    <div class="orden-info-label">Estado</div>
-                                    <div class="orden-info-value">${estadoCliente}</div>
-                                </div>
-                                ` : ''}
                                 ${ciudadCliente ? `
                                 <div class="orden-info-item">
                                     <div class="orden-info-label">Ciudad</div>
                                     <div class="orden-info-value">${ciudadCliente}</div>
+                                </div>
+                                ` : ''}
+                                ${estadoCliente ? `
+                                <div class="orden-info-item">
+                                    <div class="orden-info-label">Estado</div>
+                                    <div class="orden-info-value">${estadoCliente}</div>
                                 </div>
                                 ` : ''}
                             </div>
@@ -2366,7 +2620,7 @@
                                     <div class="orden-info-value">$${precioUnitario}</div>
                                 </div>
                                 <div class="orden-info-item">
-                                    <div class="orden-info-label">Subtotal</div>
+                                    <div class="orden-info-label">Total</div>
                                     <div class="orden-info-value">$${(cantidadProductos * parseFloat(precioUnitario)).toFixed(2)}</div>
                                 </div>
                                 ${parseFloat(descuento) > 0 ? `
@@ -2378,11 +2632,111 @@
                             </div>
 
                             <div class="orden-boletos" style="margin-top: 0.75rem;">
-                                <div class="orden-boletos-titulo">Boletos:</div>
+                                <div class="orden-boletos-titulo">🎫 Boletos (${orden.boletos?.length || 0})</div>
                                 <div class="orden-boletos-lista">
                                     ${boletosList}
                                 </div>
                             </div>
+
+                            ${(() => {
+                                try {
+                                    // ✅ VALIDACIÓN 1: Config está disponible
+                                    if (!window.rifaplusConfig) {
+                                        console.warn('⚠️ [Oportunidades] rifaplusConfig no disponible');
+                                        return '';
+                                    }
+
+                                    // ✅ VALIDACIÓN 2: Habilitado en config
+                                    const oportunidadesHabilitadas = window.rifaplusConfig?.rifa?.oportunidades?.enabled === true;
+                                    if (!oportunidadesHabilitadas) {
+                                        console.log('ℹ️ Oportunidades deshabilitadas en config');
+                                        return '';
+                                    }
+                                    
+                                    // ✅ VALIDACIÓN 3: Orden disponible
+                                    if (!orden) {
+                                        console.warn('⚠️ [Oportunidades] orden no disponible');
+                                        return '';
+                                    }
+
+                                    // ✅ VALIDACIÓN 4: Extraer y validar array
+                                    let oportunidadesDB = orden.oportunidades;
+                                    if (!Array.isArray(oportunidadesDB)) {
+                                        console.log('ℹ️ [Oportunidades] No es array:', typeof oportunidadesDB);
+                                        oportunidadesDB = [];
+                                    }
+                                    
+                                    // Validación: cantidad razonable (máximo 100k)
+                                    if (oportunidadesDB.length > 100000) {
+                                        console.error('❌ [Oportunidades] Cantidad anormal:', oportunidadesDB.length);
+                                        return '';
+                                    }
+                                    
+                                    // Si no hay datos
+                                    if (oportunidadesDB.length === 0) {
+                                        console.log('ℹ️ [Oportunidades] Sin datos para esta orden');
+                                        return '';
+                                    }
+
+                                    console.log('🎁 [Oportunidades] Config OK, cantidad=' + oportunidadesDB.length);
+
+                                    // ✅ VALIDACIÓN 5: Dígitos válidos
+                                    const totalBoletos = window.rifaplusConfig?.rifa?.totalBoletos || 1000000;
+                                    if (typeof totalBoletos !== 'number' || totalBoletos <= 0) {
+                                        console.error('❌ [Oportunidades] totalBoletos inválido:', totalBoletos);
+                                        return '';
+                                    }
+                                    const digitos = String(totalBoletos - 1).length;
+                                    
+                                    // ✅ VALIDACIÓN 6: Formatear y sanitizar
+                                    const oportunidadesValidas = [];
+                                    const oportunidadesFormato = oportunidadesDB
+                                        .map((opp, idx) => {
+                                            let numOpp = opp;
+                                            if (typeof opp === 'object' && opp !== null) {
+                                                numOpp = opp.numero_boleto || opp.boleto_numero || opp.numero_oportunidad || opp.numero || 0;
+                                            }
+                                            
+                                            numOpp = parseInt(numOpp, 10);
+                                            if (isNaN(numOpp) || numOpp <= 0 || numOpp > 9999999999) {
+                                                if (process.env?.NODE_ENV !== 'production') {
+                                                    console.warn(`⚠️ [Oportunidades] Número inválido idx=${idx}: ${opp}`);
+                                                }
+                                                return null;
+                                            }
+                                            
+                                            oportunidadesValidas.push(numOpp);
+                                            return String(numOpp).padStart(digitos, '0');
+                                        })
+                                        .filter(x => x !== null)
+                                        .sort()
+                                        .map(num => `<div style="border: 1px solid #2563eb; border-radius: 3px; padding: 4px 6px; background: linear-gradient(135deg, #dbeafe 0%, #eff6ff 100%); font-weight: 700; color: #1e40af; text-align: center; font-size: 0.65rem; letter-spacing: 0.5px; transition: all 0.2s ease; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 1px 2px rgba(37, 99, 235, 0.1);" class="ticket-item">${num}</div>`)
+                                        .join('');
+
+                                    // ✅ VALIDACIÓN 7: Al menos algunos números válidos
+                                    if (oportunidadesValidas.length === 0) {
+                                        console.warn('⚠️ [Oportunidades] Ningún número válido');
+                                        return '';
+                                    }
+
+                                    if (!oportunidadesFormato) {
+                                        console.error('❌ [Oportunidades] Fallo al formatear HTML');
+                                        return '';
+                                    }
+
+                                    console.log(`✅ [Oportunidades] Formateadas: ${oportunidadesValidas.length}/${oportunidadesDB.length}`);
+
+                                    return '<div class="orden-oportunidades">' +
+                                        '<div class="orden-oportunidades-titulo">🎁 Oportunidades Adicionales (' + oportunidadesValidas.length + ')</div>' +
+                                        '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(55px, 1fr)); gap: 8px; margin-top: 10px;" class="orden-oportunidades-lista">' +
+                                        oportunidadesFormato +
+                                        '</div>' +
+                                        '</div>';
+                                } catch (e) {
+                                    console.error('❌ Error generando oportunidades:', e);
+                                    return '';
+                                }
+                            })()}
                         </div>
 
                         <!-- SECCIÓN: DATOS DE PAGO - Solo si está pendiente -->
@@ -2407,6 +2761,17 @@
                             </div>
                             ` : ''}
                             <div style="margin-bottom: 1.5rem;">
+                                <div style="font-size: 0.85rem; font-weight: 600; color: #6B7280; margin-bottom: 0.5rem;">Beneficiario</div>
+                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <span style="font-size: 1.1rem; color: var(--primary); font-weight: 600;">${nombreBeneficiario !== '-' ? nombreBeneficiario : 'No especificado'}</span>
+                                    ${nombreBeneficiario !== '-' ? `
+                                    <button type="button" class="btn-copiar-inline" data-copiar="${nombreBeneficiario}" title="Copiar beneficiario" style="background: var(--primary); color: white; border: none; padding: 0.4rem 0.6rem; border-radius: 4px; cursor: pointer; font-size: 0.7rem; font-weight: 600; display: flex; align-items: center; gap: 0.3rem; white-space: nowrap;">
+                                        <i class="fas fa-copy"></i> Copiar
+                                    </button>
+                                    ` : ''}
+                                </div>
+                            </div>
+                            <div style="margin-bottom: 1.5rem;">
                                 <div style="font-size: 0.85rem; font-weight: 600; color: #6B7280; margin-bottom: 0.5rem;">Referencia de Pago</div>
                                 <div style="display: flex; align-items: center; gap: 0.5rem;">
                                     <span style="font-size: 1.1rem; color: var(--primary); font-weight: 600;">${ordenId}</span>
@@ -2415,19 +2780,8 @@
                                     </button>
                                 </div>
                             </div>
-                            ${nombreBeneficiario !== '-' ? `
-                            <div style="margin-bottom: 1.5rem;">
-                                <div style="font-size: 0.85rem; font-weight: 600; color: #6B7280; margin-bottom: 0.5rem;">Beneficiario</div>
-                                <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                    <span style="font-size: 1.1rem; color: var(--primary); font-weight: 600;">${nombreBeneficiario}</span>
-                                    <button type="button" class="btn-copiar-inline" data-copiar="${nombreBeneficiario}" title="Copiar beneficiario" style="background: var(--primary); color: white; border: none; padding: 0.4rem 0.6rem; border-radius: 4px; cursor: pointer; font-size: 0.7rem; font-weight: 600; display: flex; align-items: center; gap: 0.3rem; white-space: nowrap;">
-                                        <i class="fas fa-copy"></i> Copiar
-                                    </button>
-                                </div>
-                            </div>
-                            ` : ''}
                             <div style="margin-top: 1rem;">
-                                <div style="font-size: 0.85rem; font-weight: 600; color: #6B7280; margin-bottom: 0.3rem;">Total a Pagar</div>
+                                <div style="font-size: 0.85rem; font-weight: 600; color: #6B7280; margin-bottom: 0.3rem;">${estadoValidado === 'pendiente' ? 'Total a Pagar' : 'Total Pagado'}</div>
                                 <div style="font-size: 2rem; font-weight: 900; color: var(--primary);">$${totalFormato}</div>
                             </div>
                             <div style="margin-top: 1.5rem;">
@@ -2440,7 +2794,7 @@
                         <div class="orden-seccion">
                             <div class="orden-seccion-titulo">💳 Total</div>
                             <div style="text-align: center; padding: 1rem; background: linear-gradient(135deg, #F0F9FF 0%, #F8FAFC 100%); border-radius: var(--radius-md);">
-                                <div style="font-size: 0.9rem; color: var(--text-light); margin-bottom: 0.5rem;">Monto a Pagar</div>
+                                <div style="font-size: 0.9rem; color: var(--text-light); margin-bottom: 0.5rem;">Total Pagado</div>
                                 <div class="orden-pago-total">$${totalFormato}</div>
                             </div>
                         </div>
@@ -2536,8 +2890,18 @@
                     if (modal && modal.classList.contains('show')) {
                         cerrarModalComprobante();
                     }
+                    const modalConfirmacion = document.getElementById('modalComprobanteConfirmado');
+                    if (modalConfirmacion && modalConfirmacion.classList.contains('show')) {
+                        cerrarModalComprobanteConfirmado();
+                    }
                 }
             });
+
+            // Cerrar modal de confirmación
+            const btnCerrarComprobanteConfirmado = document.getElementById('btnCerrarComprobanteConfirmado');
+            if (btnCerrarComprobanteConfirmado) {
+                btnCerrarComprobanteConfirmado.addEventListener('click', cerrarModalComprobanteConfirmado);
+            }
         }
 
         window.abrirModalComprobante = function(ordenId, total) {
@@ -2640,6 +3004,14 @@
             }
         }
 
+        function cerrarModalComprobanteConfirmado() {
+            const modal = document.getElementById('modalComprobanteConfirmado');
+            if (modal) {
+                modal.classList.remove('show');
+                document.body.style.overflow = 'auto';
+            }
+        }
+
         async function subirComprobante() {
             const archivoInput = document.getElementById('archivoComprobante');
             const btnSubirComprobante = document.getElementById('btnSubirComprobante');
@@ -2726,7 +3098,13 @@
 
                 const result = await response.json();
 
-                rifaplusUtils.showFeedback('✅ Comprobante subido exitosamente. Se revisará en breve.', 'success');
+                // Mostrar modal de confirmación bonita
+                const modalConfirmacion = document.getElementById('modalComprobanteConfirmado');
+                if (modalConfirmacion) {
+                    cerrarModalComprobante(); // Cerrar modal de upload
+                    modalConfirmacion.classList.add('show');
+                    document.body.style.overflow = 'hidden';
+                }
 
                 // 🔥 FORZAR ACTUALIZACIÓN INMEDIATA DE DISPONIBILIDAD DE BOLETOS
                 // Esto asegura que si el usuario está viendo compra.html, los boletos aparezcan como apartados
@@ -2746,15 +3124,11 @@
                     }
                 }
 
-                // Cerrar modal después de éxito
+                // Actualizar lista de órdenes en background (sin cerrar el modal)
+                // El modal ahora solo se cierra cuando el usuario presiona el botón
                 setTimeout(() => {
-                    cerrarModalComprobante();
-
-                    // Actualizar lista de órdenes
-                    setTimeout(() => {
-                        buscarOrdenes();
-                    }, 500);
-                }, 1000);
+                    buscarOrdenes();
+                }, 500);
 
             } catch (error) {
                 console.error('Error al subir comprobante:', error);

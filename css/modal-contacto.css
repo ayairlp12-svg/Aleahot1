@@ -243,10 +243,14 @@
     appearance: none;
     -webkit-appearance: none;
     -moz-appearance: none;
-    cursor: pointer;
-    color: var(--text-dark);
-    font-weight: 500;
-    line-height: 1.6;
+}
+
+/* Mantener el select con borde consistente - NO usar :valid/:invalid */
+/* para evitar colores de validación automática del navegador */
+
+/* Sobrescribir cualquier estilo de validación del navegador */
+.form-group select:invalid {
+    border-color: var(--border-color) !important;
 }
 
 .form-group select:hover {
@@ -263,16 +267,6 @@
     background-position: right 0.75rem center;
     background-size: 12px;
     background-repeat: no-repeat;
-}
-
-.form-group select:valid {
-    border-color: var(--success) !important;
-    background: linear-gradient(white, white) padding-box,
-                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 14 14'%3E%3Cpath fill='%2310B981' d='M7 10L2 5h10z'/%3E%3C/svg%3E") no-repeat;
-    background-position: right 0.75rem center;
-    background-size: 12px;
-    background-repeat: no-repeat;
-    box-shadow: none;
 }
 
 .form-group select option {

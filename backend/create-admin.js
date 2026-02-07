@@ -10,8 +10,11 @@ const { Client } = require('pg');
   // Hash password
   const hashedPassword = await bcrypt.hash(password, 10);
   
-  const connectionString = process.env.DATABASE_URL + '?sslmode=require';
-  const client = new Client({ connectionString });
+  const connectionString = process.env.DATABASE_URL;
+  const client = new Client({ 
+    connectionString,
+    ssl: { rejectUnauthorized: false } // Ignorar errores de certificado en desarrollo
+  });
   try {
     await client.connect();
     

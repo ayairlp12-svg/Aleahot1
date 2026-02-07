@@ -109,8 +109,8 @@
 }
 
 .btn-continuar:hover:not(:disabled) {
-    background: var(--color-action);
-    box-shadow: 0 8px 20px rgba(0, 200, 83, 0.3);
+    background: var(--color-primary);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     transform: translateY(-2px);
 }
 

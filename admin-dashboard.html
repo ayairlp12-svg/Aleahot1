@@ -614,7 +614,7 @@
         /* Usar el ID del nuevo main content */
         #adminMain {
             width: 100%;
-            padding-top: 5rem;
+            padding-top: 6rem;
             padding-right: 2rem;
             padding-bottom: 2rem;
             padding-left: 2rem;
@@ -701,6 +701,56 @@
          */
         .stat-card.danger::before {
             background: linear-gradient(90deg, #E4163A 0%, #c41230 100%);
+        }
+
+        /**
+         * Tarjeta clickeable con efecto de presión visual
+         */
+        .stat-card.clickable {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .stat-card.clickable:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(24, 119, 242, 0.2);
+        }
+
+        .stat-card.clickable.danger:hover {
+            box-shadow: 0 8px 24px rgba(228, 22, 58, 0.2);
+        }
+
+        /**
+         * Badge de notificación para órdenes pendientes
+         */
+        .pending-badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: linear-gradient(135deg, #E4163A 0%, #c41230 100%);
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.85rem;
+            box-shadow: 0 2px 8px rgba(228, 22, 58, 0.3);
+            animation: pulse-badge 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-badge {
+            0%, 100% {
+                box-shadow: 0 2px 8px rgba(228, 22, 58, 0.3);
+                transform: scale(1);
+            }
+            50% {
+                box-shadow: 0 4px 16px rgba(228, 22, 58, 0.5);
+                transform: scale(1.1);
+            }
         }
 
         /**
@@ -811,6 +861,89 @@
 
         html[data-revenue-hidden="true"] #toggleRevenueVisibility i::before {
             content: '\f070';
+        }
+
+        /* ===== SALES FORECAST SECTION ===== */
+        .forecast-section {
+            background: linear-gradient(135deg, #FFFFFF 0%, #F8F9FA 100%);
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .forecast-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .forecast-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+        }
+
+        .forecast-metric {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .forecast-label {
+            font-size: 0.8125rem;
+            color: var(--text-lighter);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .forecast-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            font-family: 'Courier New', monospace;
+        }
+
+        .forecast-progress-bar {
+            height: 12px;
+            background: #E7F0FA;
+            border-radius: 999px;
+            overflow: hidden;
+            border: 1px solid #D0E3F5;
+            margin-top: 0.75rem;
+        }
+
+        .forecast-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #1877F2 0%, #0084FF 100%);
+            border-radius: 999px;
+            transition: width 0.5s ease;
+            width: 0%;
+        }
+
+        .forecast-status {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.9375rem;
+            font-weight: 600;
+            padding: 1rem;
+            border-radius: 0.375rem;
+            background: #F0F6FF;
+            border: 1px solid #D0E3F5;
+            color: var(--text-dark);
+            grid-column: 1 / -1;
+            margin-top: 0.5rem;
+        }
+
+        .forecast-status-icon {
+            font-size: 1.5rem;
         }
 
         .countdown-progress-section {
@@ -1210,7 +1343,9 @@
                 padding-top: 5rem;
             }
 
-            .countdown-progress-section {
+            .forecast-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }            .countdown-progress-section {
                 grid-template-columns: 1fr;
                 gap: 2rem;
                 padding: 2rem;
@@ -1302,6 +1437,10 @@
                 font-size: 1.75rem;
             }
 
+            .forecast-grid {
+                grid-template-columns: 1fr;
+            }
+
             .container {
                 padding: 1rem;
             }
@@ -1344,6 +1483,30 @@
 
             .stat-subtext {
                 font-size: 0.75rem;
+            }
+
+            .pending-badge {
+                width: 28px;
+                height: 28px;
+                font-size: 0.75rem;
+            }
+
+            .forecast-section {
+                padding: 1rem;
+            }
+
+            .forecast-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .forecast-value {
+                font-size: 1.25rem;
+            }
+
+            .forecast-status {
+                font-size: 0.85rem;
+                padding: 0.75rem;
             }
         }
 
@@ -1505,7 +1668,7 @@
                         Boletos Apartados
                     </div>
                     <div class="stat-value" id="statReserved">0</div>
-                    <div class="stat-subtext">En este momento</div>
+                    <div class="stat-subtext">En órdenes pendientes</div>
                 </div>
 
                 <div class="stat-card">
@@ -1520,7 +1683,8 @@
                     <div class="stat-subtext">Pagos verificados</div>
                 </div>
 
-                <div class="stat-card danger">
+                <div class="stat-card danger clickable" id="pendingOrdersCard" onclick="window.location.href='admin-ordenes.html'" style="cursor: pointer;">
+                    <div class="pending-badge" id="pendingBadge">0</div>
                     <div class="stat-label">
                         <i class="fas fa-clock stat-icon"></i>
                         Órdenes Pendientes
@@ -1536,6 +1700,68 @@
                     </div>
                     <div class="stat-value" id="statTotalOrders">0</div>
                     <div class="stat-subtext">Todas las órdenes</div>
+                </div>
+
+                <!-- TARJETAS DE OPORTUNIDADES (SE MUESTRAN CUANDO ESTÉN HABILITADAS) -->
+                <div class="stat-card success" id="oportunidadesCard" style="display: none;">
+                    <div class="stat-label">
+                        <i class="fas fa-star stat-icon"></i>
+                        Oportunidades Disponibles
+                    </div>
+                    <div class="stat-value" id="statOpportunitiesAvailable">0</div>
+                    <div class="stat-subtext">Listas para asignar</div>
+                </div>
+
+                <div class="stat-card" id="oportunidadesAsignadasCard" style="display: none;">
+                    <div class="stat-label">
+                        <i class="fas fa-check-circle stat-icon"></i>
+                        Oportunidades Asignadas
+                    </div>
+                    <div class="stat-value" id="statOpportunitiesAssigned">0</div>
+                    <div class="stat-subtext">Incluidas en órdenes</div>
+                </div>
+
+                <div class="stat-card warning" id="oportunidadesApartadasCard" style="display: none;">
+                    <div class="stat-label">
+                        <i class="fas fa-lock stat-icon"></i>
+                        Oportunidades Apartadas
+                    </div>
+                    <div class="stat-value" id="statOpportunitiesReserved">0</div>
+                    <div class="stat-subtext">Pendientes en órdenes</div>
+                </div>
+            </div>
+
+            <!-- SALES FORECAST SECTION -->
+            <div class="forecast-section">
+                <div class="forecast-header">
+                    <i class="fas fa-chart-line"></i>
+                    Pronóstico de Ventas
+                </div>
+                <div class="forecast-grid">
+                    <div class="forecast-metric">
+                        <div class="forecast-label">Velocidad de Venta</div>
+                        <div class="forecast-value" id="forecastSpeed">0</div>
+                        <div class="forecast-label" style="font-size: 0.75rem; margin-top: 0.25rem;">boletos/día</div>
+                    </div>
+                    <div class="forecast-metric">
+                        <div class="forecast-label">Proyección Final</div>
+                        <div class="forecast-value" id="forecastProjection">0</div>
+                        <div class="forecast-progress-bar">
+                            <div class="forecast-progress-fill" id="forecastProgressFill"></div>
+                        </div>
+                    </div>
+                    <div class="forecast-metric">
+                        <div class="forecast-label">Días Restantes</div>
+                        <div class="forecast-value" id="forecastDaysLeft">0</div>
+                    </div>
+                    <div class="forecast-metric">
+                        <div class="forecast-label">% Proyectado</div>
+                        <div class="forecast-value" id="forecastPercentage">0%</div>
+                    </div>
+                    <div class="forecast-status">
+                        <span class="forecast-status-icon" id="forecastStatusIcon">📊</span>
+                        <span id="forecastStatusText">Cargando datos...</span>
+                    </div>
                 </div>
             </div>
 
@@ -1611,7 +1837,6 @@
     </div>
 
     <script src="js/calculo-precios.js?v=20251230.1"></script>
-    <script src="js/carrito-global.js"></script>
     <script src="js/main.js"></script>
     <script>
         /* ============================================================ */
@@ -1737,6 +1962,73 @@
         /* ============================================================ */
 
         /**
+         * Calcular y mostrar pronóstico de ventas
+         * Basado en velocidad actual de venta
+         */
+        function calcularPronosticoVentas() {
+            try {
+                // Obtener datos actuales
+                const statVendidos = document.getElementById('statSold');
+                const statTotal = document.getElementById('totalTickets');
+                
+                if (!statVendidos || !statTotal) {
+                    console.warn('⚠️ [Pronóstico] Stats no encontrados');
+                    return;
+                }
+
+                const boletosVendidos = parseInt(statVendidos.textContent.replace(/,/g, '') || 0);
+                const totalBoletos = parseInt(statTotal.textContent.replace(/,/g, '') || 500);
+                
+                // Obtener fecha de creación (asumiendo hoy como fecha inicial)
+                // Idealmente esto vendría de la BD, por ahora usamos un estimado de 3 días
+                const diasTranscurridos = Math.max(1, 3); // Mínimo 1 día
+                const velocidad = Math.round(boletosVendidos / diasTranscurridos); // boletos/día
+                
+                // Calcular días restantes hasta sorteo
+                const timestampSorteo = window.rifaplusConfig?.obtenerTimestampSorteo?.();
+                const ahora = new Date().getTime();
+                const diasRestantes = Math.max(0, Math.ceil((timestampSorteo - ahora) / (1000 * 60 * 60 * 24)));
+                
+                // Proyección: vendidos actuales + (velocidad × días restantes)
+                const proyeccion = boletosVendidos + (velocidad * diasRestantes);
+                const proyeccionFinal = Math.min(proyeccion, totalBoletos); // No exceder total
+                const porcentajeProyectado = Math.round((proyeccionFinal / totalBoletos) * 100);
+                
+                // Determinar estado
+                let estado = { icon: '📊', texto: 'Cargando...', color: '#1877F2' };
+                
+                if (porcentajeProyectado >= 80) {
+                    estado = { icon: '🔥', texto: '¡Muy caliente! Proyectado ' + porcentajeProyectado + '% vendido', color: '#E4163A' };
+                } else if (porcentajeProyectado >= 60) {
+                    estado = { icon: '✅', texto: 'En buen camino. Proyectado ' + porcentajeProyectado + '% vendido', color: '#31A24C' };
+                } else if (porcentajeProyectado >= 40) {
+                    estado = { icon: '⚠️', texto: 'Ritmo lento. Proyectado ' + porcentajeProyectado + '% vendido', color: '#B4740C' };
+                } else {
+                    estado = { icon: '🚨', texto: 'Riesgo bajo de sold out. Aumenta promoción', color: '#E4163A' };
+                }
+                
+                // Actualizar DOM
+                document.getElementById('forecastSpeed').textContent = velocidad;
+                document.getElementById('forecastProjection').textContent = `${Math.round(proyeccionFinal)} / ${totalBoletos}`;
+                document.getElementById('forecastPercentage').textContent = porcentajeProyectado + '%';
+                document.getElementById('forecastDaysLeft').textContent = diasRestantes;
+                document.getElementById('forecastStatusIcon').textContent = estado.icon;
+                document.getElementById('forecastStatusText').textContent = estado.texto;
+                
+                // Actualizar barra de progreso
+                const barraLleno = document.getElementById('forecastProgressFill');
+                if (barraLleno) {
+                    barraLleno.style.width = porcentajeProyectado + '%';
+                }
+                
+                console.log('📊 [Pronóstico] Calculado:', { boletosVendidos, velocidad, diasRestantes, proyeccionFinal, porcentajeProyectado });
+                
+            } catch (error) {
+                console.error('❌ [Pronóstico] Error:', error);
+            }
+        }
+
+        /**
          * Iniciar la cuenta regresiva que muestra el tiempo hasta el sorteo
          * Actualiza cada segundo con el tiempo restante
          * NOTA: Usa funciones centralizadas de config.js para obtener la fecha
@@ -1840,6 +2132,8 @@
                     const datosBoletosPublicos = await respBoletosPublicos.json();
                     if (datosBoletosPublicos.success) {
                         vendidos = (datosBoletosPublicos.data?.sold || []).length;
+                        // ✅ AHORA: Solo contar boletos REALES apartados (estado='apartado')
+                        // NO incluir oportunidades (250000+) que están en .data.oportunidades
                         apartados = (datosBoletosPublicos.data?.reserved || []).length;
                     }
                 } catch (error) {
@@ -1876,6 +2170,15 @@
                 document.getElementById('statAvailable').textContent = Number(disponibles).toLocaleString();
                 document.getElementById('statSold').textContent = Number(vendidos).toLocaleString();
                 document.getElementById('statPending').textContent = Number(pendientes).toLocaleString();
+                
+                // 🔔 Actualizar badge de órdenes pendientes
+                const badgePendientes = document.getElementById('pendingBadge');
+                if (badgePendientes && pendientes > 0) {
+                    badgePendientes.textContent = '!';
+                    badgePendientes.style.display = 'flex';
+                } else if (badgePendientes) {
+                    badgePendientes.style.display = 'none';
+                }
                 document.getElementById('statReserved').textContent = Number(apartados).toLocaleString();
                 document.getElementById('statRevenue').textContent = `$${Number(ingresosConfirmados).toLocaleString('es-MX', { maximumFractionDigits: 0 })}`;
                 document.getElementById('statTotalOrders').textContent = Number(estadisticas.total_ordenes || 0).toLocaleString();
@@ -1884,10 +2187,141 @@
                 // Actualizar barra de progreso
                 document.getElementById('progressPercentage').textContent = `${porcentaje}%`;
                 document.getElementById('progressBar').style.width = `${porcentaje}%`;
+
+                // ✨ CARGAR ESTADÍSTICAS DE OPORTUNIDADES si están habilitadas
+                const oportunidadesHabilitadas = config.rifa?.oportunidadesHabilitadas === true;
+                console.log('🔍 [cargarEstadisticas] Debug - config.rifa:', config.rifa);
+                console.log('🔍 [cargarEstadisticas] oportunidadesHabilitadas:', oportunidadesHabilitadas);
+                
+                // ✅ SOLO mostrar si están habilitadas en config
+                if (oportunidadesHabilitadas) {
+                    console.log('✅ [cargarEstadisticas] Cargando oportunidades...');
+                    await cargarEstadisticasOportunidades();
+                } else {
+                    console.log('⏭️ [cargarEstadisticas] Oportunidades deshabilitadas en config');
+                    // Ocultar tarjetas si están deshabilitadas
+                    document.getElementById('oportunidadesCard').style.display = 'none';
+                    document.getElementById('oportunidadesAsignadasCard').style.display = 'none';
+                    document.getElementById('oportunidadesApartadasCard').style.display = 'none';
+                }
+                
+                // 🎯 Actualizar pronóstico después de cargar stats
+                calcularPronosticoVentas();
+                
             } catch (error) {
                 console.error('Error cargando estadísticas:', error);
             }
         }
+
+        /**
+         * Cargar estadísticas de oportunidades desde endpoint backend
+         * Datos REALES de BD - 3 cards: Disponibles, Asignadas, Apartadas
+         */
+        async function cargarEstadisticasOportunidades() {
+            try {
+                console.log('═══════════════════════════════════════════════════════════');
+                console.log('🚀 [cargarEstadisticasOportunidades] INICIANDO CARGA');
+                console.log('═══════════════════════════════════════════════════════════');
+
+                const token = obtenerTokenActual();
+                if (!token) {
+                    console.warn('⚠️ [cargarEstadisticasOportunidades] No hay token disponible');
+                    return;
+                }
+
+                console.log('📊 [cargarEstadisticasOportunidades] Token obtenido: ✅');
+
+                // Mostrar las 3 tarjetas
+                const cardDisp = document.getElementById('oportunidadesCard');
+                const cardAsig = document.getElementById('oportunidadesAsignadasCard');
+                const cardApar = document.getElementById('oportunidadesApartadasCard');
+
+                if (cardDisp) cardDisp.style.display = 'block';
+                if (cardAsig) cardAsig.style.display = 'block';
+                if (cardApar) cardApar.style.display = 'block';
+
+                console.log('👁️ [cargarEstadisticasOportunidades] Tarjetas visibles: ✅');
+
+                // Consultar datos REALES desde BD
+                console.log('🔍 [cargarEstadisticasOportunidades] GET /api/admin/oportunidades-stats...');
+                
+                const respuesta = await fetch(`${URL_API}/api/admin/oportunidades-stats`, {
+                    method: 'GET',
+                    headers: { 
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                console.log(`📡 [cargarEstadisticasOportunidades] Response status: ${respuesta.status}`);
+
+                if (!respuesta.ok) {
+                    throw new Error(`Endpoint retornó ${respuesta.status}`);
+                }
+
+                const datos = await respuesta.json();
+                console.log('✅ [cargarEstadisticasOportunidades] Datos obtenidos:', datos.data);
+
+                if (!datos.success || !datos.data) {
+                    throw new Error('Respuesta inválida del endpoint');
+                }
+
+                // Actualizar las 3 cards con datos REALES
+                const stats = datos.data;
+                
+                const elemAvail = document.getElementById('statOpportunitiesAvailable');
+                const elemAssigned = document.getElementById('statOpportunitiesAssigned');
+                const elemReserved = document.getElementById('statOpportunitiesReserved');
+
+                if (elemAvail) elemAvail.textContent = Number(stats.disponibles || 0).toLocaleString();
+                if (elemAssigned) elemAssigned.textContent = Number(stats.asignadas || 0).toLocaleString();
+                if (elemReserved) elemReserved.textContent = Number(stats.apartadas || 0).toLocaleString();
+
+                console.log('✅ [cargarEstadisticasOportunidades] Cards actualizadas');
+                console.log(`   - Disponibles: ${stats.disponibles}`);
+                console.log(`   - Asignadas: ${stats.asignadas}`);
+                console.log(`   - Apartadas: ${stats.apartadas}`);
+                console.log('═══════════════════════════════════════════════════════════');
+
+            } catch (error) {
+                console.error('❌ [cargarEstadisticasOportunidades] Error:', error.message);
+                
+                const elemAvail = document.getElementById('statOpportunitiesAvailable');
+                const elemAssigned = document.getElementById('statOpportunitiesAssigned');
+                const elemReserved = document.getElementById('statOpportunitiesReserved');
+
+                if (elemAvail) elemAvail.textContent = 'Error';
+                if (elemAssigned) elemAssigned.textContent = 'Error';
+                if (elemReserved) elemReserved.textContent = 'Error';
+                
+                console.log('═══════════════════════════════════════════════════════════');
+            }
+        }
+
+        /**
+         * ⚠️ DEPRECATED: Esta función es un fallback obsoleto
+         * Ahora usamos directamente GET /api/admin/oportunidades-stats que consulta la BD
+         * Se mantiene comentada por referencia histórica
+         * 
+         * async function calcularOportunidadesDesdeOrdenes(token) { ... }
+         */
+
+        /**
+         * FUNCIÓN DE DEBUGGING: Mostrar tarjetas manualmente desde consola
+         * Uso: mostrarOportunidadesTest()
+         */
+        window.mostrarOportunidadesTest = function() {
+            console.log('🟢 [mostrarOportunidadesTest] Mostrando tarjetas manualmente...');
+            document.getElementById('oportunidadesCard').style.display = 'block';
+            document.getElementById('oportunidadesAsignadasCard').style.display = 'block';
+            document.getElementById('oportunidadesApartadasCard').style.display = 'block';
+            
+            document.getElementById('statOpportunitiesAvailable').textContent = '5,000';
+            document.getElementById('statOpportunitiesAssigned').textContent = '3,000';
+            document.getElementById('statOpportunitiesReserved').textContent = '1,153';
+            
+            console.log('✅ [mostrarOportunidadesTest] Tarjetas mostradas con valores de prueba');
+        };
 
         /* ============================================================ */
         /* SECCIÓN 5: CARGA DE GRÁFICAS Y VISUALIZACIONES                */
@@ -1927,6 +2361,8 @@
                         const config = window.rifaplusConfig || {};
                         const totalBoletosDisponibles = config.rifa?.totalBoletos || 500;
                         vendidos = (datosBoletosPublicos.data?.sold || []).length;
+                        // ✅ AHORA: Solo contar boletos REALES apartados
+                        // NO incluir oportunidades que están en .data.oportunidades
                         apartados = (datosBoletosPublicos.data?.reserved || []).length;
                         disponibles = Math.max(0, totalBoletosDisponibles - (vendidos + apartados));
                         console.log('Boletos cargados:', { vendidos, disponibles, apartados });
@@ -2371,12 +2807,13 @@
                 console.log('Dashboard inicializándose...');
                 iniciarCuentaRegresiva();
                 await cargarEstadisticas();
+                calcularPronosticoVentas(); // 🎯 Calcular pronóstico después de cargar stats
                 console.log('Estadísticas cargadas, ahora cargando gráficas...');
                 await new Promise(resolve => setTimeout(resolve, 500)); // Pequeño delay para Chart.js
                 await cargarGraficas(rangoActual);
                 await cargarOrdenesPendientes();
                 console.log('Dashboard inicializado completamente');
-                intervaloEstadisticas = setInterval(cargarEstadisticas, 30000);
+                intervaloEstadisticas = setInterval(cargarEstadisticas, 10000);  // Cada 10 segundos en lugar de 30
                 setInterval(cargarOrdenesPendientes, 60000);
                 
                 // Inicializar toggle de visibilidad de ingresos

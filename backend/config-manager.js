@@ -68,8 +68,10 @@ class ConfigManager {
         production: { general: 100, login: 5, ordenes: 10, windowMs: 900000 }
       },
       database: {
-        pool: { min: 2, max: 10 },
-        queryTimeout: 30000
+        pool: { min: 5, max: 50 },  // ✅ AUMENTADO: 10 → 50 para escala
+        queryTimeout: 30000,
+        idleTimeoutMillis: 30000,
+        connectionTimeoutMillis: 2000
       },
       server: {
         port: 5001,

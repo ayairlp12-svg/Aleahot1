@@ -1,6 +1,7 @@
 /**
  * Migration: Create tabla orden_oportunidades
- * Descripción: Almacena las oportunidades asignadas a cada orden
+ * Descripción: Almacena las oportunidades (boletos ocultos) asignadas a cada orden
+ * Estados válidos: 'disponible' (no asignado), 'apartado' (en orden pendiente), 'vendido' (pagado)
  * Propósito: Persistencia de datos y auditoría
  */
 
@@ -15,11 +16,11 @@ exports.up = async function(knex) {
         table.string('numero_orden', 50).notNullable();
         table.foreign('numero_orden').references('numero_orden').inTable('ordenes').onDelete('CASCADE');
         
-        // Boleto oculto asignado (oportunidad)
+        // Número de oportunidad (boleto oculto)
         table.integer('numero_oportunidad').notNullable();
         
-        // Estado del boleto oculto
-        table.enum('estado', ['reservado', 'disponible', 'cancelado']).defaultTo('reservado');
+        // Estado de la oportunidad: disponible | apartado | vendido
+        table.enum('estado', ['disponible', 'apartado', 'vendido']).defaultTo('disponible');
         
         // Metadata
         table.timestamp('created_at').defaultTo(knex.fn.now());

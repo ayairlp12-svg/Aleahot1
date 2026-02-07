@@ -1,0 +1,269 @@
+/* ====================================
+   SISTEMA DE PREMIOS DEL SORTEO
+   ==================================== */
+
+.sistema-premios-section {
+    background: linear-gradient(135deg, #ffffff 0%, #fafafa 100%);
+    padding: 60px 20px;
+    margin: 40px 0 0 0;
+    border-top: 2px solid var(--primary);
+    border-bottom: 2px solid var(--primary);
+}
+
+.premios-header {
+    text-align: center;
+    margin-bottom: 50px;
+    animation: fadeInDown 0.6s ease;
+}
+
+.premios-titulo {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 15px;
+    letter-spacing: 0.5px;
+    text-align: center;
+}
+
+.premios-subtitulo {
+    font-size: 1rem;
+    color: var(--text-light);
+    margin: 0 auto;
+    font-weight: 500;
+    text-align: center;
+    max-width: 600px;
+}
+
+.premios-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* ====================================
+   CATEGORÍA DE PREMIOS
+   ==================================== */
+
+.premios-categoria {
+    margin-bottom: 60px;
+    animation: fadeInUp 0.6s ease;
+}
+
+.categoria-titulo {
+    font-size: 1.6rem;
+    font-weight: 600;
+    color: var(--primary);
+    margin: 0 auto 30px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--primary);
+    display: block;
+    text-align: center;
+}
+
+/* ====================================
+   GRID DE PREMIOS (SORTEO Y PRESORTEO)
+   ==================================== */
+
+.premios-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 25px;
+    margin-bottom: 40px;
+}
+
+.premio-card {
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: all var(--transition-normal);
+    border-left: 4px solid var(--primary);
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+}
+
+.premio-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+/* Indicador de posición */
+.premio-badge {
+    background: var(--primary);
+    color: white;
+    padding: 10px 16px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-align: center;
+}
+
+.premio-badge.segundo {
+    background: var(--primary);
+}
+
+.premio-badge.tercero {
+    background: var(--primary);
+}
+
+/* Contenido del premio */
+.premio-content {
+    padding: 20px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.premio-icono {
+    font-size: 2.5rem;
+    margin-bottom: 12px;
+    text-align: center;
+}
+
+.premio-descripcion {
+    font-size: 1.1rem;
+    color: var(--primary);
+    font-weight: 600;
+    margin: 0 0 8px 0;
+}
+
+.premio-texto {
+    font-size: 0.9rem;
+    color: var(--text-light);
+    margin: 0;
+    flex: 1;
+    line-height: 1.4;
+}
+
+/* ====================================
+   SECCIÓN RULETAZOS (MISMO FORMATO QUE SORTEO)
+   ==================================== */
+
+#premios-ruletazos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 25px;
+    margin-top: 16px;
+}
+
+/* ====================================
+   ANIMACIONES
+   ==================================== */
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-15px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ====================================
+   RESPONSIVO
+   ==================================== */
+
+@media (max-width: 768px) {
+    .sistema-premios-section {
+        padding: 40px 15px;
+        margin: 30px 0;
+    }
+
+    .premios-titulo {
+        font-size: 2rem;
+    }
+
+    .categoria-titulo {
+        font-size: 1.3rem;
+    }
+
+    .premios-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+    }
+
+    .premio-card {
+        border-left-width: 3px;
+    }
+
+    .premio-content {
+        padding: 15px;
+    }
+
+    .premio-icono {
+        font-size: 2rem;
+    }
+
+    .premio-descripcion {
+        font-size: 1rem;
+        margin-bottom: 6px;
+    }
+
+    .premio-texto {
+        font-size: 0.85rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .premios-titulo {
+        font-size: 1.5rem;
+    }
+
+    .categoria-titulo {
+        font-size: 1.1rem;
+    }
+
+    .premios-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+
+    .premio-icono {
+        font-size: 1.8rem;
+        margin-bottom: 8px;
+    }
+
+    .premio-descripcion {
+        font-size: 0.9rem;
+    }
+
+    .premio-texto {
+        font-size: 0.8rem;
+    }
+
+    .premio-content {
+        padding: 12px;
+    }
+}
+
+/* ====================================
+   COLORES DINÁMICOS (Generados por config.js)
+   ==================================== */
+
+.sistema-premios-section.theme-dark {
+    background: linear-gradient(135deg, rgba(30, 30, 30, 0.05) 0%, rgba(40, 40, 40, 0.05) 100%);
+}
+

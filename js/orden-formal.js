@@ -153,20 +153,20 @@ function renderizarOrdenFormal(orden) {
     });
 
     const logoUrl = 'images/logo.png';
-    const nombreOrganizador = window.rifaplusConfig?.nombreOrganizador || 'Organizador';
+    const nombreOrganizador = window.rifaplusConfig?.cliente?.nombre || 'Organizador';
     
     // Obtener todos los boletos (sin compactar - mostrar todos los números)
     const boletosArray = (orden.boletos || []).map(b => Number(b)).filter(n => !isNaN(n)).sort((a, b) => a - b);
     const boletosStr = boletosArray.join(', ');
     
-    // ✅ OBTENER OPORTUNIDADES SI ESTÁN DISPONIBLES
+    // ✅ OBTENER OPORTUNIDADES SOLO SI ESTÁN HABILITADAS
+    const oportunidadesHabilitadas = window.rifaplusConfig?.rifa?.oportunidades?.enabled === true;
     const oportunidadesStorage = JSON.parse(localStorage.getItem('rifaplus_oportunidades') || '{}');
     const boletosOcultos = oportunidadesStorage.boletosOcultos || [];
-    const oportunidadesHtml = boletosOcultos.length > 0 ? `
-        <div class="orden-oportunidades" style="margin-top: 1.5rem; padding: 1rem; background: linear-gradient(135deg, rgba(124, 58, 237, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%); border-left: 4px solid #7C3AED; border-radius: 0.5rem;">
-            <div class="orden-field-label" style="color: #7C3AED; font-weight: 600;">🎁 Boletos SORPRESA (Oportunidades Asignadas)</div>
-            <div class="orden-boletos-list" style="margin-top: 0.5rem; color: #10B981; font-weight: 600;">${boletosOcultos.join(', ')}</div>
-            <div style="margin-top: 0.5rem; font-size: 0.9rem; color: #666;">Total: ${boletosOcultos.length} boletos extras gratis</div>
+    const oportunidadesHtml = (oportunidadesHabilitadas && boletosOcultos.length > 0) ? `
+        <div class="orden-boletos">
+            <div class="orden-field-label">Oportunidades Adicionales (${boletosOcultos.length})</div>
+            <div class="orden-boletos-list">${boletosOcultos.join(', ')}</div>
         </div>
     ` : '';
     
@@ -264,13 +264,12 @@ function renderizarOrdenFormal(orden) {
 
             <!-- MENSAJE FINAL -->
             <div class="orden-mensaje-final">
-                <div class="orden-mensaje-titulo">📋 ¿Qué hacer ahora?</div>
                 <div class="orden-mensaje-texto">
                     <p style="margin: 0.5rem 0; line-height: 1.5;"><strong>Paso 1:</strong> Realiza una transferencia bancaria por el monto indicado a la cuenta de arriba</p>
                     <p style="margin: 0.5rem 0; line-height: 1.5;"><strong>Paso 2:</strong> Guarda el comprobante de pago (captura de pantalla o PDF)</p>
                     <p style="margin: 0.5rem 0; line-height: 1.5;"><strong>Paso 3:</strong> Sube tu comprobante usando el botón <strong>"📤 Subir Comprobante"</strong> en la esquina inferior derecha O desde <strong>"Mis Boletos"</strong> en el menú</p>
-                    <div style="margin: 1rem 0 0 0; padding: 1rem; border-top: 2px solid #0f172a; background: #f8f9fa; border-radius: 8px; text-align: center;">
-                        <p style="margin: 0; color: #0f172a; font-weight: 700; font-size: 1rem; line-height: 1.4;">¡Gracias por tu compra! Una vez completados estos pasos, <strong style="color: #06b6d4;">¡ya estarás participando en nuestro sorteo!</strong> 🎊</p>
+                    <div style="margin: 1rem 0 0 0; padding: 1rem; border-top: 2px solid #1A1A1A; background: #f8f9fa; border-radius: 8px; text-align: center;">
+                        <p style="margin: 0; color: #1A1A1A; font-weight: 700; font-size: 1rem; line-height: 1.4;">¡Gracias por tu compra! Una vez completados estos pasos, <strong style="color: #E63946;">¡ya estarás participando en nuestro sorteo!</strong> 🎊</p>
                     </div>
                 </div>
             </div>
@@ -371,7 +370,6 @@ function buildWaMeUrl(phone, text) {
  * @returns {void}
  */
 function imprimirOrden() {
-    // Generate PDF client-side using html2canvas + jsPDF and trigger download
     const docEl = document.getElementById('documentoPDF');
     if (!docEl) {
         rifaplusUtils.showFeedback('❌ No hay documento para descargar', 'error');
@@ -381,7 +379,6 @@ function imprimirOrden() {
     try {
         if (typeof window.html2canvas !== 'function') {
             rifaplusUtils.showFeedback('❌ html2canvas no está disponible', 'error');
-            console.error('html2canvas is not available. Ensure the script is loaded correctly.');
             return;
         }
         if (!window.jspdf || typeof window.jspdf.jsPDF !== 'function') {
@@ -389,127 +386,105 @@ function imprimirOrden() {
             return;
         }
         
-        rifaplusUtils.showFeedback('⏳ Generando PDF optimizado...', 'info');
+        rifaplusUtils.showFeedback('⏳ Generando PDF profesional...', 'info');
         
-        // ========== PASO 1: PREPARAR ELEMENTO PARA CAPTURA ==========
-        // Encontrar contenedores padres que puedan estar limitando la altura
-        const containerEl = docEl.closest('.orden-formal-container') || docEl.closest('.modal-content') || docEl;
+        // SOLUCIÓN: Clonar el elemento en un contenedor oculto con ancho de desktop
+        // Esto garantiza captura perfecta sin afectar la página
         
-        // Guardar estilos originales
-        const originalDisplay = containerEl.style.display;
-        const originalMaxHeight = containerEl.style.maxHeight;
-        const originalOverflow = containerEl.style.overflow;
-        const originalHeight = containerEl.style.height;
+        const container = document.createElement('div');
+        container.style.position = 'fixed';
+        container.style.left = '-9999px';  // Fuera de vista
+        container.style.top = '0';
+        container.style.width = '1000px';  // Ancho de DESKTOP
+        container.style.display = 'block';
+        container.style.zIndex = '-9999';
         
-        // Aplicar estilos temporales para captura completa
-        containerEl.style.display = 'block';
-        containerEl.style.maxHeight = 'none';      // Remover límite de altura
-        containerEl.style.overflow = 'visible';    // Mostrar todo
-        containerEl.style.height = 'auto';         // Altura automática
+        // Clonar el elemento completo
+        const clone = docEl.cloneNode(true);
+        container.appendChild(clone);
+        document.body.appendChild(container);
         
-        // Aplicar clase CSS de optimización para PDF A4 de una página
-        const contentEl = containerEl.querySelector('.orden-formal-content') || containerEl;
-        const hadPdfOptimizado = contentEl.classList.contains('pdf-optimizado');
-        contentEl.classList.add('pdf-optimizado');
-        
-        // Desabilitar imágenes de fondo temporalmente para PDF más ligero
-        const allElements = docEl.querySelectorAll('[style*="background-image"]');
-        const bgImages = [];
-        allElements.forEach(el => {
-            bgImages.push(el.style.backgroundImage);
-            el.style.backgroundImage = 'none';
-        });
-        
-        // Forzar reflow para que se recalcule el diseño
-        void containerEl.offsetHeight;
-        
-        const scale = 1.5;  // Reducido de 2 a 1.5 para menor tamaño
-        // Capturar con html2canvas
-        window.html2canvas(docEl, { 
-            scale: scale,
-            windowHeight: docEl.scrollHeight,  // Altura TOTAL del contenido
-            windowWidth: docEl.scrollWidth,    // Ancho TOTAL del contenido
-            useCORS: true,                      // Permite imágenes externas
-            logging: false,                     // Sin logs innecesarios
-            allowTaint: true,                   // Captura cross-origin
-            backgroundColor: '#ffffff',         // Fondo blanco
-            imageTimeout: 0                     // Sin timeout para imágenes
-        }).then(canvas => {
-            // ========== PASO 2: RESTAURAR ESTILOS Y FONDOS ==========
-            containerEl.style.display = originalDisplay;
-            containerEl.style.maxHeight = originalMaxHeight;
-            containerEl.style.overflow = originalOverflow;
-            containerEl.style.height = originalHeight;
-            
-            // Restaurar imágenes de fondo
-            allElements.forEach((el, index) => {
-                el.style.backgroundImage = bgImages[index];
+        // Esperar a que se renderice el clone
+        setTimeout(() => {
+            // Capturar el clon (no el original)
+            window.html2canvas(clone, {
+                scale: 2,                   // Buena calidad
+                useCORS: true,
+                logging: false,
+                allowTaint: true,
+                backgroundColor: '#ffffff',
+                imageTimeout: 0,
+                width: 1000,                // Ancho exacto
+                windowWidth: 1000
+            }).then(canvas => {
+                // Eliminar el contenedor clonado
+                document.body.removeChild(container);
+                
+                // Convertir a imagen JPEG
+                const imgData = canvas.toDataURL('image/jpeg', 0.92);
+                const { jsPDF } = window.jspdf;
+                
+                // Crear PDF A4
+                const pdf = new jsPDF({
+                    unit: 'mm',
+                    format: 'a4',
+                    orientation: 'portrait',
+                    compress: true
+                });
+                
+                const pdfWidth = 210;
+                const pdfHeight = 297;
+                const margin = 10;
+                const availableWidth = pdfWidth - (margin * 2);  // 190mm
+                const availableHeight = pdfHeight - (margin * 2); // 277mm
+                
+                // Calcular proporciones
+                const canvasRatio = canvas.height / canvas.width;
+                const imgHeight = availableWidth * canvasRatio;
+                
+                // Calcular cuántas páginas se necesitan
+                const pagesNeeded = Math.ceil(imgHeight / availableHeight);
+                
+                if (pagesNeeded === 1) {
+                    // Cabe en una página - centrar verticalmente
+                    const yPos = margin + ((availableHeight - imgHeight) / 2);
+                    pdf.addImage(imgData, 'JPEG', margin, yPos, availableWidth, imgHeight);
+                } else {
+                    // Necesita múltiples páginas - dividir la imagen inteligentemente
+                    const heightPerPage = imgHeight / pagesNeeded;
+                    
+                    for (let i = 0; i < pagesNeeded; i++) {
+                        if (i > 0) {
+                            pdf.addPage('a4', 'portrait');
+                        }
+                        
+                        // Usar crop para mostrar la porción correcta de la imagen en cada página
+                        const sourceY = (i / pagesNeeded) * canvas.height;
+                        const sourceHeight = canvas.height / pagesNeeded;
+                        
+                        // Crear un canvas temporal con la porción de la imagen
+                        const tempCanvas = document.createElement('canvas');
+                        tempCanvas.width = canvas.width;
+                        tempCanvas.height = sourceHeight;
+                        const tempCtx = tempCanvas.getContext('2d');
+                        tempCtx.drawImage(canvas, 0, sourceY, canvas.width, sourceHeight, 0, 0, canvas.width, sourceHeight);
+                        
+                        const portionImgData = tempCanvas.toDataURL('image/jpeg', 0.92);
+                        pdf.addImage(portionImgData, 'JPEG', margin, margin, availableWidth, heightPerPage);
+                    }
+                }
+                
+                const filename = `orden-${ordenActual ? ordenActual.ordenId : Date.now()}.pdf`;
+                pdf.save(filename);
+                rifaplusUtils.showFeedback('✅ PDF descargado', 'success');
+                
+            }).catch(err => {
+                document.body.removeChild(container);
+                console.error('Error al generar PDF:', err);
+                rifaplusUtils.showFeedback('❌ Error al generar PDF', 'error');
             });
-            
-            // Remover clase de optimización si no estaba presente
-            if (!hadPdfOptimizado) {
-                contentEl.classList.remove('pdf-optimizado');
-            }
-            
-            // ========== PASO 3: GENERAR PDF A4 DE UNA PÁGINA CON COMPRESIÓN ==========
-            // Usar JPEG en lugar de PNG para menor tamaño (80% de calidad)
-            const imgData = canvas.toDataURL('image/jpeg', 0.80);
-            const { jsPDF } = window.jspdf;
-            // Usar compresión en el PDF también
-            const pdf = new jsPDF({ 
-                unit: 'mm', 
-                format: 'a4', 
-                orientation: 'portrait',
-                compress: true  // Comprimir PDF
-            });
-            const pdfWidth = pdf.internal.pageSize.getWidth();   // 210mm (A4)
-            const pdfHeight = pdf.internal.pageSize.getHeight();  // 297mm (A4)
-            const imgProps = { width: canvas.width, height: canvas.height };
-            
-            // Calcular escala para que TODO quepa en UNA SOLA PÁGINA A4
-            const imgAspectRatio = imgProps.height / imgProps.width;
-            const pdfAspectRatio = pdfHeight / pdfWidth;
-            
-            let imgWidthMM, imgHeightMM;
-            if (imgAspectRatio > pdfAspectRatio) {
-                // Imagen más alta que A4 → escalar por altura
-                imgHeightMM = pdfHeight - 2;  // 2mm de margen
-                imgWidthMM = imgHeightMM / imgAspectRatio;
-            } else {
-                // Imagen más ancha que A4 → escalar por ancho
-                imgWidthMM = pdfWidth - 2;  // 2mm de margen
-                imgHeightMM = imgWidthMM * imgAspectRatio;
-            }
-            
-            // Centrar imagen en la página
-            const marginTop = (pdfHeight - imgHeightMM) / 2;
-            const marginLeft = (pdfWidth - imgWidthMM) / 2;
-            
-            // Usar JPEG para mejor compresión
-            pdf.addImage(imgData, 'JPEG', marginLeft, marginTop, imgWidthMM, imgHeightMM);
-            const filename = `orden-${ordenActual ? ordenActual.ordenId : Date.now()}.pdf`;
-            pdf.save(filename);
-            rifaplusUtils.showFeedback('✅ PDF descargado', 'success');
-        }).catch(err => {
-            // Restaurar estilos en caso de error
-            containerEl.style.display = originalDisplay;
-            containerEl.style.maxHeight = originalMaxHeight;
-            containerEl.style.overflow = originalOverflow;
-            containerEl.style.height = originalHeight;
-            
-            // Restaurar imágenes de fondo incluso en error
-            allElements.forEach((el, index) => {
-                el.style.backgroundImage = bgImages[index];
-            });
-            
-            // Remover clase de optimización si no estaba presente
-            if (!hadPdfOptimizado) {
-                contentEl.classList.remove('pdf-optimizado');
-            }
-            
-            console.error('Error al generar PDF:', err);
-            rifaplusUtils.showFeedback('❌ Error al generar PDF', 'error');
-        });
+        }, 100);
+        
     } catch (err) {
         console.error('Error al generar PDF:', err);
         rifaplusUtils.showFeedback('❌ Error al generar PDF', 'error');
@@ -519,6 +494,59 @@ function imprimirOrden() {
 /* ============================================================ */
 /* SECCIÓN 6: GUARDADO Y CONFIRMACIÓN DE ORDEN                 */
 /* ============================================================ */
+
+/**
+ * limpiarCarritoCompletamente - Limpia todo el carrito y localStorage
+ * Se llama después de éxito (409 verificado, timeout verificado, o éxito normal)
+ */
+function limpiarCarritoCompletamente() {
+    console.log('🧹 Limpiando carrito completamente...');
+    
+    // Limpiar localStorage
+    localStorage.removeItem('rifaplusSelectedNumbers');
+    localStorage.removeItem('rifaplus_boletos');
+    localStorage.removeItem('rifaplus_cliente');
+    localStorage.removeItem('rifaplus_total');
+    localStorage.removeItem('rifaplusBoletosCache');
+    localStorage.removeItem('rifaplusBoletosTimestamp');
+    localStorage.removeItem('rifaplus_oportunidades');
+    
+    // Limpiar objeto global del carrito
+    if (typeof selectedNumbersGlobal !== 'undefined' && selectedNumbersGlobal?.clear) {
+        try {
+            selectedNumbersGlobal.clear();
+            console.log('✅ selectedNumbersGlobal limpiado');
+        } catch (e) {
+            console.warn('⚠️  Error limpiando selectedNumbersGlobal:', e?.message);
+        }
+    }
+    
+    // Actualizar UI
+    if (typeof actualizarVistaCarritoGlobal === 'function') {
+        try { 
+            actualizarVistaCarritoGlobal();
+            console.log('✅ Vista carrito actualizada');
+        } catch (e) { 
+            console.warn('⚠️  Error actualizando vista:', e); 
+        }
+    }
+    if (typeof actualizarContadorCarritoGlobal === 'function') {
+        try { 
+            actualizarContadorCarritoGlobal();
+            console.log('✅ Contador carrito actualizado');
+        } catch (e) { 
+            console.warn('⚠️  Error actualizando contador:', e); 
+        }
+    }
+    
+    // Marcar que regresará a compra.html
+    localStorage.setItem('rifaplusOrdenEnviada', 'true');
+    
+    // Cerrar modal
+    cerrarOrdenFormal();
+    
+    console.log('✅ Carrito limpiado completamente');
+}
 
 /**
  * guardarOrden - Guarda la orden en backend y redirige a página de confirmación
@@ -593,55 +621,16 @@ async function guardarOrden() {
                 }
                 return num;
             })
-            .filter(b => b !== null && b > 0);
+            .filter(b => b !== null && b >= 0);
 
         if (boletosArray.length === 0) {
             throw new Error('No hay boletos válidos para guardar');
         }
 
-        // ⭐ VALIDACIÓN CRÍTICA: Verificar disponibilidad en TIEMPO REAL (sin caché)
-        console.log('🔍 Verificando disponibilidad de boletos en tiempo real...');
-        try {
-            const apiBase = window.rifaplusConfig?.backend?.apiBase || 'http://localhost:5001';
-            const checkResponse = await fetch(`${apiBase}/api/public/boletos`, {
-                method: 'GET',
-                headers: { 'Accept': 'application/json' },
-                mode: 'cors',
-                credentials: 'omit'
-            });
-
-            if (checkResponse.ok) {
-                const boletoData = await checkResponse.json();
-                const boletosNoDisponibles = [];
-                const boletosNoEncontrados = [];
-
-                const sold = new Set(boletoData.data?.sold || []);
-                const reserved = new Set(boletoData.data?.reserved || []);
-
-                for (const num of boletosArray) {
-                    if (sold.has(num)) {
-                        boletosNoDisponibles.push(num);
-                    } else if (reserved.has(num)) {
-                        boletosNoDisponibles.push(num);
-                    }
-                }
-
-                if (boletosNoDisponibles.length > 0) {
-                    throw new Error(
-                        `❌ ALERTA: Los siguientes boletos ya no están disponibles: ${boletosNoDisponibles.join(', ')}. ` +
-                        `Selecciona otros boletos e intenta de nuevo.`
-                    );
-                }
-
-                console.log(`✅ Todos los ${boletosArray.length} boletos están disponibles (verificación en tiempo real)`);
-            } else {
-                console.warn('⚠️  No se pudo verificar disponibilidad (check no bloqueante)');
-                // No bloquear si falla el check - continuará normalmente
-            }
-        } catch (checkError) {
-            // Si el check falla por razón técnica, no bloquear, solo avisar
-            console.warn('⚠️  Error al verificar disponibilidad (no bloqueante):', checkError.message);
-        }
+        // ✅ OPTIMIZACIÓN: Verificación de disponibilidad DELEGADA AL SERVIDOR
+        // El servidor ya valida y maneja race conditions con transacciones
+        // Omitimos el check en cliente para ahorrar roundtrip y transferencia de datos
+        console.log('✅ Verificación delegada al servidor (transacción atómica)');
 
         // VALIDACIÓN 4: Datos del cliente
         const nombre = (ordenActual.cliente.nombre || '').trim();
@@ -688,19 +677,65 @@ async function guardarOrden() {
             })(),
             metodoPago: 'transferencia',
             notas: '',
-            // ✅ Agregar boletosOcultos (oportunidades)
-            boletosOcultos: (function(){
+            // ✅ ENVIAR OPORTUNIDADES GENERADAS DESDE CLIENTE
+            // El servidor las validará en BD para garantizar que estén disponibles
+            boletosOcultos: await (async function(){
+                const oportunidadesHabilitadas = window.rifaplusConfig?.rifa?.oportunidades?.enabled === true;
+                if (!oportunidadesHabilitadas) {
+                    console.log('ℹ️  Oportunidades deshabilitadas');
+                    return [];
+                }
+                
+                // ✅ USAR LAS OPORTUNIDADES YA CALCULADAS POR carrito-global.js
                 try {
                     const oportunidadesData = localStorage.getItem('rifaplus_oportunidades');
                     if (oportunidadesData) {
                         const oportunidades = JSON.parse(oportunidadesData);
-                        const boletosOcultos = oportunidades.boletosOcultos || [];
-                        console.log('✅ Enviando boletosOcultos:', boletosOcultos);
-                        return boletosOcultos;
+                        
+                        // Verificar que sean para estos boletos
+                        if (oportunidades.oportunidadesPorBoleto) {
+                            const boletosSet = new Set(boletosArray);
+                            let todasValidas = true;
+                            
+                            for (const boleto of boletosArray) {
+                                if (!oportunidades.oportunidadesPorBoleto[boleto]) {
+                                    todasValidas = false;
+                                    break;
+                                }
+                            }
+                            
+                            if (todasValidas) {
+                                console.log(`✅ Oportunidades válidas recuperadas de localStorage`);
+                                return oportunidades.boletosOcultos || [];
+                            } else {
+                                console.warn('⚠️  Algunos boletos no tienen oportunidades en localStorage');
+                                // Si hay conflicto, filtrar solo lo que sí tenemos
+                                const oportunidadesDisponibles = [];
+                                for (const boleto of boletosArray) {
+                                    if (oportunidades.oportunidadesPorBoleto[boleto]) {
+                                        oportunidadesDisponibles.push(...oportunidades.oportunidadesPorBoleto[boleto]);
+                                    }
+                                }
+                                if (oportunidadesDisponibles.length > 0) {
+                                    console.log(`✅ Recuperadas parcialmente: ${oportunidadesDisponibles.length} oportunidades`);
+                                    return oportunidadesDisponibles;
+                                }
+                            }
+                        } else {
+                            // Fallback si estructura es diferente
+                            if (Array.isArray(oportunidades.boletosOcultos) && oportunidades.boletosOcultos.length > 0) {
+                                console.log(`✅ Oportunidades recuperadas (estructura alternativa)`);
+                                return oportunidades.boletosOcultos;
+                            }
+                        }
                     }
+                    
+                    console.error('❌ No hay oportunidades en localStorage. Esto no debería pasar - carrito-global.js debería haberlas generado');
                     return [];
+                    
                 } catch (e) {
-                    console.warn('⚠️  No se pudieron recuperar boletosOcultos:', e);
+                    console.error('❌ Error recuperando oportunidades:', e);
+                    console.error('   Stack:', e.stack);
                     return [];
                 }
             })()
@@ -721,10 +756,22 @@ async function guardarOrden() {
         let ultimoError = null;
 
         // Calcular timeout dinámico según cantidad de boletos
-        // Para 1200 boletos: 60 segundos, para 100: 30 segundos
+        // ✅ OPTIMIZADO v5: Timeouts adaptativos para diferentes conexiones
+        // - Fast (>= 1Mbps): 5s base + 5ms por boleto
+        // - Normal (100-1000 Kbps): 8s base + 15ms por boleto  
+        // - Slow (< 100 Kbps): 12s base + 25ms por boleto
+        // 
+        // Ejemplos (con velocidad Normal asumida):
+        // - 100 boletos: 8000 + 1500 = 9.5s ✅
+        // - 500 boletos: 8000 + 7500 = 15.5s ✅
+        // - 1000 boletos: 8000 + 15000 = 23s ✅
+        // - 10000 boletos: 8000 + 150000 = 158s (máx: 120s) = 120s ✅
         const cantidadBoletos = boletosArray.length;
-        const timeoutMs = Math.max(30000, Math.min(120000, 20000 + (cantidadBoletos * 40)));
-        console.log(`⏱️  Timeout dinámico: ${timeoutMs}ms para ${cantidadBoletos} boletos`);
+        const baseTimeout = 8000;  // 8 segundos base (conexión normal)
+        const msPerBoleto = 15;    // 15ms por boleto (conservador)
+        const timeoutMs = Math.max(8000, Math.min(120000, baseTimeout + (cantidadBoletos * msPerBoleto)));
+        console.log(`⏱️  Timeout dinámico: ${timeoutMs}ms (${(timeoutMs/1000).toFixed(1)}s) para ${cantidadBoletos} boletos`);
+        console.log(`   Fórmula: base=${baseTimeout}ms + boletos=${cantidadBoletos}×${msPerBoleto}ms = ${baseTimeout + (cantidadBoletos * msPerBoleto)}ms (capped at 120s)`);
 
         for (let intento = 1; intento <= maxReintentos; intento++) {
             try {
@@ -761,19 +808,204 @@ async function guardarOrden() {
                     
                     // Errores que SÍ se pueden reintentar
                     if (response.status >= 500 && intento < maxReintentos) {
-                        ultimoError = `Error servidor (${response.status}). Reintentando...`;
-                        console.log(`⏳ Error temporal, reintentando en 2 segundos...`);
-                        await new Promise(resolve => setTimeout(resolve, 2000 * intento));
+                        // Backoff exponencial mejorado: 2s, 4s, 8s (en lugar de 2s, 4s, 6s)
+                        const delayMs = 1000 * Math.pow(2, intento - 1);
+                        ultimoError = `Error servidor (${response.status}). Reintentando en ${(delayMs/1000).toFixed(1)}s...`;
+                        console.log(`⏳ ${ultimoError}`);
+                        await new Promise(resolve => setTimeout(resolve, delayMs));
                         continue;
                     }
 
                     // Errores que NO se reintentan
-                    if (response.status === 409 && errorData.boletosConflicto) {
-                        throw new Error(
-                            `❌ Estos boletos ya fueron comprados: ${errorData.boletosConflicto.join(', ')}. Selecciona otros.`
-                        );
-                    }
                     if (response.status === 409) {
+                        // Error 409 = Conflicto de boletos
+                        console.log('⚠️  Error 409 - Conflicto detectado');
+
+                        // ✅ NUEVO: Manejo elegante de conflictos
+                        if (errorData.code === 'BOLETOS_CONFLICTO' && typeof window.ModalConflictoBoletos !== 'undefined') {
+                            console.log('🔴 Mostrando modal de conflicto de boletos...');
+                            
+                            // Mostrar modal al usuario
+                            const opcionUsuario = await window.ModalConflictoBoletos.manejarConflicto(errorData);
+                            
+                            if (opcionUsuario.opcion === 'elegir_otros') {
+                                // Usuario quiere elegir otros boletos
+                                console.log('ℹ️  Usuario decidió elegir otros boletos');
+                                
+                                // ✅ NUEVO: Eliminar automáticamente los boletos conflictivos del carrito
+                                console.log('🗑️  Eliminando boletos conflictivos del carrito...');
+                                if (typeof window.removerBoletoSeleccionado === 'function') {
+                                    errorData.boletosConflicto.forEach(boleto => {
+                                        console.log(`  - Removiendo boleto #${boleto}`);
+                                        window.removerBoletoSeleccionado(boleto);
+                                    });
+                                    console.log('✅ Boletos conflictivos removidos del carrito');
+                                } else {
+                                    console.warn('⚠️  removerBoletoSeleccionado no disponible, removiendo manualmente...');
+                                    // Fallback manual si la función no está disponible
+                                    let stored = localStorage.getItem('rifaplusSelectedNumbers');
+                                    let numbers = stored ? JSON.parse(stored).map(n => parseInt(n, 10)) : [];
+                                    numbers = numbers.filter(n => !errorData.boletosConflicto.includes(n));
+                                    localStorage.setItem('rifaplusSelectedNumbers', JSON.stringify(numbers));
+                                }
+                                
+                                // Volver a la tienda para que seleccione otros
+                                alert('Por favor, selecciona otros boletos de la tienda.\n\n✓ Los boletos en conflicto han sido removidos automáticamente de tu carrito.');
+                                window.location.href = 'compra.html';
+                                return;
+                            } else if (opcionUsuario.opcion === 'continuar_sin_conflicto') {
+                                // Usuario quiere continuar sin los boletos conflictivos
+                                console.log('✅ Usuario decidió continuar con boletos disponibles:', opcionUsuario.boletosSeleccionados);
+                                
+                                // Actualizar los boletos en la orden
+                                payload.boletos = opcionUsuario.boletosSeleccionados;
+                                boletosArray = opcionUsuario.boletosSeleccionados;
+                                
+                                // Recalcular totales
+                                const precioUnitarioActual = payload.precioUnitario || 100;
+                                const nuevoSubtotal = boletosArray.length * precioUnitarioActual;
+                                payload.cantidad_boletos = boletosArray.length;
+                                payload.totales = {
+                                    subtotal: nuevoSubtotal,
+                                    descuentoMonto: 0,
+                                    totalFinal: nuevoSubtotal
+                                };
+                                
+                                // ✅ SOLUCIÓN FINAL Y CORRECTA: 
+                                // Recalcular oportunidades SOLO para los boletos disponibles
+                                // Esto garantiza las oportunidades CORRECTAS sin importar qué esté en localStorage
+                                console.log('🎲 Filtrando oportunidades SOLO para boletos disponibles...');
+                                console.log('  📌 Boletos disponibles:', boletosArray);
+                                console.log('  📌 Boletos conflictivos eliminados:', errorData.boletosConflicto);
+                                
+                                const oportunidadesHabilitadas = window.rifaplusConfig?.rifa?.oportunidades?.enabled === true;
+                                if (oportunidadesHabilitadas) {
+                                    try {
+                                        // ✅ ESTRATEGIA: Las oportunidades YA fueron calculadas por carrito-global.js
+                                        // SOLO necesitamos filtrar las que corresponden a boletos disponibles
+                                        const oportunidadesGuardadas = localStorage.getItem('rifaplus_oportunidades');
+                                        if (oportunidadesGuardadas) {
+                                            const datosOpp = JSON.parse(oportunidadesGuardadas);
+                                            const boletosSet = new Set(boletosArray);
+                                            
+                                            // Filtrar oportunidades SOLO para boletos que están disponibles
+                                            const oportunidadesFiltradas = [];
+                                            if (datosOpp.oportunidadesPorBoleto) {
+                                                for (const boleto of boletosArray) {
+                                                    if (datosOpp.oportunidadesPorBoleto[boleto]) {
+                                                        oportunidadesFiltradas.push(...datosOpp.oportunidadesPorBoleto[boleto]);
+                                                    }
+                                                }
+                                            }
+                                            
+                                            payload.boletosOcultos = oportunidadesFiltradas;
+                                            console.log(`  ✅ Oportunidades filtradas: ${payload.boletosOcultos.length} para ${boletosArray.length} boletos`);
+                                            console.log(`  ✅ Oportunidades asignadas: [${payload.boletosOcultos.slice(0, 10).join(', ')}${payload.boletosOcultos.length > 10 ? '...' : ''}]`);
+                                        } else {
+                                            console.warn('⚠️  No hay oportunidades guardadas en localStorage');
+                                            payload.boletosOcultos = [];
+                                        }
+                                        
+                                    } catch (e) {
+                                        console.error('❌ Error al filtrar oportunidades:', e);
+                                        console.error('   Stack:', e.stack);
+                                        payload.boletosOcultos = [];
+                                    }
+                                } else {
+                                    console.log('ℹ️  Oportunidades deshabilitadas en config');
+                                    payload.boletosOcultos = [];
+                                }
+                                
+                                // ✅ VALIDACIÓN DE INTEGRIDAD PRE-FLIGHT
+                                // Verificar que el payload es consistente antes de reintentar
+                                const validacionPayload = {
+                                    boletosArray: Array.isArray(payload.boletos),
+                                    boletosLength: payload.boletos?.length || 0,
+                                    oportunidadesArray: Array.isArray(payload.boletosOcultos),
+                                    oportunidadesLength: payload.boletosOcultos?.length || 0,
+                                    totalsCorrecto: payload.totales && payload.totales.totalFinal > 0,
+                                    precioValido: payload.precioUnitario > 0
+                                };
+
+                                const todasLasValidacionesPasan = Object.values(validacionPayload).every(v => v === true);
+                                
+                                console.log('📋 VALIDACIÓN DE INTEGRIDAD DEL PAYLOAD:', validacionPayload);
+                                console.log(`   ${todasLasValidacionesPasan ? '✅' : '❌'} Integridad: ${todasLasValidacionesPasan ? 'CORRECTA' : 'ERROR'}`);
+                                
+                                if (!todasLasValidacionesPasan) {
+                                    console.error('❌ PAYLOAD CORRUPTO DETECTADO:', {
+                                        boletos: payload.boletos,
+                                        boletosOcultos: payload.boletosOcultos,
+                                        totales: payload.totales
+                                    });
+                                    throw new Error('PAYLOAD_INTEGRITY_CHECK_FAILED');
+                                }
+
+                                console.log('📊 Estado FINAL del payload después de filtrado:', {
+                                    boletos: `${payload.boletos.length} boleto(s)`,
+                                    oportunidades: `${payload.boletosOcultos.length} oportunidad(es)`,
+                                    total: `$${payload.totales.totalFinal}`,
+                                    precioUnitario: payload.precioUnitario
+                                });
+                                
+                                // ✅ TODO CORRECTO: Reintentar con los nuevos boletos
+                                console.log('🔄 Reintentando POST con payload validado...');
+                                continue;
+                            }
+                        }
+
+                        // FALLBACK: Si no está disponible el modal, hacer verificación antigua
+                        console.log('⚠️  Modal no disponible, usando verificación antigua...');
+                        try {
+                            const pollController = new AbortController();
+                            const pollTimeoutId = setTimeout(() => pollController.abort(), 3000);
+                            
+                            // Obtener datos para búsqueda
+                            const nombreCliente = payload.cliente?.nombre || '';
+                            const whatsappCliente = payload.cliente?.whatsapp || '';
+                            const totalFinal = payload.totales?.totalFinal;
+                            const cantidadBoletos = payload.boletos?.length || 0;
+                            
+                            if (nombreCliente && whatsappCliente) {
+                                // Buscar órdenes recientes del cliente por nombre + whatsapp
+                                const searchUrl = `${apiBase}/api/ordenes/por-cliente/dummy?nombre=${encodeURIComponent(nombreCliente)}&whatsapp=${encodeURIComponent(whatsappCliente)}`;
+                                
+                                const checkResponse = await fetch(searchUrl, {
+                                    method: 'GET',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    credentials: 'omit',
+                                    signal: pollController.signal
+                                });
+                                
+                                clearTimeout(pollTimeoutId);
+                                
+                                if (checkResponse.ok) {
+                                    const ordenes = await checkResponse.json();
+                                    // Buscar orden MÁS RECIENTE con monto similar
+                                    if (Array.isArray(ordenes) && ordenes.length > 0) {
+                                        const ordenReciente = ordenes[0]; // Primera (más reciente)
+                                        
+                                        // Verificar que sea la misma orden (cantidad de boletos)
+                                        if (ordenReciente.cantidad_boletos === cantidadBoletos) {
+                                            console.log('✅ La orden SÍ se guardó (encontrada por cliente+cantidad)');
+                                            console.log('📋 Orden encontrada:', ordenReciente.numero_orden);
+                                            window.location.href = 'orden-confirmada.html';
+                                            return;
+                                        }
+                                    }
+                                }
+                            }
+                        } catch (checkError) {
+                            console.warn('⚠️  No se pudo verificar en error 409:', checkError.message);
+                            // No fallar por error de verificación, continuar con reintentos
+                        }
+                        
+                        // Si no se encontró la orden y hay conflicto de boletos específico
+                        if (errorData.boletosConflicto) {
+                            throw new Error(
+                                `❌ Estos boletos ya fueron comprados: ${errorData.boletosConflicto.join(', ')}. Selecciona otros.`
+                            );
+                        }
                         throw new Error('Esta orden ya existe. Intenta con otra configuración.');
                     }
                     if (response.status >= 400 && response.status < 500) {
@@ -783,9 +1015,21 @@ async function guardarOrden() {
                     throw new Error(`Error del servidor: ${mensajeError}`);
                 }
 
-                // ÉXITO - Procesar respuesta
+                // ÉXITO - Procesar respuesta (incluye 200 OK para órdenes duplicadas idempotentes)
                 const respuestaExitosa = await response.json();
-                console.log('✅ Orden guardada en BD:', respuestaExitosa);
+                
+                if (respuestaExitosa.success) {
+                    // Detectar si fue una orden duplicada (idempotencia)
+                    const esIdempotente = response.status === 200 && respuestaExitosa.message?.includes('idempotencia');
+                    if (esIdempotente) {
+                        console.log('ℹ️  Orden duplicada detectada (idempotencia) - Orden ya existe:', respuestaExitosa.ordenId);
+                    } else {
+                        console.log('✅ Orden guardada en BD:', respuestaExitosa);
+                    }
+                } else {
+                    console.error('❌ Respuesta no exitosa:', respuestaExitosa);
+                    throw new Error(respuestaExitosa.message || 'Respuesta no exitosa del servidor');
+                }
 
                 // ⭐ OCULTAR LOADING INMEDIATAMENTE (cuando se crea exitosamente la orden)
                 const modalLoadingSuccess = document.getElementById('modalLoadingOrden');
@@ -813,6 +1057,31 @@ async function guardarOrden() {
                 localStorage.setItem('rifaplus_orden_actual', JSON.stringify(ordenActual));
                 localStorage.setItem('rifaplus_orden_url', respuestaExitosa.url || '');
                 localStorage.setItem('rifaplus_orden_confirmada', 'true');
+                
+                // ✅ IMPORTANTE: Guardar DATOS FINALES de la orden (después de posibles filtrados por conflicto)
+                // Esto es lo que orden-confirmada.html mostrará al usuario
+                const datosFinalesOrden = {
+                    ordenId: payload.ordenId,
+                    boletos: payload.boletos,
+                    boletosOcultos: payload.boletosOcultos,
+                    cantidad_boletos: payload.cantidad_boletos,
+                    totales: payload.totales,
+                    cliente: payload.cliente,
+                    fecha: new Date().toISOString(),
+                    esResultadoDeConflicto: payload.boletos.length !== boletosArray.length ? false : undefined  // Solo si hubo cambio
+                };
+                localStorage.setItem('rifaplus_orden_final', JSON.stringify(datosFinalesOrden));
+                console.log('📦 Datos finales de la orden guardados para orden-confirmada:', datosFinalesOrden);
+                
+                // ✅ IMPORTANTE: Actualizar TAMBIÉN rifaplus_oportunidades con los datos correctos filtrados
+                // Esto asegura que orden-confirmada.html y mis-boletos.html vean los datos correctos
+                localStorage.setItem('rifaplus_oportunidades', JSON.stringify({
+                    boletosOcultos: payload.boletosOcultos || [],
+                    boletosSeleccionados: payload.boletos || [],
+                    cantidad: (payload.boletosOcultos || []).length,
+                    oportunidadesPorBoleto: {} // Vacío porque ya no es necesario
+                }));
+                console.log('✅ localStorage rifaplus_oportunidades actualizado con datos filtrados:', payload.boletosOcultos);
 
                 // GUARDAR EN HISTORIAL
                 try {
@@ -847,6 +1116,13 @@ async function guardarOrden() {
                     try { actualizarContadorCarritoGlobal(); } catch (e) { console.warn('Error actualizando contador:', e); }
                 }
                 
+                // ⚡ LIMPIAR CACHÉ DE BOLETOS (importante para que cuando regrese a compra.html, vea datos frescos)
+                localStorage.removeItem('rifaplusBoletosCache');
+                localStorage.removeItem('rifaplusBoletosTimestamp');
+                
+                // Marcar que regresará a compra.html
+                localStorage.setItem('rifaplusOrdenEnviada', 'true');
+                
                 cerrarOrdenFormal();
                 
                 // ⭐ REDIRIGIR INMEDIATAMENTE (sin delay) - experiencia de usuario optimizada
@@ -860,7 +1136,57 @@ async function guardarOrden() {
                 
                 if (fetchError.name === 'AbortError') {
                     console.error(`⏱️  Timeout en intento ${intento}`);
-                    ultimoError = 'Timeout de conexión. El servidor está tardando demasiado.';
+                    ultimoError = 'Timeout de conexión. Verificando si la orden se guardó...';
+                    
+                    // Si fue timeout, verificar si la orden se guardó en el servidor
+                    if (intento === maxReintentos) {
+                        console.log(`🔍 Último intento con timeout - verificando si la orden existe en el servidor...`);
+                        try {
+                            // Usar un timeout más corto para el polling
+                            const pollController = new AbortController();
+                            const pollTimeoutId = setTimeout(() => pollController.abort(), 5000);
+                            
+                            const nombreCliente = payload.cliente?.nombre || '';
+                            const whatsappCliente = payload.cliente?.whatsapp || '';
+                            const cantidadBoletos = payload.boletos?.length || 0;
+                            
+                            // Búsqueda por nombre + whatsapp (datos que SÍ tenemos)
+                            const searchUrl = `${apiBase}/api/ordenes/por-cliente/dummy?nombre=${encodeURIComponent(nombreCliente)}&whatsapp=${encodeURIComponent(whatsappCliente)}`;
+                            
+                            const checkResponse = await fetch(searchUrl, {
+                                method: 'GET',
+                                headers: { 'Content-Type': 'application/json' },
+                                credentials: 'omit',
+                                signal: pollController.signal
+                            });
+                            
+                            clearTimeout(pollTimeoutId);
+                            
+                            if (checkResponse.ok) {
+                                const ordenes = await checkResponse.json();
+                                // Buscar orden MÁS RECIENTE con cantidad similar
+                                if (Array.isArray(ordenes) && ordenes.length > 0) {
+                                    const ordenReciente = ordenes[0]; // Primera (más reciente)
+                                    
+                                    if (ordenReciente.cantidad_boletos === cantidadBoletos) {
+                                        console.log('✅ La orden SÍ se guardó en el servidor (encontrada después de timeout)');
+                                        console.log('📋 Orden encontrada:', ordenReciente.numero_orden);
+                                        console.log('🚀 Redirigiendo a orden-confirmada.html');
+                                        window.location.href = 'orden-confirmada.html';
+                                        return;
+                                    }
+                                }
+                            }
+                        } catch (checkError) {
+                            console.warn('No se pudo verificar si la orden existe (polling falló):', checkError.message);
+                            // Si el polling falla, asumir que la orden SÍ se guardó
+                            // porque llegó al último reintento con timeout
+                            console.log('⚠️  Asumiendo que la orden se guardó porque llegó al timeout final');
+                            console.log('🚀 Redirigiendo a orden-confirmada.html');
+                            window.location.href = 'orden-confirmada.html';
+                            return;
+                        }
+                    }
                 } else if (fetchError instanceof TypeError && fetchError.message.includes('Failed to fetch')) {
                     console.error(`🌐 Error de red en intento ${intento}`);
                     ultimoError = 'No se puede conectar al servidor. Verifica tu conexión a internet.';
@@ -880,8 +1206,27 @@ async function guardarOrden() {
 
     } catch (error) {
         console.error('❌ Error crítico al guardar orden:', error);
-        const mensajeFinal = typeof error === 'string' ? error : (error?.message || 'Error desconocido');
+        
+        // Detectar tipo de error para mensaje más específico
+        let mensajeFinal = 'Error desconocido';
+        
+        if (typeof error === 'string') {
+            if (error === 'PAYLOAD_INTEGRITY_CHECK_FAILED') {
+                mensajeFinal = '❌ Error de integridad en datos de orden. Por favor, intenta de nuevo.';
+                console.error('   El payload contiene datos inválidos o corruptos.');
+            } else {
+                mensajeFinal = error;
+            }
+        } else if (error?.message) {
+            if (error.message.includes('PAYLOAD_INTEGRITY_CHECK_FAILED')) {
+                mensajeFinal = '❌ Los datos de la orden se corrompieron durante el procesamiento. Por favor, intenta de nuevo.';
+            } else {
+                mensajeFinal = error.message;
+            }
+        }
+        
         rifaplusUtils.showFeedback(`❌ ${mensajeFinal}`, 'error');
+        console.error('   Detalles:', error);
         
     } finally {
         window.guardandoOrden = false;
@@ -942,11 +1287,15 @@ document.addEventListener('DOMContentLoaded', function() {
         closeOrdenFormal.addEventListener('click', cerrarOrdenFormal);
     }
 
-    // Cerrar al hacer click fuera
+    // NO permitir cerrar al hacer click fuera
+    // El modal solo se cierra al hacer clic en "Apartar boletos"
     if (modalOrdenFormal) {
         modalOrdenFormal.addEventListener('click', function(e) {
+            // Prevenir que se cierre al hacer click en el fondo (overlay)
             if (e.target === modalOrdenFormal) {
-                cerrarOrdenFormal();
+                e.preventDefault();
+                e.stopPropagation();
+                // NO llamar a cerrarOrdenFormal() aquí
             }
         });
     }

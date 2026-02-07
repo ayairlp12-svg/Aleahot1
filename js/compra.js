@@ -1948,137 +1948,147 @@ function animarAgregarAlCarrito(botonElemento, numeroDelBoleto) {
 }
 
 /**
- * crearEfectoVolandoDesdeGrid - Crea un efecto volando desde el grid (boletera) al carrito
+ * crearEfectoVolandoProfesional - Crea un efecto volador profesional y llamativo
+ * Soporta: grid, buscador, máquina de suerte
  */
-function crearEfectoVolandoDesdeGrid(carritoNav, numero) {
+function crearEfectoVolandoProfesional(origenElement, numeroDelBoleto, origen = 'grid') {
     try {
-        // Obtener el botón del número en el grid si existe
-        const numerosGrid = document.getElementById('numerosGrid');
-        let botonOrigen = null;
+        const carritoNav = document.getElementById('carritoNav');
+        if (!carritoNav) return;
         
-        if (numerosGrid) {
-            botonOrigen = numerosGrid.querySelector(`[data-numero="${numero}"]`);
-        }
-        
-        // Si no encontramos el botón, usar el centro de la pantalla como origen
-        let botonRect = {
+        const colorSeleccionado = obtenerColorSeleccionado(); // #FF3D3D
+        const origenRect = origenElement?.getBoundingClientRect ? origenElement.getBoundingClientRect() : {
             left: window.innerWidth / 2,
             top: window.innerHeight / 2,
             width: 0,
             height: 0
         };
-        
-        if (botonOrigen) {
-            botonRect = botonOrigen.getBoundingClientRect();
-        }
-        
         const carritoRect = carritoNav.getBoundingClientRect();
-        const colorSeleccionado = obtenerColorSeleccionado();
         
-        // Crear elemento flotante con color dinámico
-        const floatingEl = document.createElement('div');
-        // Convertir el color a RGB para obtener valores individuales para sombra más clara
-        const colorParaFondo = colorSeleccionado.startsWith('#') 
-            ? colorSeleccionado 
-            : colorSeleccionado;
+        // 🎨 Crear elemento principal del boleto volador
+        const mainTicket = document.createElement('div');
+        const startX = origenRect.left + origenRect.width / 2;
+        const startY = origenRect.top + origenRect.height / 2;
         
-        floatingEl.style.cssText = `
+        mainTicket.style.cssText = `
             position: fixed;
-            left: ${botonRect.left + botonRect.width / 2}px;
-            top: ${botonRect.top + botonRect.height / 2}px;
-            width: 40px;
-            height: 40px;
-            background: linear-gradient(135deg, ${colorParaFondo}, ${colorParaFondo}dd);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            color: white;
-            font-size: 18px;
-            box-shadow: 0 4px 15px ${colorParaFondo}66;
+            left: ${startX}px;
+            top: ${startY}px;
+            width: 50px;
+            height: 50px;
             z-index: 9998;
             pointer-events: none;
         `;
-        floatingEl.textContent = '🎫';
         
-        document.body.appendChild(floatingEl);
+        // 🎫 Icono del boleto con efecto de destello
+        const ticketIcon = document.createElement('div');
+        ticketIcon.style.cssText = `
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, ${colorSeleccionado}, #ff6b5b);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 0 20px ${colorSeleccionado}99, inset 0 1px 0 rgba(255,255,255,0.3);
+            transform: rotate(-15deg);
+        `;
+        ticketIcon.textContent = '🎫';
+        mainTicket.appendChild(ticketIcon);
         
-        // Calcular distancia para la animación
-        const deltaX = carritoRect.left - botonRect.left;
-        const deltaY = carritoRect.top - botonRect.top;
+        // ✨ Crear partículas de luz alrededor
+        for (let i = 0; i < 8; i++) {
+            const particle = document.createElement('div');
+            const angle = (i / 8) * Math.PI * 2;
+            const distance = 35;
+            const offsetX = Math.cos(angle) * distance;
+            const offsetY = Math.sin(angle) * distance;
+            
+            particle.style.cssText = `
+                position: absolute;
+                width: 8px;
+                height: 8px;
+                background: ${colorSeleccionado};
+                border-radius: 50%;
+                left: 50%;
+                top: 50%;
+                transform: translate(calc(-50% + ${offsetX}px), calc(-50% + ${offsetY}px));
+                opacity: 0.8;
+                box-shadow: 0 0 8px ${colorSeleccionado};
+            `;
+            mainTicket.appendChild(particle);
+        }
         
-        // Aplicar animación
+        document.body.appendChild(mainTicket);
+        
+        // 🚀 Calcular trayectoria hacia carrito
+        const deltaX = carritoRect.left - startX;
+        const deltaY = carritoRect.top - startY;
+        const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+        const duration = Math.min(1000, 600 + distance * 0.2);
+        
+        // ✨ Crear animación suave y profesional
+        requestAnimationFrame(() => {
+            mainTicket.style.transition = `all ${duration}ms cubic-bezier(0.25, 0.46, 0.45, 0.94)`;
+            mainTicket.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(0.2) rotate(360deg)`;
+            mainTicket.style.opacity = '0';
+            
+            // Animar partículas de dispersión
+            const particles = mainTicket.querySelectorAll('div:not(:first-child)');
+            particles.forEach((p, i) => {
+                p.style.transition = `all ${duration}ms ease-out`;
+                p.style.opacity = '0';
+                const angle = (i / 8) * Math.PI * 2;
+                const finalDistance = Math.random() * 200 + 100;
+                p.style.transform = `translate(calc(-50% + ${Math.cos(angle) * finalDistance}px), calc(-50% + ${Math.sin(angle) * finalDistance}px))`;
+            });
+        });
+        
+        // Limpiar elemento
         setTimeout(() => {
-            floatingEl.style.transition = 'all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
-            floatingEl.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(0.3)`;
-            floatingEl.style.opacity = '0';
-        }, 10);
+            mainTicket.remove();
+        }, duration + 200);
         
-        // Remover elemento después de la animación
-        setTimeout(() => {
-            floatingEl.remove();
-        }, 800);
+    } catch (error) {
+        console.error('Error en crearEfectoVolandoProfesional:', error);
+    }
+}
+
+/**
+ * crearEfectoVolandoDesdeGrid - (MEJORADO) Crea un efecto volando desde el grid (boletera) al carrito
+ */
+function crearEfectoVolandoDesdeGrid(carritoNav, numero) {
+    try {
+        const numerosGrid = document.getElementById('numerosGrid');
+        let botonOrigen = numerosGrid?.querySelector(`[data-numero="${numero}"]`);
         
+        if (!botonOrigen) {
+            const pseudoElement = document.createElement('div');
+            pseudoElement.style.cssText = `
+                position: fixed;
+                left: ${window.innerWidth / 2}px;
+                top: ${window.innerHeight / 2}px;
+                width: 0;
+                height: 0;
+            `;
+            document.body.appendChild(pseudoElement);
+            crearEfectoVolandoProfesional(pseudoElement, numero, 'grid');
+            setTimeout(() => pseudoElement.remove(), 1200);
+        } else {
+            crearEfectoVolandoProfesional(botonOrigen, numero, 'grid');
+        }
     } catch (error) {
         console.error('Error al crear efecto volando desde grid:', error);
     }
 }
 
 /**
- * crearEfectoVolandoAlCarrito - Crea un elemento visual que "vuela" del boleto al carrito
+ * crearEfectoVolandoAlCarrito - (MEJORADO) Crea un efecto volador profesional desde buscador/máquina
  */
 function crearEfectoVolandoAlCarrito(botonElemento, numero) {
     try {
-        const carritoNav = document.getElementById('carritoNav');
-        if (!carritoNav) return;
-        
-        const colorSeleccionado = obtenerColorSeleccionado();
-        
-        // Obtener posiciones
-        const botonRect = botonElemento.getBoundingClientRect();
-        const carritoRect = carritoNav.getBoundingClientRect();
-        
-        // Crear elemento flotante con color dinámico
-        const floatingEl = document.createElement('div');
-        floatingEl.style.cssText = `
-            position: fixed;
-            left: ${botonRect.left + botonRect.width / 2}px;
-            top: ${botonRect.top + botonRect.height / 2}px;
-            width: 40px;
-            height: 40px;
-            background: linear-gradient(135deg, ${colorSeleccionado}, ${colorSeleccionado}dd);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            color: white;
-            font-size: 18px;
-            box-shadow: 0 4px 15px ${colorSeleccionado}66;
-            z-index: 9998;
-            pointer-events: none;
-        `;
-        floatingEl.textContent = '🎫';
-        
-        document.body.appendChild(floatingEl);
-        
-        // Calcular distancia para la animación
-        const deltaX = carritoRect.left - botonRect.left;
-        const deltaY = carritoRect.top - botonRect.top;
-        
-        // Aplicar animación
-        setTimeout(() => {
-            floatingEl.style.transition = 'all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
-            floatingEl.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(0.3)`;
-            floatingEl.style.opacity = '0';
-        }, 10);
-        
-        // Remover elemento después de la animación
-        setTimeout(() => {
-            floatingEl.remove();
-        }, 800);
-        
+        crearEfectoVolandoProfesional(botonElemento, numero, 'boton');
     } catch (error) {
         console.error('Error al crear efecto volando:', error);
     }

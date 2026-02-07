@@ -1,12 +1,33 @@
 /**
- * CSS Optimization for Rango Rendering
- * Agregado a styles.css para optimizar performance de cambio de rango
+ * CSS Optimization for Purchase Page Performance
+ * Optimizaciones de rendering críticas + CLS reduction
  */
 
-/* Optimizar repaints en grid de números durante renderización */
+/* ============================================================ */
+/* CONTENEDOR PRINCIPAL - Grid de números                       */
+/* ============================================================ */
+
+/* ⚡ CLS FIX: Reservar espacio ANTES de renderizar (min-height) */
 #numerosGrid {
     contain: layout style;
     will-change: contents;
+    content-visibility: auto; /* ⚡ Renderizar solo cuando es visible */
+    
+    /* ⭐ CRÍTICO PARA CLS: Establecer tamaño mínimo antes de renderizar */
+    min-height: 300px;
+    display: grid;
+    grid-template-columns: repeat(15, 1fr);
+    gap: 0.35rem;
+    padding: 0.5rem;
+    
+    /* ⚡ Usar contain-intrinsic-size para elementos lazy-loaded */
+    contain-intrinsic-size: auto 400px;
+}
+
+/* ⚡ CLS FIX: Estado loading no causa shifts */
+#numerosGrid.loading {
+    /* No cambiar nada aquí, solo es para marcar estado */
+    pointer-events: none;
 }
 
 /* Remover transiciones costosas durante cambio de rango */
@@ -19,37 +40,183 @@
     animation: none !important;
 }
 
-/* Después de renderizar, restaurar transiciones (optional) */
+/* Después de renderizar, restaurar transiciones */
 #numerosGrid:not(.rendering) .numero-btn {
-    transition: background-color 150ms ease, border-color 150ms ease;
+    transition: background-color 100ms ease, border-color 100ms ease;
 }
+
+/* ============================================================ */
+/* BOTONES DE NÚMEROS                                           */
+/* ============================================================ */
+
+/* GPU acceleration para mejor performance */
+.numero-btn {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    will-change: auto; /* ⚡ Evitar will-change excesivo */
+    
+    /* ⚡ Altura y ancho adaptables */
+    height: 48px;
+    min-height: 48px;
+    aspect-ratio: 2.5;
+}
+
+.numero-btn.selected {
+    z-index: 10;
+    will-change: background-color, border-color;
+}
+
+.numero-btn.sold,
+.numero-btn.reserved {
+    will-change: auto; /* No cambiarán de estado */
+}
+
+/* ⚡ CLS FIX: Contenedor scrolleable reserva espacio */
+.boletos-container-scrolleable {
+    contain: layout style;
+    position: relative;
+    min-height: 400px; /* ⭐ Reservar espacio antes de renderizar */
+}
+
+/* ============================================================ */
+/* BOTONES DE RANGO                                             */
+/* ============================================================ */
 
 /* Optimizar botones de rango */
 .rango-boxes {
     contain: layout style;
 }
 
-/* Remover shadow costoso durante click en rango */
+/* Remover shadow costoso */
 .rango-btn {
     will-change: auto;
+    box-shadow: none; /* ⚡ Eliminar shadows costosos */
 }
 
-.rango-btn:active {
+.rango-btn.active {
+    will-change: background-color, border-color;
+}
+
+/* ============================================================ */
+/* SECCIONES DE PRECIO Y RESUMEN                               */
+/* ============================================================ */
+
+/* ⚡ CLS FIX: Reservar espacio para secciones dinámicas */
+#resumenCompra,
+.precio-card-main {
+    contain: layout style;
+    content-visibility: auto;
+    min-height: 60px; /* ⭐ Reservar espacio mínimo */
+}
+
+/* Evitar layout thrashing en cálculos de precio */
+.carrito-count {
+    will-change: contents;
+    contain: style;
+    display: inline-block;
+    min-width: 24px;
+    min-height: 24px;
+    text-align: center;
+    line-height: 24px;
+}
+
+/* ⚡ CLS FIX: Carrito modal con altura reservada */
+#carritoModal,
+.modal-carrito {
+    contain: layout style paint;
+    min-height: 300px; /* ⭐ Reservar espacio para items */
+}
+
+#carritoItems {
+    min-height: 200px; /* ⭐ Reservar para que no jump al llenar */
+    contain: layout style;
+}
+
+/* ============================================================ */
+/* MÁQUINA DE SUERTE Y MODALES                                  */
+/* ============================================================ */
+
+/* Optimizar máquina de suerte */
+#modalMaquina {
+    contain: layout style paint;
+    content-visibility: auto;
+}
+
+.numero-ruletazo {
     will-change: transform;
+    transform: translateZ(0);
 }
 
-/* Optimizar filtro */
+/* ============================================================ */
+/* FILTRO Y BÚSQUEDA                                            */
+/* ============================================================ */
+
+/* Optimizar filtro de disponibles */
 .numero-btn.filtrado {
     display: none;
     visibility: hidden;
 }
 
-/* GPU acceleration para mejor performance */
-.numero-btn {
-    transform: translateZ(0);
-    backface-visibility: hidden;
+#filtroDisponibles {
+    will-change: auto;
 }
 
-.numero-btn.selected {
-    z-index: 10;
+/* ============================================================ */
+/* GENERAL PERFORMANCE                                          */
+/* ============================================================ */
+
+/* Acelerar eventos de click */
+button {
+    touch-action: manipulation; /* ⚡ Eliminar delay de 300ms en mobile */
+}
+
+/* Reducir flickering en actualizaciones rápidas */
+.loading-spinner {
+    will-change: transform;
+    transform: translateZ(0);
+}
+
+/* ============================================================ */
+/* RESPONSIVE                                                  */
+/* ============================================================ */
+
+/* Pantalla media (880px a 1023px) */
+@media (max-width: 1023px) and (min-width: 880px) {
+    #numerosGrid {
+        grid-template-columns: repeat(12, 1fr);
+        gap: 0.35rem;
+        padding: 0.5rem;
+    }
+}
+
+/* Tablet (768px a 879px) */
+@media (max-width: 879px) and (min-width: 768px) {
+    #numerosGrid {
+        grid-template-columns: repeat(10, 1fr);
+        gap: 0.35rem;
+        padding: 0.5rem;
+    }
+}
+
+/* Tablet pequeño (640px a 767px) */
+@media (max-width: 767px) and (min-width: 640px) {
+    #numerosGrid {
+        grid-template-columns: repeat(8, 1fr);
+        gap: 0.33rem;
+        padding: 0.3rem;
+    }
+}
+
+/* Mobile (639px y menos) */
+@media (max-width: 639px) {
+    #numerosGrid {
+        grid-template-columns: repeat(5, 1fr);
+        gap: 0.3rem;
+        padding: 0.3rem;
+    }
+    
+    .numero-btn {
+        height: 50px;
+        aspect-ratio: 2.5;
+    }
 }

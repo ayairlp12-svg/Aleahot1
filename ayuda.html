@@ -3,13 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ayuda - SORTEOS YEPE</title>
-    <link rel="stylesheet" href="css/styles.css?v=20251220.1">
+    <!-- METADATOS DINÁMICOS - Inyectados por js/meta-inyector.js desde config.js -->
+    <title>Ayuda - Sorteos Torres</title>
+    <link rel="stylesheet" href="css/styles.css?v=20251228.15">
     <link rel="preload" as="image" href="images/logo.png" fetchpriority="high">
     <link rel="icon" href="images/logo.png" sizes="32x32">
     <link rel="apple-touch-icon" href="images/logo.png">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css ">
+    <!-- ✅ PRIMERO: Inyector de metadatos (se ejecuta ANTES que todo) -->
+    <script src="js/config.js"></script>
+    <script src="js/meta-inyector.js"></script>
     <script src="js/theme-loader.js?v=20251216"></script>
     <script>
         (function limpiarCacheYFechas() {
@@ -597,7 +601,7 @@
     <div class="modal-carrito-overlay" id="carritoModal">
         <div class="modal-carrito">
             <div class="modal-carrito-header">
-                <h2>🛒 Tu Carrito</h2>
+                <h2>Tu Carrito 🛒</h2>
                 <button class="modal-carrito-close" id="closeCarrito" aria-label="Cerrar carrito">×</button>
             </div>
             
@@ -605,11 +609,11 @@
                 <!-- Mensaje si está vacío -->
                 <div class="carrito-vacio" id="carritoVacio">
                     <div class="carrito-vacio-content">
-                        <p class="carrito-vacio-icon">🎯</p>
+                        <img src="images/logo.png" alt="Logo" class="carrito-logo">
                         <p class="carrito-vacio-titulo">Tu carrito está vacío</p>
                         <p class="carrito-vacio-subtitulo">¡Comienza a seleccionar tus boletos favoritos!</p>
                         <button class="btn btn-primary btn-carrito-comprar" id="btnIrAComprar">
-                            🎫 Ir a Comprar Boletos
+                            Ir a Comprar Boletos
                         </button>
                     </div>
                 </div>
@@ -655,6 +659,7 @@
 
     <script src="js/main.js?v=20251115"></script>
     <script src="js/calculo-precios.js?v=20251230.1"></script>
+
     <script src="js/carrito-global.js?v=1766990666"></script>
     <script src="js/flujo-compra.js"></script>
     <script src="js/orden-formal.js"></script>
@@ -799,6 +804,15 @@
                     `;
                     contactoRedes.appendChild(instagramDiv);
                 }
+            }
+            
+            // Animar botón flotante solo los primeros 2 segundos
+            const btnFlotante = document.querySelector('.btn-flotante-comprobante');
+            if (btnFlotante) {
+                btnFlotante.classList.add('bounce-animate');
+                setTimeout(() => {
+                    btnFlotante.classList.remove('bounce-animate');
+                }, 2000);
             }
         });
     </script>

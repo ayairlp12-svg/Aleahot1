@@ -339,20 +339,10 @@ function guardarBoletoSeleccionadosEnStorage() {
     const boletos = Array.from(selectedNumbersGlobal);
     localStorage.setItem('rifaplus_boletos', JSON.stringify(boletos));
     
-    // ✅ CALCULAR Y GUARDAR OPORTUNIDADES
-    const oportunidadesConfig = window.rifaplusConfig?.rifa?.oportunidades;
-    if (oportunidadesConfig && oportunidadesConfig.enabled) {
-        const oportunidadesService = window.OportunidadesService || window.oportunidadesService;
-        if (oportunidadesService && typeof oportunidadesService.calcularOportunidadesCarrito === 'function') {
-            const resultadoOportunidades = oportunidadesService.calcularOportunidadesCarrito(boletos);
-            localStorage.setItem('rifaplus_oportunidades', JSON.stringify({
-                boletosOcultos: resultadoOportunidades.boletosOcultos || [],
-                oportunidadesPorBoleto: resultadoOportunidades.oportunidadesPorBoleto || {},
-                cantidad: (resultadoOportunidades.boletosOcultos || []).length
-            }));
-            console.log('✅ Oportunidades calculadas y guardadas:', resultadoOportunidades);
-        }
-    }
+    // ✅ NOTA: Las oportunidades YA fueron calculadas por carrito-global.js
+    // y están guardadas en localStorage 'rifaplus_oportunidades'
+    // NO recalcular aquí para evitar duplicados o conflictos
+    // El siguiente paso es flujo-compra.js que las recupera de localStorage
 }
 
 /* ============================================================ */

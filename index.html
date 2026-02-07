@@ -4,17 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self' http://127.0.0.1:* http://localhost:* https://gorgeous-heliotrope-5a6b8e.netlify.app http://localhost:5001; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://fonts.googleapis.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; connect-src 'self' http://127.0.0.1:* http://localhost:* https: http://localhost:5001 https://gorgeous-heliotrope-5a6b8e.netlify.app; img-src 'self' data: https:;">
-    <title>SORTEOS YEPE - Gana un iPhone 15 Pro Max 256GB | Rifas 100% Transparentes</title>
-    <meta name="description" content="Participa en SORTEOS YEPE del iPhone 15 Pro Max 256GB. Sorteo 100% transparente en vivo. Compra tus boletos de forma segura.">
-    <!-- Open Graph Meta Tags (actualizados por JavaScript) -->
-    <meta property="og:title" content="SORTEOS YEPE - Gana un iPhone 15 Pro Max" />
-    <meta property="og:description" content="Participa en SORTEOS YEPE. Sorteo 100% transparente en vivo." />
+    <!-- METADATOS DINÁMICOS - Inyectados por js/meta-inyector.js desde config.js -->
+    <title>Sorteos Torres - RAM 1200 2025 + $150,000 | Rifas 100% Transparentes</title>
+    <meta name="description" content="Participa en el sorteo de RAM 1200 2025 + $150,000. 100% transparente, transmisión en vivo. Compra tus boletos desde $8 MXN.">
+    <!-- Open Graph Meta Tags (DINÁMICOS - se actualizan desde config.js) -->
+    <meta property="og:title" content="Sorteos Torres - ¡Gana RAM 1200 2025 + $150,000!" />
+    <meta property="og:description" content="Participa en nuestro sorteo 100% transparente. Transmisión en vivo garantizada." />
     <meta property="og:image" content="https://rifas-web.vercel.app/images/ImgPrincipal.png" />
     <meta property="og:url" content="https://rifas-web.vercel.app" />
     <meta property="og:type" content="website" />
+    <meta property="og:locale" content="es_MX" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="SORTEOS YEPE - Gana un iPhone 15 Pro Max" />
-    <meta name="twitter:description" content="Participa en SORTEOS YEPE. Sorteo 100% transparente en vivo." />
+    <meta name="twitter:title" content="Sorteos Torres - ¡Gana RAM 1200 2025 + $150,000!" />
+    <meta name="twitter:description" content="Participa en nuestro sorteo 100% transparente. Transmisión en vivo garantizada." />
     <meta name="twitter:image" content="https://rifas-web.vercel.app/images/ImgPrincipal.png" />
     <link rel="stylesheet" href="css/styles.css?v=20251228.15">
     <link rel="preload" as="image" href="images/logo.png" fetchpriority="high">
@@ -24,6 +26,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/modal-contacto.css">
     <link rel="stylesheet" href="css/orden-formal.css">
+    <link rel="stylesheet" href="css/sistema-premios.css">
+    <!-- ✅ PRIMERO: Inyector de metadatos (se ejecuta ANTES que todo) -->
+    <script src="js/config.js"></script>
+    <script src="js/meta-inyector.js"></script>
     <!-- ✅ Carga inteligente de boletos para 1M boletos -->
     <script src="js/boletos-loader.js"></script>
     <script>
@@ -74,7 +80,7 @@
         })();
     </script>
     <script src="js/theme-loader.js?v=20251228.15"></script>
-    <script src="js/config.js?v=1766990666"></script>
+    <script src="js/config.js?v=2000000001"></script>
     <script src="js/theme-dynamic.js"></script>
     <!-- DEBUG: Verificar que config se cargó correctamente -->
     <script>
@@ -97,11 +103,14 @@
         }
     </script>
     <script src="js/ganadores.js?v=20251228.15"></script>
+    <script src="js/sistema-premios.js?v=20260120"></script>
     <script src="js/modal-sorteo-finalizado.js?v=20251228.15"></script>
     <script src="js/main.js?v=20251228.15"></script>
     <script src="js/calculo-precios.js?v=20251230.1"></script>
+
     <script src="js/carrito-global.js?v=1766990666"></script>
     <script src="js/flujo-compra.js?v=20251228.15"></script>
+    <script src="js/modal-conflicto-boletos.js?v=20260127"></script>
     <script src="js/orden-formal.js?v=20251228.15"></script>
     <script src="js/modal-contacto.js?v=20251228.15"></script>
 </head>
@@ -156,10 +165,12 @@
     <section class="hero" id="inicio">
         <div class="container">
             <div class="hero-content">
+                <p class="edicion-nombre" id="edicionNombre">Edicion No. 20 de Sorteos Torres</p>
                 <h1 class="hero-title" id="heroTitle">Gana un <span class="highlight" id="heroHighlight">iPhone 15 Pro Max 256GB</span></h1>
                 <p class="hero-description" id="heroDescription">256GB - Último Modelo - Totalmente Nuevo en Caja</p>
-                <button class="btn btn-secondary-accent" onclick="window.location.href='compra.html'" aria-label="Comprar boletos ahora">
+                <button class="btn btn-secondary-accent btn-hero-cta" onclick="window.location.href='compra.html'" aria-label="Comprar boletos ahora">
                     Comprar Boletos Ahora
+                    <span class="btn-arrow">→</span>
                 </button>
             </div>
         </div>
@@ -232,6 +243,42 @@
                         Comprar boletos ahora
                     </button>
                     <p class="small-text">Compra segura • Entrega inmediata • Soporte 24/7</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECCIÓN DE PREMIOS DEL SORTEO -->
+    <section class="sistema-premios-section" id="sistema-premios">
+        <div class="container">
+            <div class="premios-header">
+                <h2 class="premios-titulo">Sistema de Premios</h2>
+                <p class="premios-subtitulo" id="premios-mensaje"></p>
+            </div>
+
+            <div class="premios-container">
+                <!-- PREMIOS DEL SORTEO PRINCIPAL -->
+                <div class="premios-categoria" id="premios-sorteo-container">
+                    <h3 class="categoria-titulo">Premios del Sorteo</h3>
+                    <div class="premios-grid" id="premios-sorteo-grid">
+                        <!-- Se llena dinámicamente con JavaScript -->
+                    </div>
+                </div>
+
+                <!-- PREMIOS DE PRESORTEO -->
+                <div class="premios-categoria" id="premios-presorteo-container" style="display: none;">
+                    <h3 class="categoria-titulo">Premios de Presorteo</h3>
+                    <div class="premios-grid" id="premios-presorteo-grid">
+                        <!-- Se llena dinámicamente con JavaScript -->
+                    </div>
+                </div>
+
+                <!-- PREMIOS DE RULETAZOS -->
+                <div class="premios-categoria" id="premios-ruletazos-container" style="display: none;">
+                    <h3 class="categoria-titulo">Ruletazos</h3>
+                    <div class="premios-grid" id="premios-ruletazos-grid">
+                        <!-- Se llena dinámicamente con JavaScript -->
+                    </div>
                 </div>
             </div>
         </div>
@@ -428,7 +475,38 @@
         const infoGrid = document.getElementById('infoRifaGrid');
         if (!infoGrid || !window.rifaplusConfig) return;
 
-        const infoItems = window.rifaplusConfig.rifa.infoRifa || [];
+        const rifa = window.rifaplusConfig.rifa;
+        let infoItems = [];
+        
+        // ===== AGREGAR ITEMS DEL CONFIG =====
+        const configItems = rifa.infoRifa || [];
+        
+        // ===== AGREGAR TARJETA DE PRESORTEO DESPUÉS DEL PRIMER ITEM (SORTEO) =====
+        if (rifa.fechaPresorteo && rifa.horaPresorteo) {
+            const presorteoItem = {
+                titulo: 'Presorteo',
+                icono: '🎊',
+                contenido: `${rifa.fechaPresorteoFormato} a las ${rifa.horaPresorteo}`
+            };
+            // Agregar primer item (Fecha y Hora del Sorteo)
+            if (configItems.length > 0) {
+                infoItems.push(configItems[0]);
+            }
+            // Agregar presorteo en segundo lugar
+            infoItems.push(presorteoItem);
+            // Agregar el resto de items
+            if (configItems.length > 1) {
+                infoItems = infoItems.concat(configItems.slice(1));
+            }
+        } else {
+            // Si no hay presorteo, usar todos los items tal cual
+            infoItems = configItems;
+        }
+        
+        // Función auxiliar para formatear números con comas
+        function formatearNumero(num) {
+            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        }
         
         infoItems.forEach((item) => {
             const infoItem = document.createElement('div');
@@ -440,10 +518,15 @@
                 contenido = window.rifaplusConfig.rifa.fechaSorteoFormato;
             } else if (item.contenido === 'dinamico-hora') {
                 contenido = `${window.rifaplusConfig.rifa.horaSorteo} (${window.rifaplusConfig.rifa.zonaHoraria})`;
+            } else if (item.contenido === 'dinamico-fecha-hora') {
+                contenido = `${window.rifaplusConfig.rifa.fechaSorteoFormato} a las ${window.rifaplusConfig.rifa.horaSorteo}`;
             } else if (item.contenido === 'dinamico-modalidad') {
                 contenido = window.rifaplusConfig.rifa.modalidadSorteo;
             } else if (item.contenido === 'dinamico-boletos') {
                 contenido = `<span id="total-boletos-info">${window.rifaplusConfig.rifa.totalBoletos}</span> disponibles`;
+            } else if (item.contenido === 'dinamico-emisiones') {
+                const totalFormateado = formatearNumero(window.rifaplusConfig.rifa.totalBoletos);
+                contenido = `<span id="total-emisiones-info">${totalFormateado}</span>`;
             }
             
             // Determinar si es la tarjeta de modalidad
@@ -492,40 +575,123 @@
     <section class="precios-section">
         <div class="container">
             <h2 class="section-title">Precios y Promociones</h2>
-            <div class="precios-grid" id="preciosGrid">
+            
+            <!-- PRECIO UNITARIO - Una sola tarjeta como en compra.html -->
+            <div class="precios-grid-unitario">
+                <div class="precio-card-main">
+                    <h3>Precio por Boleto</h3>
+                    <div class="precio-big"><span id="precioDinamicoIndex">Cargando...</span></div>
+                </div>
+            </div>
+            
+            <!-- AVISO DE OPORTUNIDADES -->
+            <p id="oportunidadesTexto" class="oportunidades-texto" style="display: none;"></p>
+            
+            <!-- PROMOCIONES/DESCUENTOS - Grid responsivo centrado -->
+            <div class="precios-grid-promos" id="preciosGrid">
                 <!-- Se carga dinámicamente desde config.js -->
             </div>
         </div>
     </section>
 
     <script>
-    // Cargar promociones dinámicamente desde config.js
-    document.addEventListener('DOMContentLoaded', function() {
+    // Cargar nombre de edición dinámicamente
+    function cargarNombreEdicion() {
+        const edEl = document.getElementById('edicionNombre');
+        if (!edEl || !window.rifaplusConfig || !window.rifaplusConfig.cliente) {
+            setTimeout(cargarNombreEdicion, 50);
+            return;
+        }
+        const nombreEdicion = window.rifaplusConfig.cliente.nombreEdicion;
+        if (nombreEdicion) {
+            edEl.innerHTML = nombreEdicion;
+        }
+    }
+    
+    // Cargar precio unitario dinámicamente
+    function cargarPrecioUnitario() {
+        const pEl = document.getElementById('precioDinamicoIndex');
+        const textoEl = document.getElementById('oportunidadesTexto');
+        if (!pEl || !window.rifaplusConfig || !window.rifaplusConfig.rifa) {
+            setTimeout(cargarPrecioUnitario, 50);
+            return;
+        }
+        const precio = window.rifaplusConfig.rifa.precioBoleto;
+        pEl.innerHTML = `$${parseFloat(precio).toFixed(2)}`;
+        
+        // Mostrar/ocultar texto de oportunidades
+        const config = window.rifaplusConfig.rifa;
+        const oportunidadesConfig = config?.oportunidades;
+        const promosOportunidadesConfig = config?.promocionesOportunidades;
+        
+        if (oportunidadesConfig && oportunidadesConfig.enabled && 
+            promosOportunidadesConfig && promosOportunidadesConfig.enabled && textoEl) {
+            const opxBoleto = oportunidadesConfig.oportunidades_por_boleto || 3;
+            textoEl.style.display = 'block';
+            textoEl.textContent = `Cada boleto que compres te regala ${opxBoleto} oportunidades EXTRA de ganar`;
+        } else if (textoEl) {
+            textoEl.style.display = 'none';
+        }
+    }
+    
+    // Cargar descuentos/promociones dinámicamente desde config
+    function cargarPreciosYDescuentos() {
         const preciosGrid = document.getElementById('preciosGrid');
-        if (!preciosGrid || !window.rifaplusConfig) return;
+        if (!preciosGrid || !window.rifaplusConfig || !window.rifaplusConfig.rifa) {
+            setTimeout(cargarPreciosYDescuentos, 50);
+            return;
+        }
 
-        // Agregar tarjeta de precio individual
-        const precioIndividual = document.createElement('div');
-        precioIndividual.className = 'precio-card';
-        precioIndividual.innerHTML = `
-            <div class="precio">1 boleto × $${window.rifaplusConfig.rifa.precioBoleto}</div>
-            <button class="btn btn-secondary" onclick="window.location.href='compra.html'">Comprar</button>
-        `;
-        preciosGrid.appendChild(precioIndividual);
+        preciosGrid.innerHTML = '';
+        const config = window.rifaplusConfig.rifa;
 
-        // Agregar tarjetas de promociones
-        if (window.rifaplusConfig.rifa.promociones && window.rifaplusConfig.rifa.promociones.length > 0) {
-            window.rifaplusConfig.rifa.promociones.forEach((promo) => {
+        // Tarjetas de descuentos si están habilitados
+        if (config.descuentos && config.descuentos.enabled && config.descuentos.reglas && config.descuentos.reglas.length > 0) {
+            config.descuentos.reglas.forEach((regla) => {
                 const precioCard = document.createElement('div');
-                precioCard.className = 'precio-card';
+                precioCard.className = 'promo-card-grande';
+                const ahorroPorcentaje = ((regla.ahorro / (regla.precio)) * 100).toFixed(0);
                 precioCard.innerHTML = `
-                    <div class="precio">${promo.cantidad} boletos × $${promo.precio}</div>
+                    <div class="promo-card-cantidad">${regla.cantidad} boletos</div>
+                    <div class="promo-card-precio">$${regla.precio}</div>
+                    <div class="promo-card-ahorro">💰 Ahorra $${regla.ahorro} (${ahorroPorcentaje}%)</div>
                     <button class="btn btn-secondary" onclick="window.location.href='compra.html'">Comprar</button>
                 `;
                 preciosGrid.appendChild(precioCard);
             });
         }
-    });
+
+        // Tarjetas de promociones de oportunidades si están habilitadas
+        if (config.promocionesOportunidades && config.promocionesOportunidades.enabled && 
+            config.oportunidades && config.oportunidades.enabled && 
+            config.promocionesOportunidades.ejemplos && config.promocionesOportunidades.ejemplos.length > 0) {
+            config.promocionesOportunidades.ejemplos.forEach((ejemplo) => {
+                const oportunidadCard = document.createElement('div');
+                oportunidadCard.className = 'promo-card-grande';
+                oportunidadCard.style.backgroundColor = '#f8fafc';
+                oportunidadCard.innerHTML = `
+                    <div class="promo-card-cantidad">${ejemplo.boletos} boleto${ejemplo.boletos > 1 ? 's' : ''}</div>
+                    <div style="font-size: 1.2rem; color: #666; margin: 0.5rem 0;">=</div>
+                    <div class="promo-card-cantidad">${ejemplo.oportunidades} oportunidade${ejemplo.oportunidades > 1 ? 's' : ''}</div>
+                    <button class="btn btn-secondary" onclick="window.location.href='compra.html'">Comprar</button>
+                `;
+                preciosGrid.appendChild(oportunidadCard);
+            });
+        }
+    }
+
+    // Iniciar carga cuando DOM esté listo
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+            cargarNombreEdicion();
+            cargarPrecioUnitario();
+            cargarPreciosYDescuentos();
+        });
+    } else {
+        cargarNombreEdicion();
+        cargarPrecioUnitario();
+        cargarPreciosYDescuentos();
+    }
     </script>
 
     <!-- BONOS SECTION -->
@@ -668,6 +834,7 @@
             cursor: pointer;
             transition: all var(--transition-normal);
             white-space: nowrap;
+            text-decoration: none;
         }
 
         .bono-btn-whatsapp:hover {
@@ -700,9 +867,9 @@
         }
 
         .bono-card.bono-primary {
-            --bono-color-start: #0f172a;
-            --bono-color-end: #051425;
-            --bono-bg: rgba(15, 23, 42, 0.1);
+            --bono-color-start: #1A1A1A;
+            --bono-color-end: #0D0D0D;
+            --bono-bg: rgba(26, 26, 26, 0.1);
         }
 
         @media (max-width: 1024px) {
@@ -848,7 +1015,229 @@
     });
     </script>
 
-    <!-- GANADORES -->
+    <!-- POR QUÉ CONFIAR EN NOSOTROS -->
+    <section class="por-que-confiar-section">
+        <div class="container">
+            <h2 class="confianza-titulo">¿Por Qué Elegir Sortel Torres?</h2>
+            
+            <div class="confianza-content">
+                <div class="confianza-lista">
+                    <div class="confianza-item">
+                        <div class="item-numero">01</div>
+                        <div class="item-contenido">
+                            <h3>100% Seguro</h3>
+                            <p>Tus datos y pagos están protegidos con encriptación de nivel bancario. Compra con confianza.</p>
+                        </div>
+                    </div>
+
+                    <div class="confianza-item">
+                        <div class="item-numero">02</div>
+                        <div class="item-contenido">
+                            <h3>Transparencia Total</h3>
+                            <p>Sorteos transmitidos en vivo en nuestras redes sociales. Puedes verlo todo en tiempo real sin manipulación.</p>
+                        </div>
+                    </div>
+
+                    <div class="confianza-item">
+                        <div class="item-numero">03</div>
+                        <div class="item-contenido">
+                            <h3>Premios Garantizados</h3>
+                            <p>Entregamos los premios a los ganadores. Miles de personas satisfechas en ediciones anteriores lo confirman.</p>
+                        </div>
+                    </div>
+
+                    <div class="confianza-item">
+                        <div class="item-numero">04</div>
+                        <div class="item-contenido">
+                            <h3>Compra Instantánea</h3>
+                            <p>Tu boleto disponible en segundos. Sin esperas, sin procesos complicados. Rápido y eficiente.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="confianza-stats">
+                    <div class="stat-item">
+                        <div class="stat-numero">10K+</div>
+                        <div class="stat-label">Participantes</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-numero">100%</div>
+                        <div class="stat-label">Transparente</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-numero">24/7</div>
+                        <div class="stat-label">Soporte</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+    // Actualizar mensaje de compras dinámicamente
+    function actualizarMensajeCompras() {
+        const el = document.getElementById('compras-mensaje');
+        if (!el || !window.rifaplusConfig || !window.rifaplusConfig.rifa) {
+            setTimeout(actualizarMensajeCompras, 100);
+            return;
+        }
+
+        const boletosVendidos = parseInt(document.getElementById('boletos-vendidos')?.textContent) || 0;
+        const totalBoletos = window.rifaplusConfig.rifa.totalBoletos || 1000;
+        
+        // Generar mensaje dinámico basado en ventas
+        let mensaje = 'Miles de personas confían en nosotros cada día';
+        
+        if (boletosVendidos > 0) {
+            const porcentaje = (boletosVendidos / totalBoletos * 100).toFixed(0);
+            
+            if (boletosVendidos < 10) {
+                mensaje = `¡${boletosVendidos} personas ya compraron hoy! ¿Será tu día de suerte?`;
+            } else if (boletosVendidos < 50) {
+                mensaje = `¡${boletosVendidos} compradores ya participan! Únete ahora`;
+            } else if (boletosVendidos < 100) {
+                mensaje = `🔥 ¡${boletosVendidos} personas compradas y contando! La emoción sube`;
+            } else {
+                mensaje = `🎉 ¡Más de ${boletosVendidos} personas ya participan! (${porcentaje}% del total)`;
+            }
+        }
+        
+        el.textContent = mensaje;
+    }
+
+    // Observar cambios en boletos vendidos
+    const observer = new MutationObserver(() => {
+        actualizarMensajeCompras();
+    });
+
+    // Observar cambios en el elemento de boletos vendidos
+    setTimeout(() => {
+        const boletosVendidosEl = document.getElementById('boletos-vendidos');
+        if (boletosVendidosEl) {
+            observer.observe(boletosVendidosEl, { childList: true, characterData: true, subtree: true });
+        }
+        actualizarMensajeCompras();
+    }, 500);
+    </script>
+
+    <style>
+        .por-que-confiar-section {
+            padding: 4rem 1.5rem;
+            background: #f8f9fa;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .confianza-titulo {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 3rem;
+            text-align: center;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .confianza-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            align-items: center;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .confianza-lista {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .confianza-item {
+            display: flex;
+            gap: 1.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .confianza-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .item-numero {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--secondary);
+            flex-shrink: 0;
+            min-width: 40px;
+        }
+
+        .item-contenido h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin: 0 0 0.5rem 0;
+        }
+
+        .item-contenido p {
+            font-size: 0.9rem;
+            color: #666;
+            line-height: 1.5;
+            margin: 0;
+        }
+
+        .confianza-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            padding: 2rem;
+            background: white;
+            border-radius: var(--radius-lg);
+            border-left: 4px solid var(--secondary);
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-numero {
+            display: block;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            display: block;
+            font-size: 0.9rem;
+            color: #666;
+            font-weight: 500;
+        }
+
+        @media (max-width: 768px) {
+            .por-que-confiar-section {
+                padding: 2.5rem 1rem;
+            }
+
+            .confianza-titulo {
+                font-size: 1.5rem;
+                margin-bottom: 2rem;
+            }
+
+            .confianza-content {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+
+            .confianza-stats {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+                padding: 1.5rem;
+            }
+        }
+    </style>
     <section class="seccion-ganadores" id="seccionGanadores" style="display: none;">
         <div class="container">
             <h2 class="section-title">Ganadores Registrados</h2>
@@ -1435,6 +1824,15 @@
             const anio = config.cliente.anioActual || new Date().getFullYear();
             footerCopyright.innerHTML = `&copy; ${anio} <strong>${config.cliente.nombre}</strong>. Todos los derechos reservados.`;
         }
+
+        // Animar botón flotante solo los primeros 2 segundos
+        const btnFlotante = document.querySelector('.btn-flotante-comprobante');
+        if (btnFlotante) {
+            btnFlotante.classList.add('bounce-animate');
+            setTimeout(() => {
+                btnFlotante.classList.remove('bounce-animate');
+            }, 2000);
+        }
     });
     </script>
 
@@ -1442,7 +1840,7 @@
     <div class="modal-carrito-overlay" id="carritoModal">
         <div class="modal-carrito">
             <div class="modal-carrito-header">
-                <h2>🛒 Tu Carrito</h2>
+                <h2>Tu Carrito 🛒</h2>
                 <button class="modal-carrito-close" id="closeCarrito" aria-label="Cerrar carrito">×</button>
             </div>
             
@@ -1450,11 +1848,11 @@
                 <!-- Mensaje si está vacío -->
                 <div class="carrito-vacio" id="carritoVacio">
                     <div class="carrito-vacio-content">
-                        <p class="carrito-vacio-icon">🎯</p>
+                        <img src="images/logo.png" alt="Logo" class="carrito-logo">
                         <p class="carrito-vacio-titulo">Tu carrito está vacío</p>
                         <p class="carrito-vacio-subtitulo">¡Comienza a seleccionar tus boletos favoritos!</p>
                         <button class="btn btn-primary btn-carrito-comprar" id="btnIrAComprar">
-                            🎫 Ir a Comprar Boletos
+                            Ir a Comprar Boletos
                         </button>
                     </div>
                 </div>
@@ -1536,10 +1934,9 @@
     <div class="modal-orden-formal" id="modalOrdenFormal">
         <div class="orden-formal-container">
             <div class="orden-formal-header">
-                <h2>📄 Orden de Pago</h2>
-                <p style="font-size: 0.9rem; opacity: 0.9; margin-bottom: 8px;">✓ Te recomendamos descargar la orden de pago o tomarle captura de pantalla para tener evidencia de su compra</p>
-                <p>Después haga click en "Continuar" para guardar su orden en el sistema</p>
-                <button class="modal-close" id="closeOrdenFormal" aria-label="Cerrar">×</button>
+                <h2>Orden de Pago</h2>
+                <p style="font-size: 0.9rem; opacity: 0.9; margin-bottom: 8px;">A continuación se muestra el resumen de su orden de pago con los datos bancarios para realizar su compra. Puede descargar o tomar una captura de pantalla de esta orden para tener constancia de su transacción.</p>
+                <p>Haga click en "Apartar boletos" para confirmar y guardar su orden en el sistema.</p>
             </div>
             <div class="orden-formal-content">
                 <div id="contenidoOrdenFormal">
@@ -1551,7 +1948,7 @@
                     <i class="fas fa-download"></i> Descargar
                 </button>
                 <button class="btn btn-primary" id="btnContinuarOrdenFormal">
-                    <i class="fas fa-lock-open"></i> Apartar boletos
+                    <i class="fas fa-check"></i> Apartar boletos
                 </button>
             </div>
         </div>

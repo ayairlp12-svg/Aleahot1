@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cuentas de Pago - RifaPlus</title>
-    <link rel="stylesheet" href="css/styles.css?v=20251220.1">
+    <!-- METADATOS DINÁMICOS - Inyectados por js/meta-inyector.js desde config.js -->
+    <title>Cuentas de Pago - Sorteos Torres</title>
+    <link rel="stylesheet" href="css/styles.css?v=20251228.15">
     <link rel="preload" as="image" href="images/logo.png" fetchpriority="high">
     <link rel="icon" href="images/logo.png" sizes="32x32">
     <link rel="apple-touch-icon" href="images/logo.png">
@@ -12,11 +13,57 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css ">
     <link rel="stylesheet" href="css/modal-contacto.css">
     <link rel="stylesheet" href="css/orden-formal.css">
+    <!-- ✅ PRIMERO: Inyector de metadatos (se ejecuta ANTES que todo) -->
+    <script src="js/config.js"></script>
+    <script src="js/meta-inyector.js"></script>
     <style>
         /* Centrar contenido - tarjetas con ancho suficiente para mostrar toda la información */
         main.container {
             max-width: 100%;
             padding: 2rem 1rem;
+        }
+        
+        .payment-instructions-warning {
+            margin-bottom: 2.5rem;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .payment-instructions-main {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #d68500;
+            margin: 0 0 1rem 0;
+            line-height: 1.6;
+            text-align: center;
+        }
+        
+        .payment-instructions-important {
+            font-size: 1.05rem;
+            color: #333;
+            margin: 0;
+            line-height: 1.7;
+            text-align: center;
+        }
+        
+        .payment-instructions-important strong {
+            color: #d68500;
+            font-weight: 700;
+        }
+        
+        @media (max-width: 768px) {
+            .payment-instructions-warning {
+                margin-bottom: 2rem;
+            }
+            
+            .payment-instructions-main {
+                font-size: 1.05rem;
+            }
+            
+            .payment-instructions-important {
+                font-size: 1rem;
+            }
         }
         
         .payment-section {
@@ -32,21 +79,206 @@
             justify-content: center;
             margin: 2rem auto;
             width: 100%;
+            padding: 0 1rem;
+            box-sizing: border-box;
         }
         
-        .cuenta-card,
-        .efectivo-card {
+        .cuenta-card {
             flex: 0 1 auto;
             width: 350px;
-            min-width: 350px;
+            min-width: 0;
+            max-width: 350px;
+        }
+        
+        .efectivo-card {
+            flex: 0 1 auto;
+            width: 320px;
+            min-width: 0;
+            max-width: calc(100% - 2rem);
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            transition: all 0.3s ease;
+            position: relative;
+            color: #1a1a1a;
+        }
+        
+        .efectivo-card:hover {
+            border-color: var(--secondary);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        .efectivo-card-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: flex-start;
+            gap: 0;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--secondary);
+        }
+        
+        .efectivo-card-titulo {
+            margin: 0;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1a1a1a;
+            flex: 1;
+        }
+        
+        .efectivo-card-badge {
+            background: var(--secondary);
+            color: white;
+            padding: 0.35rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            white-space: nowrap;
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+        }
+        
+        .efectivo-card-content {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+        
+        .efectivo-info-row {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .efectivo-info-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .efectivo-info-value-group {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .efectivo-info-value {
+            font-size: 0.95rem;
+            color: #1a1a1a;
+            font-weight: 500;
+            word-break: break-all;
+            flex: 1;
+        }
+        
+        .efectivo-copy-btn {
+            background: none;
+            border: 1px solid #d0d0d0;
+            border-radius: 6px;
+            padding: 0.5rem 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: #666;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+        
+        .efectivo-copy-btn:hover {
+            background: #f5f5f5;
+            border-color: var(--secondary);
+            color: var(--secondary);
+        }
+        
+        .efectivo-copy-btn:active {
+            background: var(--secondary);
+            color: white;
+            border-color: var(--secondary);
+        }
+        
+        .efectivo-copy-btn.copied {
+            background: #10B981 !important;
+            color: white !important;
+            border-color: #10B981 !important;
+            animation: copyPulse 0.6s ease-out;
+        }
+        
+        .copy-icon.copied {
+            background: #10B981 !important;
+            color: white !important;
+            animation: copyPulse 0.6s ease-out;
+        }
+        
+        @keyframes copyPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        .beneficiary-row {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            margin-top: 0.5rem;
+        }
+        
+        .beneficiary {
+            font-size: 0.85rem;
+            opacity: 0.85;
+            word-break: break-all;
+        }
+        
+        .beneficiary-row .copy-icon {
+            min-width: 28px;
+            height: 28px;
+            padding: 0.25rem;
+            font-size: 0.75rem;
+        }
+        
+        @media (max-width: 1024px) {
+            .efectivo-card {
+                width: 100%;
+                max-width: 350px;
+            }
         }
         
         @media (max-width: 768px) {
-            .cuenta-card,
-            .efectivo-card {
+            main.container {
+                padding: 2rem 0.5rem;
+            }
+            
+            .cuentas-grid,
+            .efectivo-grid {
+                gap: 1.5rem;
+                padding: 0 0.5rem;
+            }
+            
+            .cuenta-card {
                 width: 100%;
                 min-width: auto;
                 max-width: 350px;
+            }
+            
+            .efectivo-card {
+                width: 100%;
+                min-width: auto;
+                max-width: 100%;
+            }
+            
+            .efectivo-card-header {
+                flex-direction: column;
+            }
+            
+            .efectivo-card-titulo {
+                font-size: 1.1rem;
             }
         }
     </style>
@@ -101,19 +333,21 @@
     <!-- CONTENT -->
     <main class="container">
         <h1 style="margin-bottom:0.25rem; text-align:center;">Métodos de Pago</h1>
-        <p class="cuentas-subtitle" style="text-align:center; margin-bottom: 2rem;">Selecciona el método de pago que mejor te convenga. Si una cuenta rechaza el pago, intenta con otra.</p>
+        
+        <div class="payment-instructions-warning">
+            <p class="payment-instructions-main">⚠️ Selecciona el método de pago que mejor te convenga. Si una cuenta rechaza el pago, intenta con otra.</p>
+            <p class="payment-instructions-important">💡 <strong>Importante para procesar tu pago:</strong> En el concepto o referencia de la transferencia, debes escribir tu <strong>número de orden</strong> o <strong>nombre completo</strong>. Esto nos permitirá identificar tu pago y procesar tu compra correctamente.</p>
+        </div>
 
         <!-- SECCIÓN 1: TRANSFERENCIAS BANCARIAS -->
         <section class="payment-section">
-            <h2 class="section-title">💳 Transferencias Bancarias</h2>
-            <p class="section-subtitle">Transferencia directa a través de tu banco</p>
+            <h2 class="section-title">Transferencias Bancarias</h2>
             <div id="transferenciasContainer" class="cuentas-grid"></div>
         </section>
 
         <!-- SECCIÓN 2: DEPÓSITOS EN EFECTIVO -->
         <section class="payment-section">
-            <h2 class="section-title">💰 Depósitos en Efectivo</h2>
-            <p class="section-subtitle">Paga en tiendas sin necesidad de banco</p>
+            <h2 class="section-title">Depósitos en Efectivo</h2>
             <div id="efectivoContainer" class="efectivo-grid"></div>
         </section>
 
@@ -125,23 +359,56 @@
                 </div>
                 <div class="cuenta-number-row">
                     <div class="account-number cuenta-number">0000-0000-0000</div>
-                    <button type="button" class="copy-icon" aria-label="copiar numero" title="copiar">📋</button>
+                    <button type="button" class="copy-icon" aria-label="copiar numero" title="copiar">
+                        <i class="fas fa-copy"></i>
+                    </button>
                 </div>
-                <div class="beneficiary cuenta-beneficiary">Beneficiario</div>
+                <div class="beneficiary-row">
+                    <div class="beneficiary cuenta-beneficiary">Beneficiario</div>
+                    <button type="button" class="copy-icon" aria-label="copiar beneficiario" title="copiar">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
             </div>
         </template>
 
         <template id="efectivoTemplate">
-            <div class="efectivo-card" data-bank="">
-                <div class="efectivo-header">
-                    <div class="bank-name efectivo-banco">Tienda</div>
-                    <div class="efectivo-icon">🏪</div>
+            <div class="efectivo-card">
+                <div class="efectivo-card-header">
+                    <h3 class="efectivo-card-titulo"></h3>
+                    <div class="efectivo-card-badge">Efectivo</div>
                 </div>
-                <div class="efectivo-body">
-                    <p class="efectivo-instructions"></p>
-                </div>
-                <div class="efectivo-footer">
-                    <small class="efectivo-code">Código enviado por correo</small>
+                
+                <div class="efectivo-card-content">
+                    <div class="efectivo-info-row">
+                        <div class="efectivo-info-label">Banco</div>
+                        <div class="efectivo-info-value"></div>
+                    </div>
+                    
+                    <div class="efectivo-info-row">
+                        <div class="efectivo-info-label">Número de Cuenta</div>
+                        <div class="efectivo-info-value-group">
+                            <div class="efectivo-info-value"></div>
+                            <button type="button" class="efectivo-copy-btn" aria-label="Copiar número" title="Copiar">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="efectivo-info-row">
+                        <div class="efectivo-info-label">Concepto de Pago</div>
+                        <div class="efectivo-info-value"></div>
+                    </div>
+                    
+                    <div class="efectivo-info-row">
+                        <div class="efectivo-info-label">Beneficiario</div>
+                        <div class="efectivo-info-value-group">
+                            <div class="efectivo-info-value"></div>
+                            <button type="button" class="efectivo-copy-btn" aria-label="Copiar beneficiario" title="Copiar">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </template>
@@ -299,13 +566,27 @@
                 transferContainer.appendChild(frag);
             });
             
-            // Renderizar efectivo
+            // Renderizar efectivo - Un card por tienda
             efectivo.forEach(c => {
                 const frag = efectivoTpl.content.cloneNode(true);
-                const cardDiv = frag.querySelector('.efectivo-card');
-                cardDiv.setAttribute('data-bank', (c.nombreBanco || '').toLowerCase());
-                frag.querySelector('.efectivo-banco').textContent = c.nombreBanco || 'Tienda';
-                frag.querySelector('.efectivo-instructions').textContent = c.instructions || 'Presenta tu código de referencia en la tienda.';
+                
+                frag.querySelector('.efectivo-card-titulo').textContent = c.nombreBanco || 'Tienda';
+                
+                // Obtener todas las filas de información
+                const infoRows = frag.querySelectorAll('.efectivo-info-row');
+                
+                // Primera fila: Banco
+                infoRows[0].querySelector('.efectivo-info-value').textContent = c.nombreBanco || '';
+                
+                // Segunda fila: Número de cuenta
+                infoRows[1].querySelector('.efectivo-info-value').textContent = c.accountNumber || '';
+                
+                // Tercera fila: Concepto de pago
+                infoRows[2].querySelector('.efectivo-info-value').textContent = c.numero_referencia || '';
+                
+                // Cuarta fila: Beneficiario
+                infoRows[3].querySelector('.efectivo-info-value').textContent = c.beneficiary || '';
+                
                 efectivoContainer.appendChild(frag);
             });
         }
@@ -319,30 +600,64 @@
 
         // Delegated handler para el icono de copiar dentro de las tarjetas
         document.addEventListener('click', function(e) {
-            const btn = e.target.closest('.btn-copy-account, .copy-icon');
+            const btn = e.target.closest('.btn-copy-account, .copy-icon, .efectivo-copy-btn');
             if (!btn) return;
-            const card = btn.closest('.cuenta-card');
-            if (!card) return;
-            const numEl = card.querySelector('.cuenta-number');
-            const text = numEl ? numEl.textContent.trim() : '';
+            
+            let text = '';
+            let contentType = 'Contenido';
+            
+            // Para cuentas de transferencia
+            if (btn.closest('.cuenta-card')) {
+                const card = btn.closest('.cuenta-card');
+                const benefRow = btn.closest('.beneficiary-row');
+                const numRow = btn.closest('.cuenta-number-row');
+                
+                if (benefRow) {
+                    const benefEl = benefRow.querySelector('.cuenta-beneficiary');
+                    text = benefEl ? benefEl.textContent.trim() : '';
+                    contentType = 'Beneficiario';
+                } else if (numRow) {
+                    const numEl = numRow.querySelector('.cuenta-number');
+                    text = numEl ? numEl.textContent.trim() : '';
+                    contentType = 'Número';
+                }
+            }
+            
+            // Para cuentas de efectivo
+            if (btn.closest('.efectivo-card')) {
+                const card = btn.closest('.efectivo-card');
+                const infoGroup = btn.closest('.efectivo-info-value-group');
+                if (infoGroup) {
+                    const valueEl = infoGroup.querySelector('.efectivo-info-value');
+                    text = valueEl ? valueEl.textContent.trim() : '';
+                    
+                    // Detectar qué tipo de información es
+                    const parentRow = infoGroup.closest('.efectivo-info-row');
+                    const label = parentRow ? parentRow.querySelector('.efectivo-info-label').textContent : '';
+                    contentType = label || 'Contenido';
+                }
+            }
+            
             if (!text) return;
 
             navigator.clipboard.writeText(text).then(() => {
+                // Agregar clase copied para el feedback visual
+                btn.classList.add('copied');
+                
                 if (window.rifaplusUtils && window.rifaplusUtils.showFeedback) {
-                    rifaplusUtils.showFeedback('Número de cuenta copiado', 'success');
-                } else {
-                    // visual feedback temporal para el icono
-                    const orig = btn.textContent;
-                    btn.textContent = '✔️';
-                    btn.disabled = true;
-                    setTimeout(() => {
-                        btn.textContent = orig || '📋';
-                        btn.disabled = false;
-                    }, 1200);
+                    rifaplusUtils.showFeedback(`${contentType} copiado ✓`, 'success');
                 }
+                
+                // Remover la clase después de la animación
+                setTimeout(() => {
+                    btn.classList.remove('copied');
+                }, 600);
             }).catch(() => {
-                if (window.rifaplusUtils && window.rifaplusUtils.showFeedback) rifaplusUtils.showFeedback('Error al copiar', 'error');
-                else alert('Error al copiar');
+                if (window.rifaplusUtils && window.rifaplusUtils.showFeedback) {
+                    rifaplusUtils.showFeedback('Error al copiar', 'error');
+                } else {
+                    alert('Error al copiar');
+                }
             });
         });
 
@@ -353,7 +668,7 @@
     <div class="modal-carrito-overlay" id="carritoModal">
         <div class="modal-carrito">
             <div class="modal-carrito-header">
-                <h2>🛒 Tu Carrito</h2>
+                <h2>Tu Carrito 🛒</h2>
                 <button class="modal-carrito-close" id="closeCarrito" aria-label="Cerrar carrito">×</button>
             </div>
             
@@ -361,11 +676,11 @@
                 <!-- Mensaje si está vacío -->
                 <div class="carrito-vacio" id="carritoVacio">
                     <div class="carrito-vacio-content">
-                        <p class="carrito-vacio-icon">🎯</p>
+                        <img src="images/logo.png" alt="Logo" class="carrito-logo">
                         <p class="carrito-vacio-titulo">Tu carrito está vacío</p>
                         <p class="carrito-vacio-subtitulo">¡Comienza a seleccionar tus boletos favoritos!</p>
                         <button class="btn btn-primary btn-carrito-comprar" id="btnIrAComprar">
-                            🎫 Ir a Comprar Boletos
+                            Ir a Comprar Boletos
                         </button>
                     </div>
                 </div>
@@ -447,10 +762,9 @@
     <div class="modal-orden-formal" id="modalOrdenFormal">
         <div class="orden-formal-container">
             <div class="orden-formal-header">
-                <h2>📄 Orden de Pago</h2>
-                <p style="font-size: 0.9rem; opacity: 0.9; margin-bottom: 8px;">✓ Te recomendamos descargar la orden de pago o tomarle captura de pantalla para tener evidencia de su compra</p>
-                <p>Después haga click en "Continuar" para guardar su orden en el sistema</p>
-                <button class="modal-close" id="closeOrdenFormal" aria-label="Cerrar">×</button>
+                <h2>Orden de Pago</h2>
+                <p style="font-size: 0.9rem; opacity: 0.9; margin-bottom: 8px;">A continuación se muestra el resumen de su orden de pago con los datos bancarios para realizar su compra. Puede descargar o tomar una captura de pantalla de esta orden para tener constancia de su transacción.</p>
+                <p>Haga click en "Apartar boletos" para confirmar y guardar su orden en el sistema.</p>
             </div>
             <div class="orden-formal-content">
                 <div id="contenidoOrdenFormal">
@@ -477,10 +791,108 @@
     <script defer src="js/config.js?v=1766990666"></script>
     <script defer src="js/theme-dynamic.js"></script>
     <script defer src="js/main.js"></script>
+    <script defer src="js/calculo-precios.js?v=20251230.1"></script>
+
     <script defer src="js/carrito-global.js?v=1766990666"></script>
     <script defer src="js/flujo-compra.js"></script>
     <script defer src="js/orden-formal.js"></script>
     <script defer src="js/modal-contacto.js"></script>
+
+    <!-- Script para mejorar funcionalidad de copiar en cuentas-pago -->
+    <script defer>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Manejar botones de copiar
+            document.querySelectorAll('.copy-icon, .efectivo-copy-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Obtener el texto a copiar
+                    let textToCopy = '';
+                    if (this.classList.contains('copy-icon')) {
+                        const row = this.closest('.cuenta-number-row') || this.closest('.beneficiary-row');
+                        textToCopy = row.querySelector('div:first-child').textContent.trim();
+                    } else if (this.classList.contains('efectivo-copy-btn')) {
+                        textToCopy = this.parentElement.querySelector('.efectivo-info-value').textContent.trim();
+                    }
+                    
+                    if (!textToCopy) return;
+                    
+                    // Copiar al portapapeles
+                    navigator.clipboard.writeText(textToCopy).then(() => {
+                        // Cambiar icono a palomita
+                        const icon = this.querySelector('i');
+                        const originalClass = icon.className;
+                        icon.className = 'fas fa-check';
+                        this.style.background = '#10B981';
+                        this.style.borderColor = '#10B981';
+                        this.style.color = 'white';
+                        
+                        // Mostrar notificación
+                        showCopyNotification('¡Copiado!');
+                        
+                        // Restaurar icono después de 2 segundos
+                        setTimeout(() => {
+                            icon.className = originalClass;
+                            this.style.background = '';
+                            this.style.borderColor = '';
+                            this.style.color = '';
+                        }, 2000);
+                    });
+                });
+            });
+            
+            // Función para mostrar notificación de copiado
+            function showCopyNotification(message) {
+                const notification = document.createElement('div');
+                notification.style.cssText = `
+                    position: fixed;
+                    top: 150px;
+                    right: 20px;
+                    background: #10B981;
+                    color: white;
+                    padding: 12px 20px;
+                    border-radius: 8px;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                    z-index: 9999;
+                    font-weight: 600;
+                    animation: slideIn 0.3s ease;
+                `;
+                notification.textContent = message;
+                notification.innerHTML += ' <i class="fas fa-check" style="margin-left: 8px;"></i>';
+                
+                document.body.appendChild(notification);
+                
+                // Remover después de 2 segundos
+                setTimeout(() => {
+                    notification.style.animation = 'slideOut 0.3s ease';
+                    setTimeout(() => notification.remove(), 300);
+                }, 2000);
+            }
+            
+            // Agregar animaciones
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes slideIn {
+                    from { transform: translateX(100%); opacity: 0; }
+                    to { transform: translateX(0); opacity: 1; }
+                }
+                @keyframes slideOut {
+                    from { transform: translateX(0); opacity: 1; }
+                    to { transform: translateX(100%); opacity: 0; }
+                }
+            `;
+            document.head.appendChild(style);
+            
+            // Animar botón flotante solo los primeros 2 segundos
+            const btnFlotante = document.querySelector('.btn-flotante-comprobante');
+            if (btnFlotante) {
+                btnFlotante.classList.add('bounce-animate');
+                setTimeout(() => {
+                    btnFlotante.classList.remove('bounce-animate');
+                }, 2000);
+            }
+        });
+    </script>
 
     <!-- Botón Flotante: Subir Comprobante -->
     <a href="mis-boletos.html" class="btn-flotante-comprobante" title="Subir comprobante de pago">

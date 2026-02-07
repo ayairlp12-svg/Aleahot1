@@ -23,7 +23,7 @@
     document.getElementById('countdown-hours').textContent = String(horas).padStart(2, '0');
     document.getElementById('countdown-minutes').textContent = String(minutos).padStart(2, '0');
     document.getElementById('countdown-seconds').textContent = String(segundos).padStart(2, '0');
-}
+
 
 /* ============================================================ */
 /* SECCIÓN 5: ACTUALIZACIÓN DE BARRA DE PROGRESO              */
@@ -31,17 +31,47 @@
 
 async function actualizarBarraProgreso() {
     try {
+        // 🎯 PASO 1: Determinar total y rango de boletos a mostrar
+        // Si oportunidades está habilitada, usar SOLO el rango visible
+        // Si no, usar el totalBoletos configurado
+        const oportunidadesConfig = window.rifaplusConfig?.rifa?.oportunidades;
+        const totalBoletosConfiguracion = window.rifaplusConfig?.rifa?.totalBoletos || 10000;
+        
+        let totalParaMostrar = totalBoletosConfiguracion;
+        let rangoVisible = null;
+        
+        if (oportunidadesConfig && oportunidadesConfig.enabled && oportunidadesConfig.rango_visible) {
+            rangoVisible = oportunidadesConfig.rango_visible;
+            // El total a mostrar es el TAMAÑO del rango visible, no el config.totalBoletos
+            totalParaMostrar = (rangoVisible.fin - rangoVisible.inicio) + 1;
+            console.debug('[countdown] Oportunidades enabled, usando rango visible:', rangoVisible, 'Total:', totalParaMostrar);
+        } else {
+            console.debug('[countdown] Oportunidades disabled, usando totalBoletos:', totalParaMostrar);
+        }
+        
+        // 🎯 PASO 2: Obtener datos de boletos (PRIMERO en memoria, LUEGO backend)
+        const sold = (window.rifaplusSoldNumbers && Array.isArray(window.rifaplusSoldNumbers)) ? window.rifaplusSoldNumbers : [];
+        const reserved = (window.rifaplusReservedNumbers && Array.isArray(window.rifaplusReservedNumbers)) ? window.rifaplusReservedNumbers : [];
+        
+        // Si tenemos datos en memoria, usarlos
+        if (window.rifaplusBoletosLoaded && (sold.length > 0 || reserved.length > 0)) {
+            console.debug('[countdown] Usando datos en memoria (tiempo real)');
+            // Pasar tanto el total como el rango para que la función calcule correctamente
+            actualizarInterfazProgreso(sold, reserved, totalParaMostrar, rangoVisible);
+            return;
+        }
+        
+        // 🎯 PASO 3: FALLBACK - Obtener del backend si no hay datos en memoria
         const apiBase = (window.rifaplusConfig && window.rifaplusConfig.backend && window.rifaplusConfig.backend.apiBase) 
             ? window.rifaplusConfig.backend.apiBase 
             : 'http://localhost:3000';
         const url = `${apiBase}/api/public/ordenes-stats`;
-        const totalBoletos = window.rifaplusConfig?.rifa?.totalBoletos || 10000;
         
         const respuesta = await fetch(url);
 
         if (!respuesta.ok) {
             console.warn('⚠️ No se pudo obtener estadísticas de boletos');
-            actualizarInterfazProgreso(0, totalBoletos);
+            actualizarInterfazProgreso([], [], totalParaMostrar, rangoVisible);
             return;
         }
 
@@ -49,10 +79,11 @@ async function actualizarBarraProgreso() {
         
         if (datos.success && datos.data) {
             const boletosVendidos = datos.data.total_boletos_vendidos || 0;
-            actualizarInterfazProgreso(boletosVendidos, totalBoletos);
+            console.debug('[countdown] Usando datos del backend:', { boletosVendidos });
+            actualizarInterfazProgreso([], [], totalParaMostrar, rangoVisible, boletosVendidos);
         } else {
             console.warn('[countdown] Invalid API response format');
-            actualizarInterfazProgreso(0, totalBoletos);
+            actualizarInterfazProgreso([], [], totalParaMostrar, rangoVisible);
         }
     } catch (error) {
         console.error('[countdown] Error obteniendo estadísticas:', error);
@@ -69,51 +100,59 @@ async function actualizarBarraProgreso() {
  * @param {number} totalBoletos - Total de boletos disponibles
  * @returns {void}
  */
-function actualizarInterfazProgreso(boletosVendidos, totalBoletos) {
-    // ✅ Si oportunidades está habilitada, calcular solo en rango visible
-    const oportunidadesConfig = window.rifaplusConfig && window.rifaplusConfig.rifa && window.rifaplusConfig.rifa.oportunidades;
-    let boletosVendidosEnRango = boletosVendidos;
-    let totalEnRango = totalBoletos;
+/**
+ * actualizarInterfazProgreso - Actualiza elementos UI con datos de boletos
+ * 🎯 LÓGICA CORRECTA:
+ * - Si oportunidades ESTÁ ENABLED: Mostrar solo boletos del rango visible
+ *   * Vendidos: Contar solo boletos vendidos/reservados en el rango visible
+ *   * Total: Tamaño del rango visible (ya ajustado en actualizarBarraProgreso)
+ * 
+ * - Si oportunidades NO ESTÁ: Mostrar todos los boletos
+ *   * Vendidos: Todos los vendidos (sin filtrar)
+ *   * Total: totalParaMostrar (que es totalBoletos)
+ * 
+ * @param {Array} sold - Array de boletos vendidos
+ * @param {Array} reserved - Array de boletos reservados
+ * @param {number} totalParaMostrar - Total de boletos a considerar
+ * @param {Object|null} rangoVisible - Rango visible si oportunidades está enabled
+ * @param {number} backendVendidos - (Opcional) Total de vendidos del backend (fallback)
+ */
+function actualizarInterfazProgreso(sold = [], reserved = [], totalParaMostrar = 10000, rangoVisible = null, backendVendidos = null) {
+    // 🎯 CALCULAR BOLETOS VENDIDOS SEGÚN MODALIDAD
+    // ⭐ IMPORTANTE: Contar SOLO boletos vendidos (sold), no apartados/reservados
+    // Los reservados son boletos temporales sin pago confirmado
+    let boletosVendidosParaMostrar = 0;
     
-    if (oportunidadesConfig && oportunidadesConfig.enabled && oportunidadesConfig.rango_visible) {
-        const rangoVisible = oportunidadesConfig.rango_visible;
-        
-        // Contar solo boletos vendidos/apartados que están en el rango visible
-        const sold = (window.rifaplusSoldNumbers && Array.isArray(window.rifaplusSoldNumbers)) ? window.rifaplusSoldNumbers : [];
-        const reserved = (window.rifaplusReservedNumbers && Array.isArray(window.rifaplusReservedNumbers)) ? window.rifaplusReservedNumbers : [];
-        
-        let vendidosEnRangoVisible = 0;
-        let apartadosEnRangoVisible = 0;
-        
-        // Contar vendidos en el rango visible
+    if (rangoVisible && rangoVisible.inicio !== undefined && rangoVisible.fin !== undefined) {
+        // 🎯 MODO OPORTUNIDADES: Contar solo boletos VENDIDOS del rango visible
+        // NO incluir reservados (apartados sin pago)
         sold.forEach(num => {
             const n = Number(num);
             if (n >= rangoVisible.inicio && n <= rangoVisible.fin) {
-                vendidosEnRangoVisible++;
+                boletosVendidosParaMostrar++;
             }
         });
         
-        // Contar apartados en el rango visible
-        reserved.forEach(num => {
-            const n = Number(num);
-            if (n >= rangoVisible.inicio && n <= rangoVisible.fin) {
-                apartadosEnRangoVisible++;
-            }
-        });
-        
-        boletosVendidosEnRango = vendidosEnRangoVisible + apartadosEnRangoVisible;
-        totalEnRango = (rangoVisible.fin - rangoVisible.inicio) + 1;
+        console.debug('[countdown] MODO OPORTUNIDADES - Rango visible:', rangoVisible, 'Vendidos en rango:', boletosVendidosParaMostrar, 'Total sold:', sold.length, 'Total reserved:', reserved.length);
+    } else if (backendVendidos !== null) {
+        // FALLBACK: Si solo tenemos data del backend
+        boletosVendidosParaMostrar = backendVendidos;
+        console.debug('[countdown] FALLBACK BACKEND - Vendidos:', boletosVendidosParaMostrar);
+    } else {
+        // 🎯 MODO NORMAL (sin oportunidades): Contar SOLO los vendidos
+        boletosVendidosParaMostrar = sold.length;
+        console.debug('[countdown] MODO NORMAL - Total vendidos:', boletosVendidosParaMostrar, 'Total reserved:', reserved.length);
     }
     
-    const boletosRestantes = totalEnRango - boletosVendidosEnRango;
-    const porcentaje = totalEnRango > 0 ? Math.round((boletosVendidosEnRango / totalEnRango) * 100) : 0;
+    // 🎯 CALCULAR DISPONIBLES Y PORCENTAJE
+    const boletosRestantes = totalParaMostrar - boletosVendidosParaMostrar;
+    const porcentaje = totalParaMostrar > 0 ? Math.round((boletosVendidosParaMostrar / totalParaMostrar) * 100) : 0;
 
-    console.debug('[countdown] actualizarInterfazProgreso called:', {
-        boletosVendidos: boletosVendidosEnRango,
-        totalBoletos: totalEnRango,
+    console.debug('[countdown] RESULTADO FINAL:', {
+        boletosVendidos: boletosVendidosParaMostrar,
         boletosRestantes,
-        porcentaje,
-        oportunidadesActiva: oportunidadesConfig && oportunidadesConfig.enabled
+        totalParaMostrar,
+        porcentaje
     });
 
     // Actualizar números - con validación de elementos
@@ -132,7 +171,7 @@ function actualizarInterfazProgreso(boletosVendidos, totalBoletos) {
         return;
     }
 
-    elemVendidos.textContent = boletosVendidosEnRango;
+    elemVendidos.textContent = boletosVendidosParaMostrar;
     elemRestantes.textContent = boletosRestantes;
     elemPorcentaje.textContent = `${porcentaje}%`;
 
@@ -228,6 +267,14 @@ function inicializarCountdown() {
     console.debug('[countdown] About to call actualizarBarraProgreso()');
     actualizarBarraProgreso();
     setInterval(actualizarBarraProgreso, 60000);
+    
+    // 🔥 NUEVO: Escuchar evento cuando boletos se cargan en main.js
+    // Esto asegura que la barra se actualice apenas los datos estén listos
+    window.addEventListener('boletosListos', function(e) {
+        console.debug('[countdown] Evento boletosListos recibido, actualizando barra:', e.detail);
+        // Llamar INMEDIATAMENTE cuando los boletos estén listos
+        actualizarBarraProgreso();
+    });
 }
 
 // Run when DOM is ready

@@ -10,13 +10,28 @@
     --primary-dark: #051425;
     --primary-light: #06b6d4;
     --secondary: #06b6d4;
+    --secondary-dark: #05a4b0;
     --success: #10b981;
+    --success-dark: #059669;
     --danger: #ef4444;
+    --danger-dark: #dc2626;
     --text-dark: #1f2937;
     --text-light: #6b7280;
     --bg-light: #f8fafc;
     --bg-white: #ffffff;
     --border-color: #e5e7eb;
+    --gray-light: #f3f4f6;
+    
+    /* Estados de boletos - Colores para la leyenda y grid */
+    --disponible: #f8fafc;
+    --seleccionado: #e11223ba;
+    --apartado: #4d060c;
+    --vendido: #1A1A1A;
+    --seleccionado-30: rgba(225, 18, 35, 0.3);
+    
+    /* Variables dinámicas para animaciones (se inyectan desde JS) */
+    --fly-to-x: 0;
+    --fly-to-y: 0;
     
     /* Logo centralizado */
     --logo-path: url('images/logo.png');
@@ -213,13 +228,10 @@ body {
     justify-content: center;
     overflow: visible;
     box-shadow: 0 8px 32px rgba(201, 169, 97, 0.5), 0 0 24px rgba(255, 255, 255, 0.4);
-    transition: left 0.3s ease, box-shadow 0.3s ease, width 0.3s ease, height 0.3s ease;
-    position: fixed;
-    top: 0;
-    left: 60px;
-    transform: none;
+    transition: box-shadow 0.3s ease, width 0.3s ease, height 0.3s ease;
+    position: relative;
     z-index: 101;
-    margin: 0;
+    margin: 15px 0 0 0;
     padding: 0;
 }
 
@@ -234,7 +246,7 @@ body {
     pointer-events: none;
 }
 
-@media (max-width: 1150px) {
+@media (max-width: 1100px) {
     /* Cuando el menú empieza a tocar, logo se centra */
     .header {
         height: 125px;
@@ -244,7 +256,7 @@ body {
         padding: 0 0.5rem;
         align-items: center;
         height: 125px;
-        justify-content: space-between;
+        justify-content: center;
     }
 
     .header-left {
@@ -252,6 +264,8 @@ body {
         align-items: center;
         gap: 0.75rem;
         z-index: 200;
+        position: absolute;
+        left: 1rem;
     }
 
     .header-right {
@@ -259,14 +273,14 @@ body {
         align-items: center;
         gap: 0.75rem;
         z-index: 200;
+        position: absolute;
+        right: 1rem;
     }
 
     .logo {
         position: relative;
-        left: auto;
-        top: auto;
         display: flex;
-        align-items: flex-start;
+        align-items: center;
         justify-content: center;
         height: auto;
         transform: none;
@@ -279,11 +293,9 @@ body {
     .logo-circle {
         width: 140px;
         height: 140px;
-        position: fixed;
-        top: 0;
-        left: 50%;
-        transform: translateX(-50%);
-        margin: 0;
+        position: relative;
+        transform: none;
+        margin: 15px 0 0 0;
     }
 
     .hamburger {
@@ -298,10 +310,10 @@ body {
 /* Responsive para logo-circle en tablet */
 @media (max-width: 768px) {
     .logo {
-        position: fixed;
-        top: 0;
-        left: 50%;
-        transform: translateX(-50%);
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         width: 135px;
         height: 135px;
         margin: 0;
@@ -311,11 +323,9 @@ body {
     .logo-circle {
         width: 135px !important;
         height: 135px !important;
-        position: fixed !important;
-        top: 0 !important;
-        left: 50% !important;
-        transform: translateX(-50%) !important;
-        margin: 0 !important;
+        position: relative !important;
+        transform: none !important;
+        margin: 15px 0 0 0 !important;
         padding: 0 !important;
     }
 }
@@ -330,10 +340,10 @@ body {
     }
 
     .logo {
-        position: fixed;
-        top: 0;
-        left: 50%;
-        transform: translateX(-50%);
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         width: 120px;
         height: 120px;
         margin: 0;
@@ -343,11 +353,9 @@ body {
     .logo-circle {
         width: 120px !important;
         height: 120px !important;
-        position: fixed !important;
-        top: 0 !important;
-        left: 50% !important;
-        transform: translateX(-50%) !important;
-        margin: 0 !important;
+        position: relative !important;
+        transform: none !important;
+        margin: 15px 0 0 0 !important;
         padding: 0 !important;
     }
 
@@ -642,6 +650,17 @@ body {
     padding: 0 1rem;
 }
 
+.edicion-nombre {
+    font-size: 1rem;
+    font-weight: 900;
+    color: white;
+    margin-bottom: 0.5rem;
+    margin-top: -0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    animation: slideDown 0.8s ease-out 0.2s both;
+}
+
 .hero-title {
     font-size: 3.5rem;
     font-weight: 800;
@@ -651,12 +670,21 @@ body {
 }
 
 @media (max-width: 1024px) {
+    .edicion-nombre {
+        font-size: 0.95rem;
+    }
+
     .hero-title {
         font-size: 3rem;
     }
 }
 
 @media (max-width: 768px) {
+    .edicion-nombre {
+        font-size: 0.9rem;
+        margin-bottom: 0.4rem;
+    }
+
     .hero-title {
         font-size: 2.25rem;
         margin-bottom: 0.75rem;
@@ -664,6 +692,11 @@ body {
 }
 
 @media (max-width: 640px) {
+    .edicion-nombre {
+        font-size: 0.85rem;
+        margin-bottom: 0.3rem;
+    }
+
     .hero-title {
         font-size: 1.75rem;
         margin-bottom: 0.5rem;
@@ -671,6 +704,11 @@ body {
 }
 
 @media (max-width: 480px) {
+    .edicion-nombre {
+        font-size: 0.8rem;
+        margin-bottom: 0.25rem;
+    }
+
     .hero-title {
         font-size: 1.5rem;
         margin-bottom: 0.375rem;
@@ -699,15 +737,61 @@ body {
 .hero-description {
     font-size: 1.25rem;
     margin-bottom: 2rem;
-    opacity: 0.95;
+    color: white;
+    opacity: 1;
     animation: slideUp 0.8s ease-out 0.2s both;
     line-height: 1.6;
+}
+
+/* Estilos para el botón CTA del hero mejorado */
+.btn-hero-cta {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.75rem !important;
+    font-size: 1.1rem !important;
+    font-weight: 600 !important;
+    padding: 1.2rem 2.5rem !important;
+    position: relative !important;
+    overflow: visible !important;
+    background: var(--secondary) !important;
+    border: 1.5px solid rgba(255, 255, 255, 0.3) !important;
+    color: white !important;
+    animation: slideUp 0.8s ease-out 0.4s both;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+.btn-hero-cta .btn-arrow {
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    display: inline-block;
+    font-size: 1.2rem;
+}
+
+.btn-hero-cta:hover {
+    background: var(--secondary) !important;
+    color: white !important;
+    border-color: white !important;
+    box-shadow: 0 12px 40px rgba(230, 57, 70, 0.5), inset 0 0 20px rgba(255, 255, 255, 0.1) !important;
+    transform: translateY(-3px) scale(1.02) !important;
+}
+
+.btn-hero-cta:hover .btn-arrow {
+    transform: translateX(8px);
 }
 
 @media (max-width: 768px) {
     .hero-description {
         font-size: 1rem;
         margin-bottom: 1.5rem;
+        color: white !important;
+    }
+
+    .btn-hero-cta {
+        font-size: 1rem !important;
+        padding: 1rem 2rem !important;
+        background: var(--secondary) !important;
+        border: 1.5px solid rgba(255, 255, 255, 0.3) !important;
+        color: white !important;
     }
 }
 
@@ -715,6 +799,7 @@ body {
     .hero-description {
         font-size: 0.95rem;
         margin-bottom: 1rem;
+        color: white !important;
     }
 }
 
@@ -722,6 +807,7 @@ body {
     .hero-description {
         font-size: 0.85rem;
         margin-bottom: 1rem;
+        color: white !important;
     }
 }
 
@@ -870,7 +956,7 @@ body {
 }
 
 /* Botones con estilo secundario (naranja quemado) */
-.btn-secondary-accent {
+.btn-secondary-accent:not(.btn-hero-cta) {
     background: var(--secondary);
     color: white;
     transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
@@ -878,13 +964,13 @@ body {
     overflow: hidden;
 }
 
-.btn-secondary-accent:hover {
+.btn-secondary-accent:not(.btn-hero-cta):hover {
     background: var(--secondary-dark);
     box-shadow: 0 10px 30px rgba(201, 69, 69, 0.3);
     transform: translateY(-3px);
 }
 
-.btn-secondary-accent:active {
+.btn-secondary-accent:not(.btn-hero-cta):active {
     box-shadow: 0 4px 12px rgba(201, 69, 69, 0.2);
     transform: translateY(-1px);
 }
@@ -913,8 +999,8 @@ body {
 }
 
 .btn-continuar:hover {
-    background: var(--primary-dark);
-    box-shadow: 0 8px 20px var(--primary-30);
+    background: var(--primary);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .btn-continuar:active {
@@ -1082,17 +1168,21 @@ body {
     right: 1rem;
 }
 
-/* Responsive: en pantallas pequeñas aumentamos proporcionalmente la altura */
+/* Responsive: en pantallas pequeñas ajustamos la altura */
 @media (max-width: 480px) {
     .carrusel-inner {
-        height: 60vh;
+        height: 280px;
         max-height: none;
+    }
+    
+    .carrusel-item img {
+        object-fit: contain;
     }
 }
 
-@media (max-width: 768px) {
+@media (min-width: 481px) and (max-width: 768px) {
     .carrusel-inner {
-        height: 500px;
+        height: 350px;
     }
 }
 
@@ -1102,7 +1192,7 @@ body {
 
 .countdown-section {
     padding: 4rem 0;
-    background: linear-gradient(135deg, #0F172A 0%, #1E1B4B 100%);
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
     position: relative;
     overflow: hidden;
 }
@@ -1205,6 +1295,21 @@ body {
     }
     75% {
         transform: scale(1.15);
+    }
+}
+
+@keyframes efectoDestello {
+    0% {
+        box-shadow: 0 0 10px rgba(255, 61, 61, 0.5);
+        transform: scale(1);
+    }
+    50% {
+        box-shadow: 0 0 30px rgba(255, 61, 61, 0.8), 0 0 60px rgba(255, 61, 61, 0.4);
+        transform: scale(1.05);
+    }
+    100% {
+        box-shadow: 0 0 10px rgba(255, 61, 61, 0.5);
+        transform: scale(1);
     }
 }
 
@@ -1450,7 +1555,7 @@ body {
     font-weight: 900;
     text-align: center;
     margin-bottom: 3.5rem;
-    color: #0f172a;
+    color: var(--primary);
     line-height: 1.2;
     letter-spacing: -0.5px;
 }
@@ -1619,164 +1724,163 @@ body {
     margin-bottom: 3rem;
 }
 
-.precios-grid {
+/* Grid para precio unitario - una sola tarjeta centrada */
+.precios-grid-unitario {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 3rem;
+    max-width: 90vw;
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.precio-card-main {
+    text-align: center;
+    background: var(--primary);
+    padding: 2rem;
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-sm);
+    display: block;
+    width: 100%;
+    border-top: 4px solid var(--secondary);
+    transition: all var(--transition-normal);
+}
+
+.precio-card-main:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+    border-top-color: var(--primary-light);
+}
+
+.precio-card-main h3 {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #FFFFFF;
+    margin: 0 0 1rem;
+}
+
+.precio-big {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.5rem !important;
+    font-size: clamp(1rem, 7vw, 4rem) !important;
+    font-weight: 900 !important;
+    color: #FFFFFF !important;
+    margin-bottom: 1.5rem !important;
+    line-height: 1 !important;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+    letter-spacing: 0.05em !important;
+}
+
+.precio-label {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-light);
+    white-space: nowrap;
+}
+
+/* Grid para promociones - responsivo */
+.precios-grid-promos {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 2rem;
-    max-width: 1000px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    max-width: 1200px;
     margin: 0 auto;
-    place-items: center;
+    place-items: stretch;
 }
 
 @media (max-width: 1024px) {
-    .precios-grid {
-        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-        gap: 1.5rem;
-        max-width: 100%;
-        padding: 0 1rem;
-    }
-}
-
-@media (max-width: 768px) {
-    .precios-grid {
-        grid-template-columns: repeat(2, minmax(220px, 1fr));
-        gap: 1.5rem;
-    }
-}
-
-@media (max-width: 640px) {
-    .precios-grid {
+    .precios-grid-promos {
         grid-template-columns: repeat(2, 1fr);
-        gap: 1.25rem;
-        padding: 0;
     }
 }
 
-.precios-grid > :last-child:nth-child(odd) {
-    grid-column: 1 / -1;
-    justify-self: center;
-}
-
-.precio-card {
+/* Tarjeta de promoción - REFACTORIZADA */
+.promo-card-grande {
     background: white;
     border: 1px solid #e0e0e0;
     border-radius: var(--radius-md);
-    padding: 2rem;
+    padding: 1rem 0.9rem;
     text-align: center;
     transition: all var(--transition-normal);
     position: relative;
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    gap: 1.25rem;
-    justify-content: center;
+    gap: 0.5rem;
+    justify-content: space-between;
+    width: 100%;
+    min-height: 160px;
 }
 
-@media (max-width: 768px) {
-    .precio-card {
-        padding: 1.75rem;
-        gap: 1rem;
-    }
-}
-
-@media (max-width: 640px) {
-    .precio-card {
-        padding: 1.5rem;
-        gap: 0.875rem;
-    }
-}
-
-.precio-card.animate-in {
-    opacity: 1;
-    transform: translateY(0);
-}
-
-.precio-card::before {
+.promo-card-grande::before {
     content: '';
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
     height: 3px;
-    background: #0f172a;
+    background: var(--primary);
     transform: scaleX(0);
     transition: transform var(--transition-normal);
     transform-origin: left;
 }
 
-.precio-card:hover {
+.promo-card-grande:hover {
     transform: translateY(-4px);
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-    border-color: #0f172a;
+    border-color: var(--primary);
 }
 
-.precio-card:hover::before {
+.promo-card-grande:hover::before {
     transform: scaleX(1);
 }
 
-.precio-card.popular {
-    border-color: #0f172a;
-    background: white;
+.promo-card-grande .btn {
+    background: var(--primary) !important;
+    color: #FFFFFF !important;
+    border: 2px solid var(--secondary) !important;
 }
 
-.popular-badge {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    background: #0f172a;
-    color: white;
-    padding: 6px 12px;
-    border-radius: var(--radius-sm);
-    font-size: 0.75rem;
-    font-weight: 600;
+.promo-card-grande .btn:hover {
+    background: var(--secondary) !important;
+    border-color: var(--primary) !important;
 }
 
-@media (max-width: 640px) {
-    .popular-badge {
-        font-size: 0.7rem;
-        padding: 5px 10px;
-    }
-}
-
-.precio-card h3 {
-    font-size: 1.3rem;
+.promo-card-cantidad {
+    font-size: clamp(0.95rem, 2vw, 1.3rem);
     font-weight: 700;
     color: #1a1a1a;
-    margin: 0;
-}
-
-@media (max-width: 768px) {
-    .precio-card h3 {
-        font-size: 1.1rem;
-    }
-}
-
-@media (max-width: 640px) {
-    .precio-card h3 {
-        font-size: 1rem;
-    }
-}
-
-.precio-card .precio {
-    font-size: 1.8rem;
-    font-weight: 700;
-    color: #0f172a;
     margin: 0;
     line-height: 1.2;
 }
 
-.precio-card p {
-    color: #666;
-    margin: 0;
-    font-size: 0.9rem;
+.promo-card-precio {
+    font-size: clamp(0.55rem, 1.4vw, 0.7rem) !important;
+    font-weight: 700 !important;
+    color: var(--primary) !important;
+    margin: 0.2rem 0 !important;
+    line-height: 1.3 !important;
+    letter-spacing: -0.4px !important;
+    word-spacing: -0.15em !important;
+    white-space: normal !important;
 }
 
-.precio-card .btn {
-    width: 100%;
-    margin-top: 0.5rem;
-    padding: 0.875rem 1.5rem;
+.promo-card-ahorro {
+    color: #10b981;
+    font-weight: 700;
     font-size: 0.9rem;
-    background: #0f172a;
+    margin: 0.5rem 0 0;
+}
+
+.promo-card-grande .btn {
+    width: 100%;
+    margin-top: auto;
+    padding: 0.7rem 1.2rem;
+    font-size: 0.85rem;
+    background: var(--primary);
     color: white;
     border: none;
     border-radius: var(--radius-sm);
@@ -1785,44 +1889,77 @@ body {
     transition: all var(--transition-normal);
 }
 
-.precio-card .btn:hover {
-    background: #051425;
+.promo-card-grande .btn:hover {
+    background: var(--primary-dark);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.3);
+    box-shadow: 0 4px 12px rgba(26, 26, 26, 0.3);
 }
 
-.precio-card--destacada {
-    border: 2px solid #0f172a;
-    background: white;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+/* Responsive: Celular */
+@media (max-width: 640px) {
+    .precios-section {
+        padding: 3rem 1rem;
+    }
+
+    .precios-section .section-title {
+        margin-bottom: 2rem;
+    }
+
+    .precios-grid-unitario {
+        margin-bottom: 2.5rem;
+        max-width: 95vw;
+    }
+
+    .precio-card-main {
+        padding: 1.5rem;
+    }
+
+    .precio-card-main h3 {
+        font-size: 0.85rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .precio-big {
+        font-size: clamp(1.8rem, 7vw, 4rem) !important;
+        margin-bottom: 1rem !important;
+    }
+
+    /* Grid promociones: 2 columnas en mobile */
+    .precios-grid-promos {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+
+    .promo-card-grande {
+        padding: 1rem 0.8rem;
+        gap: 0.5rem;
+        min-height: 180px;
+    }
+
+    .promo-card-cantidad {
+        font-size: 0.95rem;
+    }
+
+    .promo-card-precio {
+        font-size: 0.8rem;
+    }
+
+    .promo-card-grande .btn {
+        padding: 0.5rem 0.8rem;
+        font-size: 0.75rem;
+    }
 }
 
-.precio-card--destacada:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 12px 24px rgba(15, 23, 42, 0.15);
-    border-color: #051425;
-}
+/* Responsive: Tablet */
+@media (max-width: 1024px) and (min-width: 641px) {
+    .precios-grid-promos {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.25rem;
+    }
 
-.precio-card--destacada::before {
-    background: #0f172a;
-    height: 3px;
-}
-
-.precio-ahorro {
-    color: #0f172a;
-    font-weight: 700;
-    font-size: 1rem;
-    margin-bottom: 1rem;
-    padding: 0.75rem;
-    background: rgba(15, 23, 42, 0.05);
-    border-radius: var(--radius-sm);
-}
-
-.promo-ahorro {
-    color: var(--primary);
-    font-weight: 600;
-    font-size: 0.95rem;
-    margin-top: 0.5rem;
+    .promo-card-grande {
+        min-height: 190px;
+    }
 }
 
 /* ====================================
@@ -1837,11 +1974,40 @@ body {
 .contacto-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 1rem;
+    grid-template-rows: auto auto;
+    gap: 0.6rem 0.8rem;
     margin-top: 2rem;
-    max-width: 600px;
+    max-width: 700px;
     margin-left: auto;
     margin-right: auto;
+    position: relative;
+    align-items: center;
+    padding: 0 1rem;
+}
+
+/* Triángulo invertido profesional - compacto y atractivo */
+.contacto-grid .contacto-icono-btn:nth-child(1) {
+    /* WhatsApp - abajo izquierda */
+    grid-column: 1;
+    grid-row: 2;
+    justify-self: center;
+    margin-top: -1.5rem;
+}
+
+.contacto-grid .contacto-icono-btn:nth-child(2) {
+    /* Facebook - arriba centro - ligeramente arriba */
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: center;
+    margin-bottom: -2.5rem;
+}
+
+.contacto-grid .contacto-icono-btn:nth-child(3) {
+    /* Instagram - abajo derecha */
+    grid-column: 3;
+    grid-row: 2;
+    justify-self: center;
+    margin-top: -1.5rem;
 }
 
 .contacto-card {
@@ -2031,48 +2197,47 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.75rem;
-    padding: 1.5rem 1rem;
+    gap: 0.5rem;
+    padding: 1rem 0.75rem;
     text-align: center;
     position: relative;
     z-index: 1;
+    transition: all 0.3s ease;
 }
 
 .contacto-icon-grande {
-    font-size: 3.5rem;
-    animation: float 3s ease-in-out infinite;
+    font-size: 2.8rem;
 }
 
 .contacto-icono-btn:nth-child(1) .contacto-icon-grande {
     color: #25D366;
     text-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);
-    animation-delay: 0s;
 }
 
 .contacto-icono-btn:nth-child(2) .contacto-icon-grande {
     color: #1877F2;
     text-shadow: 0 4px 15px rgba(24, 119, 242, 0.3);
-    animation-delay: 0.2s;
 }
 
 .contacto-icono-btn:nth-child(3) .contacto-icon-grande {
     color: #E4405F;
     text-shadow: 0 4px 15px rgba(228, 64, 95, 0.3);
-    animation-delay: 0.4s;
 }
 
 .contacto-icono-btn .btn-contacto {
-    width: 100%;
-    max-width: 140px;
-    padding: 0.55rem 0.9rem;
-    font-size: 0.85rem;
+    width: auto;
+    min-width: 130px;
+    padding: 0.6rem 1.2rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
 }
 
 .contacto-nombre-usuario {
-    font-size: 0.85rem;
+    font-size: 0.75rem;
     font-weight: 600;
     color: var(--text-dark);
-    margin-top: 0.5rem;
+    margin-top: 0.3rem;
     display: block;
 }
 
@@ -2101,41 +2266,100 @@ body {
 }
 
 @media (max-width: 768px) {
+    .contacto-grid {
+        grid-template-columns: repeat(3, 1fr);
+        grid-template-rows: auto auto;
+        gap: 0.5rem 0.6rem;
+        padding: 0 1rem;
+        max-width: 600px;
+    }
+
+    .contacto-grid .contacto-icono-btn:nth-child(1) {
+        grid-column: 1;
+        grid-row: 2;
+        justify-self: center;
+    }
+
+    .contacto-grid .contacto-icono-btn:nth-child(2) {
+        grid-column: 2;
+        grid-row: 1;
+        justify-self: center;
+        margin-bottom: -1rem;
+    }
+
+    .contacto-grid .contacto-icono-btn:nth-child(3) {
+        grid-column: 3;
+        grid-row: 2;
+        justify-self: center;
+    }
+
     .contacto-icono-btn {
-        padding: 1rem 0.75rem;
-        gap: 0.5rem;
+        padding: 0.8rem 0.6rem;
+        gap: 0.4rem;
     }
 
     .contacto-icon-grande {
-        font-size: 2.5rem;
+        font-size: 2.4rem;
     }
 
     .contacto-icono-btn .btn-contacto {
-        max-width: 120px;
-        padding: 0.5rem 0.7rem;
+        min-width: 120px;
+        padding: 0.55rem 1rem;
         font-size: 0.75rem;
+    }
+
+    .contacto-nombre-usuario {
+        font-size: 0.7rem;
     }
 }
 
 @media (max-width: 480px) {
     .contacto-grid {
-        gap: 0.75rem;
+        grid-template-columns: repeat(3, 1fr);
+        grid-template-rows: auto auto;
+        gap: 0.3rem 0.3rem;
+        padding: 0.5rem;
         max-width: 100%;
+        min-width: 280px;
+        width: 100%;
+    }
+
+    .contacto-grid .contacto-icono-btn:nth-child(1) {
+        grid-column: 1;
+        grid-row: 2;
+        justify-self: center;
+    }
+
+    .contacto-grid .contacto-icono-btn:nth-child(2) {
+        grid-column: 2;
+        grid-row: 1;
+        justify-self: center;
+        margin-bottom: -0.7rem;
+    }
+
+    .contacto-grid .contacto-icono-btn:nth-child(3) {
+        grid-column: 3;
+        grid-row: 2;
+        justify-self: center;
     }
 
     .contacto-icono-btn {
-        padding: 0.75rem 0.5rem;
-        gap: 0.4rem;
+        padding: 0.5rem 0.3rem;
+        gap: 0.25rem;
     }
 
     .contacto-icon-grande {
-        font-size: 2rem;
+        font-size: 1.8rem;
     }
 
     .contacto-icono-btn .btn-contacto {
-        max-width: 100px;
-        padding: 0.45rem 0.6rem;
+        min-width: 90px;
+        padding: 0.4rem 0.7rem;
         font-size: 0.65rem;
+    }
+
+    .contacto-nombre-usuario {
+        font-size: 0.6rem;
     }
 }
 
@@ -2157,7 +2381,11 @@ footer {
     color: white;
     padding: 4rem 0 2rem;
     margin-top: 4rem;
+    margin-bottom: 0 !important;
     box-shadow: 0 -12px 40px rgba(15, 18, 24, 0.5);
+    margin-left: 0;
+    margin-right: 0;
+    width: 100%;
 }
 
 .footer-main {
@@ -2386,7 +2614,7 @@ footer {
 .footer-divider {
     height: 1px;
     background: rgba(255, 255, 255, 0.2);
-    margin: 2rem 0;
+    margin: 1.5rem 0 1rem;
 }
 
 .footer-bottom {
@@ -2786,48 +3014,68 @@ footer {
 .compra-hero-inner{ text-align:center; padding: 0 1rem }
 .compra-hero-title{ font-size:1.6rem; font-weight:700; margin-bottom:0.5rem }
 .compra-hero-sub{ opacity:0.95; margin-bottom:0.85rem }
-.compra-hero-cta{ display:flex; gap:1.25rem; justify-content:center; flex-wrap:wrap }
+.compra-hero-cta{ display:flex; gap:1.5rem; justify-content:center; flex-wrap:wrap; align-items:center }
 
 .compra-hero-cta .btn {
-    padding: 0.8rem 2rem;
+    padding: 0.9rem 2.5rem;
     font-weight: 700;
-    transition: all var(--transition-normal), box-shadow 0.2s;
+    font-size: 1rem;
+    transition: all var(--transition-normal), box-shadow 0.3s;
     opacity: 0;
     transform: translateY(40px);
     animation: slideUp 0.8s ease-out 0.2s forwards;
-    border: 2px solid transparent;
     color: white;
     position: relative;
     overflow: hidden;
     border-radius: var(--radius-lg);
+    cursor: pointer;
+    border: 2px solid transparent;
+    flex: 1;
+    min-width: 200px;
+    max-width: 280px;
+    text-align: center;
 }
 
-/* Botón Seleccionar Boletos - Primario (más destacado) */
+/* Botón Seleccionar Boletos - PRIMARIO (Destacado) */
 .compra-hero-cta .btn-seleccionar {
     background: var(--secondary);
-    box-shadow: 0 6px 20px var(--secondary-25);
+    box-shadow: 0 8px 24px rgba(239, 68, 68, 0.4);
     border: 2px solid var(--secondary);
 }
 
 .compra-hero-cta .btn-seleccionar:hover,
 .compra-hero-cta .btn-seleccionar:focus {
     background: var(--secondary-dark);
-    box-shadow: 0 8px 28px var(--secondary-35);
+    border-color: var(--secondary-dark);
+    box-shadow: 0 12px 32px rgba(239, 68, 68, 0.5);
+    transform: translateY(-3px);
     outline: none;
 }
 
-/* Botón Máquina de la Suerte - Secundario */
+.compra-hero-cta .btn-seleccionar:active {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(239, 68, 68, 0.3);
+}
+
+/* Botón Máquina de la Suerte - SECUNDARIO (Outline) */
 .compra-hero-cta .btn-maquina {
-    background: var(--primary-light);
-    box-shadow: 0 6px 20px rgba(212, 165, 116, 0.35);
-    border: 2px solid var(--primary-light);
+    background: transparent;
+    border: 2px solid var(--secondary);
+    color: white;
+    box-shadow: none;
 }
 
 .compra-hero-cta .btn-maquina:hover,
 .compra-hero-cta .btn-maquina:focus {
-    background: #c4945a;
-    box-shadow: 0 8px 28px rgba(212, 165, 116, 0.5);
+    background: rgba(239, 68, 68, 0.1);
+    box-shadow: 0 8px 20px rgba(239, 68, 68, 0.25);
+    transform: translateY(-3px);
     outline: none;
+}
+
+.compra-hero-cta .btn-maquina:active {
+    background: rgba(239, 68, 68, 0.15);
+    transform: translateY(-1px);
 }
 
 .compra-hero-cta .btn::after {
@@ -2837,8 +3085,8 @@ footer {
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
-    transition: left 0.4s;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s;
     z-index: 1;
 }
 .compra-hero-cta .btn:hover::after,
@@ -2901,13 +3149,13 @@ footer {
 .promociones-title{ margin:0; font-size:2.2rem; color:var(--primary-dark); font-weight:700 }
 .promociones-sub{ margin: 0.25rem 0 0 0; color:var(--text-light); font-size:0.98rem; max-width:720px; margin-left:auto; margin-right:auto }
 
-/* Promos container centered */
-.promos-cards{ display:flex; gap:0.75rem; justify-content:center; align-items:stretch; margin-top:0.6rem }
+/* Promos container centered - Grid layout */
+.promos-cards{ display:grid; grid-template-columns:repeat(4, 1fr); gap:0.75rem; justify-content:center; align-items:stretch; margin-top:0.6rem; width:100%; max-width:1200px; margin-left:auto; margin-right:auto }
 
 /* Estilo llamativo para tarjetas de promoción */
-.promo-card{ background: linear-gradient(180deg, var(--primary-06), rgba(167,139,250,0.03)); padding:0.4rem 0.6rem; border-radius:var(--radius-lg); text-align:center; flex: 0 1 260px; max-width:320px; min-width:190px; border-left:6px solid var(--primary); box-shadow: 0 8px 20px rgba(99,102,241,0.06); transition: var(--transition-normal); display:flex; align-items:center; justify-content:center; flex-direction: column; height: 70px; overflow: hidden; }
+.promo-card{ background: linear-gradient(180deg, var(--primary-06), rgba(167,139,250,0.03)); padding:0.75rem 0.9rem; border-radius:var(--radius-lg); text-align:center; border-left:6px solid var(--primary); box-shadow: 0 8px 20px rgba(99,102,241,0.06); transition: var(--transition-normal); display:flex; align-items:center; justify-content:center; flex-direction: column; height: auto; min-height: 80px; overflow: visible; width:100% }
 .promo-card:hover{ transform: translateY(-6px); box-shadow: 0 20px 36px rgba(99,102,241,0.12); }
-.promo-card .promo-simple{ font-weight:800; color:var(--text-dark); font-size:0.95rem; margin:0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.promo-card .promo-simple{ font-weight:800; color:var(--text-dark); font-size:0.95rem; margin:0; line-height: 1.3; word-wrap: break-word; overflow-wrap: break-word; }
 .promo-card .promo-desc{ display: none; }
 
 /* Máquina de la Suerte - encabezado centrado */
@@ -2934,14 +3182,11 @@ footer {
 .promo-price{ font-size:1.5rem; font-weight:700; margin:0.25rem 0 }
 .promo-desc{ color:var(--text-light); margin-bottom:0.75rem }
 
-/* Responsive: en pantallas pequeñas mantener tarjetas con ancho fijo y scroll horizontal
-   para evitar que se apilen en vertical ocupando demasiada altura. */
-/* En pantallas pequeñas conservar altura tipo escritorio y mostrar 2 tarjetas por fila.
-   Esto evita tarjetas muy altas y permite ver dos promociones alineadas. */
+/* Responsive: en pantallas pequeñas mostrar 2 tarjetas por fila */
 @media (max-width: 640px) {
     .promos-cards {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
         gap: 0.75rem;
         align-items: stretch;
         justify-content: center;
@@ -2949,11 +3194,10 @@ footer {
     }
 
     .promo-card {
-        flex: none;
-        width: 100%;
-        max-width: none;
-        min-width: 0;
-        height: 140px; /* altura consistente con versión de escritorio */
+        width: 100% !important;
+        max-width: none !important;
+        height: auto !important;
+        padding: 0.4rem 0.6rem !important;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -3374,29 +3618,36 @@ footer {
 }
 
 /* Grid de números */
-.numeros-grid{ display:grid; grid-template-columns: repeat(auto-fill, minmax(52px,1fr)); gap:0.3rem; margin-bottom:1.5rem }
+.numeros-grid{ display:grid; grid-template-columns: repeat(15, 1fr); gap:0.35rem; margin-bottom:1.5rem }
 
 /* Estados de los números */
 .numero-btn{ 
-    padding:0.5rem; 
-    border-radius:var(--radius-md); 
-    border:1px solid var(--border-color); 
+    padding:0.5rem 0.6rem; 
+    border-radius:8px; 
+    border:1.5px solid var(--border-color); 
     background: var(--disponible); 
     cursor:pointer; 
     text-align:center; 
-    /* OPTIMIZACIÓN: Transición removida - 500+ elementos no necesitan animación smooth */
-    font-weight: 500;
-    font-size: 0.75rem;
-    min-height: 48px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    height: 48px;
+    width: 100%;
+    aspect-ratio: 2.5;
     display: flex;
     align-items: center;
     justify-content: center;
+    line-height: 1;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
 .numero-btn:hover:not(.sold):not(.reserved):not(.selected) {
     background: #E5E7EB;
     border-color: var(--primary-light);
     color: var(--text-dark);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    transform: translateY(-1px);
 }
 
 .numero-btn.selected {
@@ -3404,7 +3655,8 @@ footer {
     color: white;
     font-weight: 700;
     border-color: var(--seleccionado);
-    box-shadow: 0 4px 12px var(--seleccionado-30);
+    box-shadow: 0 6px 20px var(--seleccionado-30);
+    transform: scale(1.02);
 }
 
 .numero-btn.sold {
@@ -3414,12 +3666,13 @@ footer {
     cursor: not-allowed;
     opacity: 0.85;
     border-color: var(--vendido);
+    border: 1px solid var(--vendido);
 }
 
 .numero-btn.reserved {
     background: var(--apartado);
     color: var(--primary);
-    border: 1px dashed var(--primary-light);
+    border: 2px dotted #000000;
     cursor: not-allowed;
     opacity: 0.85;
     position: relative;
@@ -3428,17 +3681,20 @@ footer {
 .numero-btn.reserved::after {
     content: '⏳';
     position: absolute;
-    top: -5px;
-    right: -5px;
-    font-size: 0.7rem;
+    top: 1px;
+    right: 1px;
+    font-size: 0.38rem;
     background: var(--primary-dark);
     color: white;
     border-radius: 50%;
-    width: 16px;
-    height: 16px;
+    width: 10px;
+    height: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
+    padding: 0;
+    line-height: 1;
+    z-index: 5;
 }
 
 /* Resumen de compra */
@@ -3579,16 +3835,16 @@ footer {
 }
 
 .precio-big {
-    font-size: 3.5rem;
-    font-weight: 900;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    line-height: 1;
-    position: relative;
-    z-index: 2;
-    text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    font-size: 2.5rem !important;
+    font-weight: 900 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.5rem !important;
+    line-height: 1 !important;
+    position: relative !important;
+    z-index: 2 !important;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.2) !important;
 }
 
 .precio-label {
@@ -3601,12 +3857,12 @@ footer {
 
 /* Efecto de partículas decorativas */
 .precio-card-main::after {
-    content: '💰 🎫 🎯';
+    content: '';
     position: absolute;
     bottom: 10px;
     right: 20px;
     font-size: 1.5rem;
-    opacity: 0.3;
+    opacity: 0;
     z-index: 1;
 }
 
@@ -3618,11 +3874,7 @@ footer {
     }
     
     .precio-big {
-        font-size: 2.5rem;
-    }
-    
-    .precio-card-main h3 {
-        font-size: 1rem;
+        font-size: clamp(1.2rem, 8vw, 4.5rem) !important;
     }
     
     .precio-label {
@@ -3637,12 +3889,7 @@ footer {
     }
     
     .precio-big {
-        font-size: 2.2rem;
-    }
-    
-    .precio-card-main h3 {
-        font-size: 0.95rem;
-        margin-bottom: 0.75rem;
+        font-size: clamp(1.2rem, 8vw, 4.5rem) !important;
     }
     
     .precio-label {
@@ -3653,12 +3900,24 @@ footer {
         font-size: 1.2rem;
         bottom: 8px;
         right: 15px;
+        content: '';
+        opacity: 0;
     }
     
     .precio-label {
         font-size: 1rem;
     }
 }
+
+/* TEXTO DE OPORTUNIDADES */
+.oportunidades-texto {
+    text-align: center;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #92400e;
+    margin: 1rem 0 1.5rem 0;
+}
+
 /* ESTILOS PARA LA MÁQUINA DE LA SUERTE MEJORADA */
 .maquina-controls-mejorada {
     background: #f8fafc;
@@ -3792,7 +4051,7 @@ footer {
 }
 
 .numero-chip {
-    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    background: var(--primary);
     color: white;
     padding: 0.75rem 1rem;
     border-radius: var(--radius-md);
@@ -3880,21 +4139,35 @@ footer {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0.95rem 1.25rem !important;
+    padding: 0.25rem 0.75rem !important;
     background: linear-gradient(135deg, rgba(16, 185, 129, 0.06), rgba(5, 150, 105, 0.06)) !important;
     border-radius: 0 0 var(--radius-md) var(--radius-md) !important;
     border: 1.5px solid var(--border-color) !important;
-    border-top: none !important;
-    margin-top: -1.5px !important;
-    margin-bottom: -0.5rem !important;
+    border-top: 1.5px solid var(--border-color) !important;
+    margin: 0.1rem 0 0.25rem 0 !important;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
     transition: all var(--transition-normal) !important;
+}
+
+/* Indentación visual SOLO cuando oportunidades está habilitado */
+.carrito-items.oportunidades-enabled .carrito-item-oportunidades-container {
+    margin-left: 1rem !important;
+    margin-right: -0.25rem !important;
 }
 
 .carrito-item-oportunidades-container:hover {
     background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(5, 150, 105, 0.12)) !important;
     border-color: #10B981 !important;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Lista de oportunidades alineadas compactas */
+.oportunidades-list {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.2rem;
 }
 
 .carrito-item-oportunidades-text {
@@ -3980,15 +4253,16 @@ footer {
     }
 }
 
-/* Responsive para compra - TABLET (768px y menos) */
-@media (max-width: 768px){
-    .numeros-grid{ grid-template-columns: repeat(auto-fill, minmax(44px,1fr)); gap:0.25rem; padding: 0 0.5rem; }
-    .precio-big{ font-size:1.4rem }
+/* Responsive para compra - Pantalla media (880px a 1023px) */
+@media (max-width: 1023px) and (min-width: 880px){
+    .numeros-grid{ grid-template-columns: repeat(12, 1fr); gap:0.35rem; padding: 0 0.5rem; }
+    .numero-btn { padding: 0.45rem 0.55rem; height: 46px; font-size: 0.8rem; aspect-ratio: 2.5; }
+    .precio-big{ font-size: clamp(1rem, 7vw, 4rem) !important; }
     .resumen-actions{ flex-direction:column }
     .maquina-controls{ flex-direction:column; align-items:stretch }
     .maquina-actions{ margin-left:0; margin-top:0.5rem }
-    .compra-hero-cta{ flex-direction:column; align-items:stretch; gap:1rem }
-    .compra-hero-cta .btn{ padding:0.85rem 1.5rem; width:100%; }
+    .compra-hero-cta{ flex-direction:column; align-items:center; justify-content:center; gap:1rem }
+    .compra-hero-cta .btn{ padding:1rem 2rem; width:auto; max-width:280px; font-size:0.95rem; }
     .btn-probar-maquina{ padding:0.85rem 2rem; font-size:1rem }
     .leyenda-estados{ gap:0.5rem }
     .leyenda-item{ font-size:0.8rem }
@@ -3996,54 +4270,107 @@ footer {
     .rango-boxes { margin: 1.25rem 0 1.25rem; padding: 0.5rem 0.5rem 0.5rem 0; }
     .promos-cards { display: grid !important; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
     .promo-card { width: 100% !important; max-width: none !important; height: 70px; }
-    
-    /* Ajustar contenedor scrolleable para tablet */
     .boletos-container-scrolleable {
         max-height: 600px;
         padding: 1.25rem;
     }
-    
     .instruccion-rango {
         padding: 0.5rem 0;
         margin-bottom: 0.5rem;
     }
-    
     .instruccion-rango p {
         font-size: 0.9rem;
     }
 }
 
-/* MOBILE - 640px y menos */
-@media (max-width: 640px) {
-    .numeros-grid{ grid-template-columns: repeat(auto-fill, minmax(40px,1fr)); gap:0.2rem; padding: 0 0.25rem; }
-    .numero-btn { padding: 0.4rem; min-height: 42px; font-size: 0.7rem; }
-    .rango-boxes { margin: 0.75rem 0 1rem; padding: 0.35rem; gap: 0.5rem; }
-    .rango-btn { padding: 0.6rem 0.8rem; font-size: 0.8rem; }
-    
-    .promos-cards { grid-template-columns: 1fr !important; }
-    .promo-card { height: auto !important; padding: 0.75rem !important; }
-    
-    .compra-hero-title { font-size: 1.5rem; padding: 0 0.5rem; }
-    .compra-hero-sub { font-size: 0.95rem; padding: 0 0.5rem; }
-    .precio-card-main { padding: 1rem 0.75rem; }
-    .precio-big { font-size: 1.25rem; }
+/* Responsive para compra - TABLET (768px a 879px) */
+@media (max-width: 879px) and (min-width: 768px){
+    .numeros-grid{ grid-template-columns: repeat(10, 1fr); gap:0.35rem; padding: 0 0.5rem; }
+    .numero-btn { padding: 0.45rem 0.55rem; height: 46px; font-size: 0.78rem; aspect-ratio: 2.5; }
+    .precio-big{ font-size: clamp(1rem, 7vw, 4rem) !important; }
+    .resumen-actions{ flex-direction:column }
+    .maquina-controls{ flex-direction:column; align-items:stretch }
+    .maquina-actions{ margin-left:0; margin-top:0.5rem }
+    .compra-hero-cta{ flex-direction:column; align-items:center; justify-content:center; gap:1rem }
+    .compra-hero-cta .btn{ padding:1rem 2rem; width:auto; max-width:280px; font-size:0.95rem; }
+    .btn-probar-maquina{ padding:0.85rem 2rem; font-size:1rem }
+    .leyenda-estados{ gap:0.5rem }
+    .leyenda-item{ font-size:0.8rem }
     .rango-btn { padding: 0.7rem 0.9rem; font-size: 0.9rem; }
+    .rango-boxes { margin: 1.25rem 0 1.25rem; padding: 0.5rem 0.5rem 0.5rem 0; }
     .promos-cards { display: grid !important; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
     .promo-card { width: 100% !important; max-width: none !important; height: 70px; }
-    
-    /* Ajustar contenedor scrolleable para mobile */
+    .boletos-container-scrolleable {
+        max-height: 600px;
+        padding: 1.25rem;
+    }
+    .instruccion-rango {
+        padding: 0.5rem 0;
+        margin-bottom: 0.5rem;
+    }
+    .instruccion-rango p {
+        font-size: 0.9rem;
+    }
+}
+
+/* Responsive para compra - TABLET PEQUEÑO (640px a 767px) */
+@media (max-width: 767px) and (min-width: 640px){
+    .numeros-grid{ grid-template-columns: repeat(8, 1fr); gap:0.33rem; padding: 0 0.3rem; }
+    .numero-btn { padding: 0.4rem 0.5rem; height: 44px; font-size: 0.74rem; aspect-ratio: 2.5; }
+    .precio-big{ font-size: clamp(1rem, 7vw, 4rem) !important; }
+    .resumen-actions{ flex-direction:column }
+    .maquina-controls{ flex-direction:column; align-items:stretch }
+    .maquina-actions{ margin-left:0; margin-top:0.5rem }
+    .compra-hero-cta{ flex-direction:column; align-items:center; justify-content:center; gap:1rem }
+    .compra-hero-cta .btn{ padding:1rem 2rem; width:auto; max-width:280px; font-size:0.95rem; }
+    .btn-probar-maquina{ padding:0.85rem 2rem; font-size:1rem }
+    .leyenda-estados{ gap:0.5rem }
+    .leyenda-item{ font-size:0.8rem }
+    .rango-btn { padding: 0.7rem 0.9rem; font-size: 0.9rem; }
+    .rango-boxes { margin: 1.25rem 0 1.25rem; padding: 0.5rem 0.5rem 0.5rem 0; }
+    .promos-cards { display: grid !important; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
+    .promo-card { width: 100% !important; max-width: none !important; height: 70px; }
+    .boletos-container-scrolleable {
+        max-height: 550px;
+        padding: 1.1rem;
+    }
+    .instruccion-rango {
+        padding: 0.5rem 0;
+        margin-bottom: 0.5rem;
+    }
+    .instruccion-rango p {
+        font-size: 0.88rem;
+    }
+}
+
+/* MOBILE - 639px y menos */
+@media (max-width: 639px) {
+    .numeros-grid{ grid-template-columns: repeat(5, 1fr); gap:0.3rem; padding: 0 0.3rem; }
+    .numero-btn { padding: 0.5rem 0.6rem; height: 50px; font-size: 0.75rem; aspect-ratio: 2.5; }
+    .numero-btn.reserved::after { width: 10px; height: 10px; font-size: 0.36rem; top: 0px; right: 0px; }
+    .precio-big{ font-size: clamp(1rem, 7vw, 4rem) !important; }
+    .resumen-actions{ flex-direction:column }
+    .maquina-controls{ flex-direction:column; align-items:stretch }
+    .maquina-actions{ margin-left:0; margin-top:0.5rem }
+    .compra-hero-cta{ flex-direction:column; align-items:center; justify-content:center; gap:1rem }
+    .compra-hero-cta .btn{ padding:1rem 2rem; width:auto; max-width:280px; font-size:0.95rem; }
+    .btn-probar-maquina{ padding:0.85rem 2rem; font-size:1rem }
+    .leyenda-estados{ gap:0.5rem }
+    .leyenda-item{ font-size:0.8rem }
+    .rango-btn { padding: 0.6rem 0.8rem; font-size: 0.8rem; }
+    .rango-boxes { margin: 0.75rem 0 1rem; padding: 0.35rem; gap: 0.5rem; }
+    .promos-cards { display: grid !important; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
+    .promo-card { width: 100% !important; max-width: none !important; height: 70px; }
     .boletos-container-scrolleable {
         max-height: 500px;
         padding: 1rem;
         margin: 1rem 0;
         border-width: 1px;
     }
-    
     .instruccion-rango {
         padding: 0.5rem 0;
         margin-bottom: 0.5rem;
     }
-    
     .instruccion-rango p {
         font-size: 0.85rem;
     }
@@ -4330,6 +4657,16 @@ footer {
     animation: float 3s ease-in-out infinite;
 }
 
+.carrito-logo {
+    height: 80px;
+    width: auto;
+    max-width: 180px;
+    display: block;
+    margin: 0 auto 0.75rem;
+    object-fit: contain;
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.08));
+}
+
 @keyframes float {
     0%, 100% { transform: translateY(0px); }
     50% { transform: translateY(-10px); }
@@ -4416,7 +4753,14 @@ footer {
 .carrito-items {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 0;
+    /* ⚡ CSS Containment: Optimización de rendering para muchos items */
+    contain: content;
+}
+
+/* Separación entre un boleto normal y el siguiente (no entre boleto + oportunidades) */
+.carrito-item:not(.carrito-item-oportunidades-container) + .carrito-item:not(.carrito-item-oportunidades-container) {
+    margin-top: 1rem;
 }
 
 .carrito-item {
@@ -4428,6 +4772,9 @@ footer {
     border-radius: var(--radius-md) var(--radius-md) 0 0;
     border: 1.5px solid var(--border-color);
     border-bottom: none;
+    /* ⚡ Cada item es independiente para layout */
+    contain: layout style paint;
+    will-change: auto;
     transition: all var(--transition-normal);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
@@ -4443,6 +4790,30 @@ footer {
     display: flex;
     flex-direction: column;
     gap: 0.35rem;
+}
+
+.boleto-numero {
+    border: 2px solid #00000008;
+    border-radius: 6px;
+    padding: 0.4rem 0.8rem;
+    background: linear-gradient(135deg, #f0f4ff 0%, #faf8ff 100%);
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #000000;
+    font-family: 'Courier New', monospace;
+}
+
+/* Boletos de oportunidades - estilo diferente */
+.boleto-numero-oportunidad {
+    border: 2px solid #00000008;
+    border-radius: 6px;
+    padding: 0.25rem 0.6rem;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.06), rgba(5, 150, 105, 0.06));
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #0000008c;
+    font-family: 'Courier New', monospace;
+    display: inline-block;
 }
 
 .carrito-item-numero-text {
@@ -5088,8 +5459,8 @@ footer {
     position: relative;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    overflow: hidden;
+    justify-content: flex-start;
+    overflow: visible;
     aspect-ratio: 16 / 10; /* proporción tarjeta de crédito */
 }
 
@@ -5206,7 +5577,7 @@ footer {
     display: flex;
     align-items: center;
     gap: 1rem;
-    margin: 1.5rem 0;
+    margin: 0.75rem 0;
     position: relative;
     z-index: 1;
     min-height: 40px;
@@ -5271,33 +5642,48 @@ footer {
     padding: 2rem 0;
 }
 
-.efectivo-card {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-radius: 12px;
-    padding: 1.75rem;
-    color: white;
-    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.25);
-    transition: all var(--transition-normal);
-    position: relative;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-}
+/* ========================================================================
+   SECCIÓN: EFECTIVO-CARD (Tarjetas de Depósitos en Efectivo)
+   UBICACIÓN: cuentas-pago.html
+   ======================================================================
+   ⚠️ ARQUITECTURA DE ESTILOS - IMPORTANTE:
+   
+   NUNCA agregues estilos base para .efectivo-card aquí.
+   Los estilos base (.efectivo-card sin [data-bank]) están en:
+   → cuentas-pago.html (línea ~111)
+   
+   AQUÍ SOLO van los estilos especializados:
+   → .efectivo-card[data-bank="oxxo"]
+   → .efectivo-card[data-bank="walmart"]
+   → .efectivo-card[data-bank="soriana"]
+   
+   Si necesitas cambiar estilos base (background, border, padding, etc):
+   → EDITA: cuentas-pago.html línea ~111
+   → NO AQUÍ en styles.css
+   
+   RAZÓN: En producción, conflictos de CSS causaron que las tarjetas
+   cambien de color al cambiar pestañas del navegador (2-feb-2026).
+   
+   Para más info, lee: CSS_ARCHITECTURE.md
+   ======================================================================== */
 
 /* Gradientes por tienda de efectivo */
 .efectivo-card[data-bank="oxxo"] {
     background: linear-gradient(135deg, #FF0000 0%, #CC0000 100%);
-    box-shadow: 0 8px 24px rgba(255, 0, 0, 0.25);
+    box-shadow: 0 8px 24px rgba(255, 0, 0, 0.25) !important;
+    color: white;
 }
 
 .efectivo-card[data-bank="walmart"] {
     background: linear-gradient(135deg, #0071CE 0%, #003D7A 100%);
-    box-shadow: 0 8px 24px rgba(0, 113, 206, 0.25);
+    box-shadow: 0 8px 24px rgba(0, 113, 206, 0.25) !important;
+    color: white;
 }
 
 .efectivo-card[data-bank="soriana"] {
     background: linear-gradient(135deg, #F39C12 0%, #D68910 100%);
-    box-shadow: 0 8px 24px rgba(243, 156, 18, 0.25);
+    box-shadow: 0 8px 24px rgba(243, 156, 18, 0.25) !important;
+    color: white;
 }
 
 .efectivo-card::before {
@@ -5324,21 +5710,16 @@ footer {
     pointer-events: none;
 }
 
-.efectivo-card:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 12px 32px rgba(102, 126, 234, 0.35);
-}
-
 .efectivo-card[data-bank="oxxo"]:hover {
-    box-shadow: 0 12px 32px rgba(255, 0, 0, 0.35);
+    box-shadow: 0 12px 32px rgba(255, 0, 0, 0.35) !important;
 }
 
 .efectivo-card[data-bank="walmart"]:hover {
-    box-shadow: 0 12px 32px rgba(0, 113, 206, 0.35);
+    box-shadow: 0 12px 32px rgba(0, 113, 206, 0.35) !important;
 }
 
 .efectivo-card[data-bank="soriana"]:hover {
-    box-shadow: 0 12px 32px rgba(243, 156, 18, 0.35);
+    box-shadow: 0 12px 32px rgba(243, 156, 18, 0.35) !important;
 }
 
 .efectivo-header {
@@ -5560,13 +5941,17 @@ footer {
     border-radius: var(--radius-lg);
     overflow: hidden;
     box-shadow: var(--shadow-md);
-    transition: all var(--transition-normal);
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+    /* OPTIMIZACIONES DE RENDIMIENTO */
+    contain: layout style paint;
+    will-change: box-shadow, border-color;
+    backface-visibility: hidden;
+    transform: translateZ(0);
 }
 
 .orden-card:hover {
     border-color: var(--primary);
     box-shadow: 0 8px 16px rgba(124, 58, 237, 0.12);
-    transform: translateY(-2px);
 }
 
 .orden-header {
@@ -5681,10 +6066,11 @@ footer {
 }
 
 .boleto-numero {
-    background: linear-gradient(135deg, var(--primary-light), var(--primary));
-    color: white;
+    background: linear-gradient(135deg, #f0f4ff 0%, #faf8ff 100%);
+    color: #000000;
     padding: 0.5rem 0.875rem;
-    border-radius: var(--radius-md);
+    border: 2px solid #00000008;
+    border-radius: 6px;
     font-size: 0.85rem;
     font-weight: 600;
     transition: all var(--transition-fast);
@@ -5840,10 +6226,18 @@ footer {
     font-size: 1.1rem;
     font-weight: 700;
     color: var(--primary);
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
     display: flex;
     align-items: center;
     gap: 0.5rem;
+}
+
+.payment-method-subtitle {
+    font-size: 0.9rem;
+    color: var(--text-light);
+    margin: 0 0 1rem 0;
+    font-weight: 500;
+    line-height: 1.4;
 }
 
 /* Stack list para opciones de pago */
@@ -6205,11 +6599,15 @@ footer {
     cursor: pointer;
     white-space: nowrap;
     overflow: visible;
-    animation: pulse-btn 2.5s ease-in-out infinite;
     transform: translateZ(0);
     will-change: transform;
     opacity: 1;
     pointer-events: auto;
+}
+
+/* Animación solo cuando carga la página */
+.btn-flotante-comprobante.bounce-animate {
+    animation: bounce-shake-suave 2s ease-in-out forwards;
 }
 
 /* Ocultar botón cuando hay modales abiertos */
@@ -6246,15 +6644,26 @@ footer {
     letter-spacing: 0.5px;
 }
 
-/* Animación pulse para atraer atención */
-@keyframes pulse-btn {
+/* Animación bounce-shake suave para primeros 2 segundos */
+@keyframes bounce-shake-suave {
     0% {
+        transform: translateY(0) translateX(0);
         box-shadow: 0 8px 24px rgba(232, 86, 59, 0.35);
     }
+    25% {
+        transform: translateY(-6px) translateX(-1px);
+        box-shadow: 0 12px 28px rgba(232, 86, 59, 0.42);
+    }
     50% {
-        box-shadow: 0 12px 32px rgba(232, 86, 59, 0.5);
+        transform: translateY(0) translateX(1px);
+        box-shadow: 0 8px 24px rgba(232, 86, 59, 0.35);
+    }
+    75% {
+        transform: translateY(-6px) translateX(-1px);
+        box-shadow: 0 12px 28px rgba(232, 86, 59, 0.42);
     }
     100% {
+        transform: translateY(0) translateX(0);
         box-shadow: 0 8px 24px rgba(232, 86, 59, 0.35);
     }
 }

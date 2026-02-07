@@ -4,13 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self' http://127.0.0.1:* http://localhost:*; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://fonts.googleapis.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; connect-src 'self' http://127.0.0.1:* http://localhost:* https:; img-src 'self' data: https:;">
-    <title>Orden Confirmada - SORTEOS YEPE</title>
-    <link rel="stylesheet" href="css/styles.css?v=20251220.5">
+    <!-- METADATOS DINÁMICOS - Inyectados por js/meta-inyector.js desde config.js -->
+    <title>Orden Confirmada - Sorteos Torres</title>
+    <link rel="stylesheet" href="css/styles.css?v=20251228.15">
     <link rel="preload" as="image" href="images/logo.png" fetchpriority="high">
     <link rel="icon" href="images/logo.png" sizes="32x32">
     <link rel="apple-touch-icon" href="images/logo.png">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- ✅ PRIMERO: Inyector de metadatos (se ejecuta ANTES que todo) -->
+    <script src="js/config.js?v=1766990666"></script>
+    <script src="js/meta-inyector.js"></script>
     <script src="js/theme-loader.js?v=20251220.2"></script>
     <script>
         (function limpiarCacheYFechas() {
@@ -316,8 +320,32 @@
                 return ranges.join(', ');
             }
 
-            // Obtener datos de la orden desde localStorage - INMEDIATAMENTE
-            const orden = JSON.parse(localStorage.getItem('rifaplus_orden_actual') || '{}');
+            // Obtener datos de la orden desde localStorage
+            // ✅ ESTRATEGIA: Primero intenta leer datos FINALES (después de posibles filtrados por conflicto)
+            // Si no existen, usa los datos originales
+            let ordenFinal = null;
+            let ordenOrigen = null;
+            
+            // PASO 1: Intentar leer datos finales (generados después de filtrado por conflicto)
+            try {
+                const datosFinales = localStorage.getItem('rifaplus_orden_final');
+                if (datosFinales) {
+                    ordenFinal = JSON.parse(datosFinales);
+                    console.log('📦 Usando datos FINALES de orden (después de filtrado):', ordenFinal);
+                }
+            } catch (e) {
+                console.warn('⚠️  No se pudo leer datos finales:', e);
+            }
+            
+            // PASO 2: Leer datos originales como fallback
+            try {
+                ordenOrigen = JSON.parse(localStorage.getItem('rifaplus_orden_actual') || '{}');
+            } catch (e) {
+                ordenOrigen = {};
+            }
+            
+            // PASO 3: Usar datos finales si existen, sino los originales
+            const orden = ordenFinal || ordenOrigen;
             
             if (!orden.ordenId) {
                 // Si no hay orden, redirigir a compra al instante
@@ -346,22 +374,48 @@
             requestAnimationFrame(() => {
                 const ordenId = document.getElementById('ordenId');
                 const ordenBoletos = document.getElementById('ordenBoletos');
+                const labelBoletos = document.getElementById('labelBoletos');
                 const ordenTotal = document.getElementById('ordenTotal');
                 const ordenWhatsapp = document.getElementById('ordenWhatsapp');
                 const ordenOportunidadesContainer = document.getElementById('ordenOportunidadesContainer');
                 const ordenOportunidades = document.getElementById('ordenOportunidades');
+                const labelOportunidades = document.getElementById('labelOportunidades');
                 
                 if (ordenId) ordenId.textContent = orden.ordenId;
-                if (ordenBoletos) ordenBoletos.textContent = boletosCompactados;
+                if (ordenBoletos) {
+                    ordenBoletos.textContent = boletosCompactados;
+                    if (labelBoletos) labelBoletos.textContent = `Boletos (${boletosArray.length}):`;
+                }
                 if (ordenTotal) ordenTotal.textContent = totalDisplay;
                 if (ordenWhatsapp) ordenWhatsapp.textContent = whatsapp;
                 
-                // ✅ MOSTRAR OPORTUNIDADES SI EXISTEN
-                const oportunidadesStorage = JSON.parse(localStorage.getItem('rifaplus_oportunidades') || '{}');
-                const boletosOcultos = oportunidadesStorage.boletosOcultos || [];
-                if (boletosOcultos.length > 0 && ordenOportunidadesContainer && ordenOportunidades) {
+                // ✅ MOSTRAR OPORTUNIDADES CORRECTAS (PRIORIDAD: Datos finales > localStorage actualizado)
+                // Los datos finales contienen lo que realmente se guardó en BD
+                const oportunidadesHabilitadas = window.rifaplusConfig?.rifa?.oportunidades?.enabled === true;
+                let boletosOcultos = [];
+                
+                // ESTRATEGIA: Intenta leer oportunidades en este orden (de más confiable a menos)
+                if (orden.boletosOcultos && Array.isArray(orden.boletosOcultos) && orden.boletosOcultos.length > 0) {
+                    // PRIMERA OPCIÓN: Del objeto orden (que viene de datos finales)
+                    boletosOcultos = orden.boletosOcultos;
+                    console.log('✅ Oportunidades del objeto orden (DATOS FINALES FILTRADOS):', boletosOcultos);
+                } else {
+                    // SEGUNDA OPCIÓN: Del localStorage actualizado
+                    const oportunidadesStorage = JSON.parse(localStorage.getItem('rifaplus_oportunidades') || '{}');
+                    boletosOcultos = oportunidadesStorage.boletosOcultos || [];
+                    console.log('⚠️  Oportunidades del localStorage:', boletosOcultos);
+                }
+                
+                console.log(`📊 Resumen: ${boletosOcultos.length} oportunidades, Habilitadas: ${oportunidadesHabilitadas}`);
+                console.log(`📋 Oportunidades a mostrar: [${boletosOcultos.join(', ')}]`);
+                
+                if (oportunidadesHabilitadas && boletosOcultos && boletosOcultos.length > 0 && ordenOportunidadesContainer && ordenOportunidades) {
                     ordenOportunidadesContainer.style.display = 'block';
                     ordenOportunidades.textContent = boletosOcultos.join(', ');
+                    if (labelOportunidades) labelOportunidades.textContent = `Oportunidades Adicionales (${boletosOcultos.length}):`;
+                    console.log('✅ Oportunidades mostradas correctamente');
+                } else {
+                    console.log(`ℹ️  No se muestran oportunidades: habilitadas=${oportunidadesHabilitadas}, cantidad=${boletosOcultos?.length || 0}`);
                 }
             });
         })();
@@ -432,11 +486,11 @@
                     <span class="confirmacion-orden-valor" id="ordenId">RIFA-00000</span>
                 </div>
                 <div class="confirmacion-orden-item">
-                    <span class="confirmacion-orden-label">Boletos:</span>
+                    <span class="confirmacion-orden-label" id="labelBoletos">Boletos:</span>
                     <span class="confirmacion-orden-valor" id="ordenBoletos">-</span>
                 </div>
-                <div class="confirmacion-orden-item" id="ordenOportunidadesContainer" style="display: none; background: linear-gradient(135deg, rgba(124, 58, 237, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%); padding: 1rem; border-radius: 0.5rem; border-left: 4px solid #7C3AED;">
-                    <span class="confirmacion-orden-label">🎁 Boletos SORPRESA:</span>
+                <div class="confirmacion-orden-item" id="ordenOportunidadesContainer" style="display: none;">
+                    <span class="confirmacion-orden-label" id="labelOportunidades">Oportunidades Adicionales:</span>
                     <span class="confirmacion-orden-valor" id="ordenOportunidades">-</span>
                 </div>
                 <div class="confirmacion-orden-item">
@@ -513,6 +567,7 @@
     <!-- Scripts -->
     <script src="js/main.js?v=20251220.2"></script>
     <script src="js/calculo-precios.js?v=20251230.1"></script>
+
     <script src="js/carrito-global.js?v=1766990666"></script>
     <script>
         // ⭐ SCRIPT MUY SIMPLE: Solo manejar el botón (los datos ya están inyectados por el script inicial)
