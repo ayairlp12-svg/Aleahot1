@@ -283,11 +283,7 @@ function guardarIdEnLocalStorage(orderId) {
         if (used.length > 10000) {
             used = used.slice(-10000);
         }
-        try {
-            localStorage.setItem(usedKey, JSON.stringify(used));
-        } catch (e) {
-            console.warn('⚠️ No se pudo guardar IDs en localStorage');
-        }
+        safeTrySetItem(usedKey, JSON.stringify(used));
     }
 }
 
@@ -318,17 +314,7 @@ async function guardarClienteEnStorage(nombre, apellidos, whatsapp, estado, ciud
         fecha: new Date().toISOString()
     };
     
-    try {
-        localStorage.setItem('rifaplus_cliente', JSON.stringify(clienteData));
-    } catch (e) {
-        if (e.name === 'QuotaExceededError') {
-            console.warn('⚠️ [MODAL] localStorage lleno, datos del cliente en memoria (DB es autoridad)');
-            // Silent fail - datos están en clienteData variable
-            // Continuar sin bloquear - el backend tiene la verdad
-        } else {
-            console.error('❌ Error guardando cliente en storage:', e);
-        }
-    }
+    safeTrySetItem('rifaplus_cliente', JSON.stringify(clienteData));
     
     return clienteData;
 }
@@ -350,14 +336,9 @@ function guardarBoletoSeleccionadosEnStorage() {
     try {
         // Guardar números seleccionados para que aparezcan en la orden
         const boletos = Array.from(selectedNumbersGlobal);
-        localStorage.setItem('rifaplus_boletos', JSON.stringify(boletos));
+        safeTrySetItem('rifaplus_boletos', JSON.stringify(boletos));
     } catch (e) {
-        if (e.name === 'QuotaExceededError') {
-            console.warn('⚠️ [MODAL] localStorage lleno, continuando sin guardar boletos (DB es autoridad)');
-            // Silent fail - los boletos ya están en selectedNumbersGlobal en memoria
-            // El backend tiene la verdad. Continuar sin bloquear.
-        } else {
-            console.error('❌ Error guardando boletos en storage:', e);
+        console.error('❌ Error preparando boletos para storage:', e);
         }
     }
     

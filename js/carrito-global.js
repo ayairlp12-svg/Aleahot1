@@ -298,7 +298,7 @@ function actualizarVistaCarritoGlobal() {
 
     // Guardar totales
     try {
-        localStorage.setItem('rifaplus_total', JSON.stringify({
+        safeTrySetItem('rifaplus_total', JSON.stringify({
             subtotal: calcTotal.subtotal,
             descuento: calcTotal.descuentoMonto,
             totalFinal: calcTotal.totalFinal,
@@ -363,7 +363,7 @@ function obtenerBoletosSelecionados() {
         // Si hay diferencia, usar el Set global (es la fuente primaria)
         // pero actualizar localStorage por si acaso
         const currentSet = new Set(Array.from(selectedNumbersGlobal));
-        localStorage.setItem('rifaplusSelectedNumbers', JSON.stringify(Array.from(currentSet)));
+        safeTrySetItem('rifaplusSelectedNumbers', JSON.stringify(Array.from(currentSet)));
         
         // ⭐ IMPORTANTE: Retornar siempre números (no strings)
         return Array.from(currentSet).map(n => parseInt(n, 10));
@@ -484,7 +484,7 @@ function handleProcederAlPago() {
         cerrarCarritoGlobal();
     } else {
         // Si estamos en otra página, marcar para iniciar flujo al llegar a compra.html
-        localStorage.setItem('rifaplusIniciarFlujoPago', 'true');
+        safeTrySetItem('rifaplusIniciarFlujoPago', 'true');
         window.location.href = 'compra.html';
     }
 }
@@ -578,7 +578,7 @@ function agregarBoletoSelecionado(numero) {
         }
         
         numbers.push(numero);
-        localStorage.setItem('rifaplusSelectedNumbers', JSON.stringify(numbers));
+        safeTrySetItem('rifaplusSelectedNumbers', JSON.stringify(numbers));
     }
     
     // Actualizar todas las vistas
@@ -623,7 +623,7 @@ function agregarMuchosBoletosAlCarrito(numeros) {
             }
         });
         
-        localStorage.setItem('rifaplusSelectedNumbers', JSON.stringify(Array.from(setNumbers)));
+        safeTrySetItem('rifaplusSelectedNumbers', JSON.stringify(Array.from(setNumbers)));
     }
     
     if (agregados === 0) return false;
@@ -677,7 +677,7 @@ function sincronizarCarritoAlLocalStorage() {
         if (typeof selectedNumbersGlobal !== 'undefined') {
             try {
                 const numbers = Array.from(selectedNumbersGlobal);
-                localStorage.setItem('rifaplusSelectedNumbers', JSON.stringify(numbers));
+                safeTrySetItem('rifaplusSelectedNumbers', JSON.stringify(numbers));
                 console.debug(`⚡ Sincronizado ${numbers.length} números a localStorage`);
             } catch (e) {
                 console.warn('Error sincronizando a localStorage:', e.message);
@@ -952,7 +952,7 @@ function calcularYLlenarOportunidades(numerosOrdenados, retryCount = 0) {
                 generador: 'carrito-global-v3' // MARCADOR de generador oficial
             };
             try {
-                localStorage.setItem('rifaplus_oportunidades', JSON.stringify(datosAGuardar));
+                safeTrySetItem('rifaplus_oportunidades', JSON.stringify(datosAGuardar));
                 console.log(`✅ [CARRITO] Oportunidades guardadas en localStorage:`, {
                     total: boletosOcultosArray.length,
                     boletos: numerosOrdenados.length,

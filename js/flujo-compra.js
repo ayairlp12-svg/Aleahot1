@@ -253,7 +253,7 @@ async function mostrarOrdenFormal(cuenta) {
     }
     
     // Guardar datos para orden-formal.js (sin email)
-    localStorage.setItem('rifaplus_cliente', JSON.stringify({
+    safeTrySetItem('rifaplus_cliente', JSON.stringify({
         nombre: clienteCheckout.nombre || '',
         apellidos: clienteCheckout.apellidos || clienteCheckout.apellido || '',
         whatsapp: clienteCheckout.whatsapp || '',
@@ -262,7 +262,7 @@ async function mostrarOrdenFormal(cuenta) {
         ordenId: clienteCheckout.ordenId || `RIFA-${Date.now()}`
     }));
     
-    localStorage.setItem('rifaplus_boletos', JSON.stringify(boletos));
+    safeTrySetItem('rifaplus_boletos', JSON.stringify(boletos));
     
     // ✅ GENERAR Y GUARDAR OPORTUNIDADES (ROBUSTO CON VALIDACIONES)
     console.log('🎁 [flujo-compra] Iniciando generación de oportunidades...');
@@ -319,7 +319,7 @@ async function mostrarOrdenFormal(cuenta) {
     const precioUnitario = obtenerPrecioDinamico();
     const totales = calcularTotales(boletos.length, precioUnitario);
     
-    localStorage.setItem('rifaplus_total', JSON.stringify({
+    safeTrySetItem('rifaplus_total', JSON.stringify({
         subtotal: totales.subtotal,
         descuento: totales.descuentoMonto,
         totalFinal: totales.totalFinal
@@ -342,7 +342,7 @@ async function mostrarOrdenFormal(cuenta) {
         referencia: clienteCheckout.ordenId || `RIFA-${Date.now()}`
     };
     
-    localStorage.setItem('rifaplus_orden_actual', JSON.stringify(orden));
+    safeTrySetItem('rifaplus_orden_actual', JSON.stringify(orden));
     
     // Usar función de orden-formal.js si está disponible
     if (typeof window.abrirOrdenFormal === 'function') {

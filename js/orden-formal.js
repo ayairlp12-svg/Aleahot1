@@ -58,7 +58,7 @@ function abrirOrdenFormal(cuenta) {
         if (selectedNumbers && selectedNumbers.length > 0) {
             console.warn('⚠️  rifaplus_boletos está vacío, usando rifaplusSelectedNumbers como fallback');
             boletos = selectedNumbers;
-            localStorage.setItem('rifaplus_boletos', JSON.stringify(boletos));
+            safeTrySetItem('rifaplus_boletos', JSON.stringify(boletos));
         }
     }
 
@@ -69,7 +69,7 @@ function abrirOrdenFormal(cuenta) {
     
     // Guardar el ID reconstruido en localStorage para futuros usos
     cliente.ordenId = ordenId;
-    localStorage.setItem('rifaplus_cliente', JSON.stringify(cliente));
+    safeTrySetItem('rifaplus_cliente', JSON.stringify(cliente));
 
     ordenActual = {
         ordenId: ordenId,
@@ -90,7 +90,7 @@ function abrirOrdenFormal(cuenta) {
     };
 
     // Guardar en storage
-    localStorage.setItem('rifaplus_orden_actual', JSON.stringify(ordenActual));
+    safeTrySetItem('rifaplus_orden_actual', JSON.stringify(ordenActual));
 
     // Renderizar modal
     renderizarOrdenFormal(ordenActual);
@@ -540,7 +540,7 @@ function limpiarCarritoCompletamente() {
     }
     
     // Marcar que regresará a compra.html
-    localStorage.setItem('rifaplusOrdenEnviada', 'true');
+    safeTrySetItem('rifaplusOrdenEnviada', 'true');
     
     // Cerrar modal
     cerrarOrdenFormal();
@@ -1053,23 +1053,9 @@ async function guardarOrden() {
                     }
                 }
                 // GUARDAR EN LOCALSTORAGE (con fallback si quota se excede)
-                try {
-                    localStorage.setItem('rifaplus_orden_actual', JSON.stringify(ordenActual));
-                    localStorage.setItem('rifaplus_orden_url', respuestaExitosa.url || '');
-                    localStorage.setItem('rifaplus_orden_confirmada', 'true');
-                } catch (e) {
-                    if (e.name === 'QuotaExceededError') {
-                        console.warn('⚠️  [GRACEFUL FALLBACK] localStorage quota exceeded para datos de orden');
-                        // Intentar al menos guardar la URL como fallback
-                        try {
-                            localStorage.setItem('rifaplus_orden_url', respuestaExitosa.url || '');
-                        } catch (e2) {
-                            console.warn('    ℹ️  Los datos están en BD, se recuperarán desde API');
-                        }
-                    } else {
-                        throw e;
-                    }
-                }
+                safeTrySetItem('rifaplus_orden_actual', JSON.stringify(ordenActual));
+                safeTrySetItem('rifaplus_orden_url', respuestaExitosa.url || '');
+                safeTrySetItem('rifaplus_orden_confirmada', 'true');
                 
                 // ✅ IMPORTANTE: Guardar DATOS FINALES de la orden (después de posibles filtrados por conflicto)
                 // Esto es lo que orden-confirmada.html mostrará al usuario
@@ -1085,38 +1071,18 @@ async function guardarOrden() {
                 };
                 
                 // ✅ INTENTAR guardar en localStorage, pero con fallback si no hay espacio
-                try {
-                    localStorage.setItem('rifaplus_orden_final', JSON.stringify(datosFinalesOrden));
-                    console.log('📦 Datos finales de la orden guardados para orden-confirmada:', datosFinalesOrden);
-                } catch (e) {
-                    if (e.name === 'QuotaExceededError') {
-                        console.warn('⚠️  [GRACEFUL FALLBACK] localStorage quota exceeded para rifaplus_orden_final');
-                        console.warn('    ℹ️  Los datos están en la BD, se recuperarán en orden-confirmada.html desde API');
-                        // NO hacer throw - la orden está en BD, es solo para cache local
-                    } else {
-                        throw e;
-                    }
-                }
+                safeTrySetItem('rifaplus_orden_final', JSON.stringify(datosFinalesOrden));
+                console.log('📦 Datos finales de la orden guardados para orden-confirmada:', datosFinalesOrden);
                 
                 // ✅ IMPORTANTE: Actualizar TAMBIÉN rifaplus_oportunidades con los datos correctos filtrados
                 // Esto asegura que orden-confirmada.html y mis-boletos.html vean los datos correctos
-                try {
-                    localStorage.setItem('rifaplus_oportunidades', JSON.stringify({
-                        boletosOcultos: payload.boletosOcultos || [],
-                        boletosSeleccionados: payload.boletos || [],
-                        cantidad: (payload.boletosOcultos || []).length,
-                        oportunidadesPorBoleto: {} // Vacío porque ya no es necesario
-                    }));
-                    console.log('✅ localStorage rifaplus_oportunidades actualizado con datos filtrados:', payload.boletosOcultos);
-                } catch (e) {
-                    if (e.name === 'QuotaExceededError') {
-                        console.warn('⚠️  [GRACEFUL FALLBACK] localStorage quota exceeded para rifaplus_oportunidades');
-                        console.warn('    ℹ️  Los datos están en la BD, se recuperarán desde API');
-                        // NO hacer throw - la orden está en BD
-                    } else {
-                        throw e;
-                    }
-                }
+                safeTrySetItem('rifaplus_oportunidades', JSON.stringify({
+                    boletosOcultos: payload.boletosOcultos || [],
+                    boletosSeleccionados: payload.boletos || [],
+                    cantidad: (payload.boletosOcultos || []).length,
+                    oportunidadesPorBoleto: {} // Vacío porque ya no es necesario
+                }));
+                console.log('✅ localStorage rifaplus_oportunidades actualizado con datos filtrados:', payload.boletosOcultos);
 
                 // GUARDAR EN HISTORIAL
                 try {
@@ -1127,7 +1093,7 @@ async function guardarOrden() {
                         fecha: new Date().toISOString(),
                         url_confirmacion: respuestaExitosa.url
                     });
-                    localStorage.setItem('rifaplus_ordenes_admin', JSON.stringify(ordenes));
+                    safeTrySetItem('rifaplus_ordenes_admin', JSON.stringify(ordenes));
                 } catch (e) {
                     console.warn('⚠️  No se pudo guardar historial:', e?.message);
                 }
@@ -1156,7 +1122,7 @@ async function guardarOrden() {
                 localStorage.removeItem('rifaplusBoletosTimestamp');
                 
                 // Marcar que regresará a compra.html
-                localStorage.setItem('rifaplusOrdenEnviada', 'true');
+                safeTrySetItem('rifaplusOrdenEnviada', 'true');
                 
                 cerrarOrdenFormal();
                 
