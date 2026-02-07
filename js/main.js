@@ -162,11 +162,24 @@
             window.rifaplusOportunidadesDisponibles = disponibles;
             window.rifaplusOportunidadesLoaded = true;
             
-            // Guardar en caché
-            localStorage.setItem(cacheKey, JSON.stringify({
-                disponibles: disponibles,
-                timestamp: Date.now()
-            }));
+            // 🛡️ Intentar guardar en caché, pero NO fallar si localStorage está lleno
+            try {
+                const cacheData = JSON.stringify({
+                    disponibles: disponibles,
+                    timestamp: Date.now()
+                });
+                // Validar tamaño ANTES de intentar guardar (localStorage tiene límite ~5-10MB)
+                const sizeInMB = (cacheData.length / (1024 * 1024)).toFixed(2);
+                if (sizeInMB > 5) {
+                    console.warn(`[main] ⚠️  Cache muy grande (${sizeInMB}MB), mantiendo solo en memoria`);
+                } else {
+                    localStorage.setItem(cacheKey, cacheData);
+                    console.debug(`[main] 💾 Caché guardado en localStorage (${sizeInMB}MB)`);
+                }
+            } catch (cacheError) {
+                // localStorage lleno o deshabilitado - silent fail, datos ya están en window
+                console.warn('[main] ⚠️  No se pudo cachear (localStorage lleno o excedido):', cacheError.message);
+            }
             
             console.debug('[main] ✅ Oportunidades cargadas:', disponibles.length + ' disponibles');
             
