@@ -215,15 +215,40 @@ async function inicializarSistemaCompra() {
     
     inicializarRangoDefault();
     configurarEventListeners();
-    // Cargar datos reales de boletos vendidos/apartados ANTES de inicializar la máquina
-    await cargarBoletosPublicos();
-    // Inicializar la máquina sólo después de tener datos de vendidos/apartados
+    
+    // ⚡ OPTIMIZACIÓN: NO esperar cargarBoletosPublicos() completo
+    // Stage 1 (/stats) es ultra-rápido (< 50ms) y actualiza availability-note instantáneamente
+    // Stage 2 (/api/public/boletos) es lento y se ejecuta en background sin bloquear
+    // Solo la carga INICIAL necesita esperar un poco para los datos, luego lo demás sigue en background
+    startCargarBoletosPublicosConIntentos();
+    
+    // Inicializar la máquina de suerte (no necesita esperar todo)
     inicializarMaquinaSuerteMejorada();
+    
     // La función `cargarBoletosPublicos` se encarga ahora de programar su siguiente ejecución
     // usando setTimeout + backoff para evitar solapamientos que causan 429.
     
     // 🔄 INICIAR ACTUALIZACIÓN PERIÓDICA: Detectar órdenes canceladas por expiración
     iniciarActualizacionPeriodicaBoletos();
+}
+
+/* ============================================================ */
+/* SECCIÓN 3.4: INICIO NO-BLOQUEANTE DE CARGA DE BOLETOS         */
+/* ============================================================ */
+
+/**
+ * Inicia cargarBoletosPublicos() SIN esperar
+ * Stage 1 (/stats) se ejecuta en paralelo y actualiza availability-note instantáneamente
+ * Stage 2 (background) continúa sin bloquear
+ */
+function startCargarBoletosPublicosConIntentos() {
+    // Esperar un tick del event loop para que el DOM esté 100% listo
+    requestAnimationFrame(() => {
+        // NO usar await - dejar que execute en background
+        cargarBoletosPublicos().catch(e => {
+            console.warn('Error en carga inicial de boletos:', e.message);
+        });
+    });
 }
 
 /* ============================================================ */
@@ -237,6 +262,7 @@ async function inicializarSistemaCompra() {
  * 
  * OPTIMIZACIÓN: Solo recarga /boletos si /stats muestra cambio de disponibles
  */
+
 function iniciarActualizacionPeriodicaBoletos() {
     let ultimosDisponibles = window.rifaplusConfig?.estado?.boletosDisponibles || 0;
     
