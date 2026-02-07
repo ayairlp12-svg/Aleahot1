@@ -116,8 +116,6 @@
         const endpoint = String(apiBase).replace(/\/+$/, '');
         
         console.log('[main] 🚀 Iniciando carga robusta de oportunidades...');
-        
-    try {
         console.log('[main] ⏳ Esperando que OportunidadesCacheManager esté disponible...');
         
         // Step 1: Esperar a que boot-cache haya ejecutado
