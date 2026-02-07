@@ -48,6 +48,18 @@ window.addEventListener('oportunidadesListas', function(event) {
 });
 
 /**
+ * 🆕 ESCUCHAR CUANDO LAS OPORTUNIDADES DEL BACKEND SE ACTUALIZAN
+ * Esto se dispara cada vez que se cargan datos frescos del backend
+ */
+window.addEventListener('oportunidadesDisponiblesActualizadas', function(event) {
+    console.log('✅ [CARRITO] Evento: oportunidades FRESCAS del backend actualizado', {
+        cantidad: event.detail.cantidad,
+        momento: event.detail.momento
+    });
+    // Los datos frescos están en window.rifaplusOportunidadesDisponiblesReal
+});
+
+/**
  * Inicializa el carrito cuando el DOM está listo
  */
 document.addEventListener('DOMContentLoaded', function() {
@@ -780,22 +792,20 @@ function calcularYLlenarOportunidades(numerosOrdenados, retryCount = 0) {
     // ⚡ Usar datos en memoria (actualizados cada 5 segundos desde compra.js)
     setTimeout(() => {
         try {
-            // 🔒 CRÍTICO: Esperar a que se carguen los datos de oportunidades disponibles
-            // Esto es IGUAL que máquina de suerte - solo genera de lo que está disponible
-            if (!window.rifaplusOportunidadesLoaded) {
-                // 🛡️ LÍMITE DE REINTENTOS: máximo 5 intentos con backoff exponencial
-                const MAX_RETRIES = 5;
+            // 🔒 CRÍTICO: Esperar a que se carguen los datos de oportunidades desde el BACKEND (datos frescos)
+            // This is MORE important than the cache version - we need REAL backend data
+            if (!window.rifaplusOportunidadesDisponiblesReal || window.rifaplusOportunidadesDisponiblesReal.length === 0) {
+                // 🛡️ LÍMITE DE REINTENTOS: máximo 10 intentos esperando por datos frescos del backend
+                const MAX_RETRIES = 10;
                 if (retryCount < MAX_RETRIES) {
-                    const delayMs = 500 * Math.pow(1.5, retryCount); // 500ms, 750ms, 1125ms, etc.
-                    console.warn(`⚠️  [CARRITO] Oportunidades aún no cargadas (intento ${retryCount + 1}/${MAX_RETRIES}), reintentando en ${Math.round(delayMs)}ms...`);
+                    const delayMs = 400 * Math.pow(1.3, retryCount); // 400ms, 520ms, 676ms, etc.
+                    console.warn(`⏳ [CARRITO] Esperando oportunidades FRESCAS del backend (intento ${retryCount + 1}/${MAX_RETRIES})...`);
                     setTimeout(() => calcularYLlenarOportunidades(numerosOrdenados, retryCount + 1), delayMs);
                     return;
                 } else {
-                    console.warn(`❌ [CARRITO] Oportunidades no disponibles después de ${MAX_RETRIES} intentos (~${Math.round(500 + 750 + 1125 + 1687 + 2531)}ms). Continuando sin oportunidades...`);
-                    // Marcar como cargado aunque no tenga datos, para no bloquear el carrito
-                    window.rifaplusOportunidadesLoaded = true;
-                    window.rifaplusOportunidadesDisponibles = [];
-                    // NO hacer return, continuar sin oportunidades disponibles
+                    console.warn(`❌ [CARRITO] Oportunidades del backend no disponibles después de ${MAX_RETRIES} intentos. Usando cache local como fallback...`);
+                    // Fallback a datos cacheados si REALMENTE no hay datos frescos
+                    window.rifaplusOportunidadesDisponiblesReal = window.rifaplusOportunidadesDisponibles || [];
                 }
             }
 
@@ -815,11 +825,10 @@ function calcularYLlenarOportunidades(numerosOrdenados, retryCount = 0) {
                 }
             }
 
-            console.log(`✅ [CARRITO] Datos frescos confirmados - procediendo a generar oportunidades`);
+            console.log(`✅ [CARRITO] Datos FRESCOS confirmados (backend + boletos) - procediendo a generar oportunidades`);
             
-            // RESTO DEL CÓDIGO (sin cambios)
-
-            const numerosDisponibles = window.rifaplusOportunidadesDisponibles || [];
+            // 🎯 USAR DATOS FRESCOS DEL BACKEND, NO DEL CACHE LOCAL
+            const numerosDisponibles = window.rifaplusOportunidadesDisponiblesReal || [];
             
             if (numerosDisponibles.length === 0) {
                 console.warn('⚠️  [CARRITO] No hay oportunidades disponibles en memoria');

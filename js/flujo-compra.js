@@ -27,6 +27,14 @@ var clienteCheckout = null;
 document.addEventListener('DOMContentLoaded', function() {
     inicializarFlujoCompra();
     
+    // 🆕 CARGAR OPORTUNIDADES FRESCAS DEL BACKEND (COMO LO HACE COMPRA.HTML)
+    // Esto asegura que calcularYLlenarOportunidades() tenga datos frescos disponibles
+    if (window.cargarOportunidadesDisponiblesDelBackend) {
+        cargarOportunidadesDisponiblesDelBackend().catch(e => {
+            console.warn('⚠️  [flujo-compra] Error al cargar oportunidades frescas:', e.message);
+        });
+    }
+    
     // Verificar si debe iniciar el flujo de pago (redirigido desde otra página)
     setTimeout(function() {
         if (localStorage.getItem('rifaplusIniciarFlujoPago') === 'true') {

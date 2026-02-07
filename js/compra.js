@@ -254,6 +254,14 @@ function startCargarBoletosPublicosConIntentos() {
     cargarBoletosPublicos().catch(e => {
         console.warn('❌ Error crítico en carga inicial de boletos:', e.message);
     });
+    
+    // 🆕 TAMBIÉN CARGAR OPORTUNIDADES FRESCAS DEL BACKEND al mismo tiempo
+    // Esto asegura que window.rifaplusOportunidadesDisponiblesReal esté poblado para calcularYLlenarOportunidades()
+    if (window.cargarOportunidadesDisponiblesDelBackend) {
+        cargarOportunidadesDisponiblesDelBackend().catch(e => {
+            console.warn('⚠️  Error cargando oportunidades frescos:', e.message);
+        });
+    }
 }
 
 /* ============================================================ */
@@ -270,6 +278,7 @@ function startCargarBoletosPublicosConIntentos() {
 
 function iniciarActualizacionPeriodicaBoletos() {
     let ultimosDisponibles = window.rifaplusConfig?.estado?.boletosDisponibles || 0;
+    let ultimasOportunidades = 0;
     
     // Verificar RÁPIDAMENTE cada 15 segundos llamando a /stats (ultra rápido)
     setInterval(async () => {
@@ -295,6 +304,26 @@ function iniciarActualizacionPeriodicaBoletos() {
 
                 // Recargar datos completos
                 await cargarBoletosPublicos();
+                // TAMBIÉN recargar oportunidades por si hubo cambios
+                await cargarOportunidadesDisponiblesDelBackend();
+            }
+            
+            // 🆕 TAMBIÉN verificar cambios en oportunidades periodicamente
+            const oppResponse = await fetch(`${endpoint}/api/public/oportunidades/disponibles?t=${Date.now()}`, {
+                signal: AbortSignal.timeout(3000),
+                cache: 'no-store'
+            });
+            
+            if (oppResponse.ok) {
+                const oppData = await oppResponse.json();
+                const cantOportunidades = oppData.cantidad || 0;
+                
+                if (cantOportunidades !== ultimasOportunidades) {
+                    console.log(`🔄 [PeriodicUpdate] Oportunidades: ${ultimasOportunidades} → ${cantOportunidades}`);
+                    ultimasOportunidades = cantOportunidades;
+                    // Actualizar la variable global
+                    window.rifaplusOportunidadesDisponiblesReal = oppData.disponibles || [];
+                }
             }
         } catch (error) {
             console.debug(`[PeriodicUpdate] Check rápido failed:`, error.message);

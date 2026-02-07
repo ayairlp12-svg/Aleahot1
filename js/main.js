@@ -6,6 +6,14 @@
 // ============================================================ //
 
 /**
+ * 🆕 VARIABLES GLOBALES: Inicialirar antes de cualquier carga asincrónica
+ * Esto permite que las funciones que dependen de estas variables no fallen
+ */
+window.rifaplusOportunidadesDisponiblesReal = []; // DATOS FRESCOS DEL BACKEND
+window.rifaplusBoletosDatosActualizados = false;  // Flag de sincronización
+window.rifaplusOportunidadesLoaded = false;       // Flag de carga
+
+/**
  * 🔥 CRÍTICO: Cargar boletos públicos al iniciar index.html
  * Esto llena window.rifaplusSoldNumbers y window.rifaplusReservedNumbers
  * que se usan en actualizarBarraProgreso() para mostrar el progreso
@@ -100,88 +108,71 @@
 })();
 
 /**
- * 🔥 CRÍTICO: Cargar oportunidades disponibles para el carrito
- * ARQUITECTURA ROBUSTA:
- * 1. IndexedDB (50MB disponible) - optimizado para datos grandes
- * 2. Memory cache - para acceso rápido dentro de la sesión
- * 3. Set de números - búsquedas O(1) en lugar de O(n)
- * 4. Reintentos exponenciales - con backoff automático
+ * 🔥 CRÍTICO: REMOVIDO - Usar solo cargarOportunidadesDisponiblesDelBackend()
+ * La carga de oportunidades ahora sucede DIRECTAMENTE del backend en:
+ * 1. compra.js:startCargarBoletosPublicosConIntentos() - carga inicial
+ * 2. flujo-compra.js:DOMContentLoaded - carga inicial
+ * 3. compra.js:iniciarActualizacionPeriodicaBoletos() - actualización cada 15s
+ * 
+ * ARQUITECTURA NUEVA (simplificada y más rápida):
+ * - Cualquier página llamará cargarOportunidadesDisponiblesDelBackend()
+ * - Datos frescos guardados en window.rifaplusOportunidadesDisponiblesReal
+ * - JAMÁS se usa caché local (siempre datos frescos del backend)
  */
-(async function cargarOportunidadesDisponibles() {
+
+/**
+ * 🆕 Cargar oportunidades disponibles DIRECTAMENTE del backend (no del cache local)
+ * ESTO ES LO QUE ASEGURA QUE SIEMPRE USAMOS DATOS FRESCOS DEL BACKEND
+ * Similar a como boletos se cargan en Stage 1/Stage 2
+ */
+async function cargarOportunidadesDisponiblesDelBackend() {
     try {
-        // Obtener API base desde config
         const apiBase = (window.rifaplusConfig && window.rifaplusConfig.backend && window.rifaplusConfig.backend.apiBase) 
             ? window.rifaplusConfig.backend.apiBase 
             : 'http://localhost:5001';
         const endpoint = String(apiBase).replace(/\/+$/, '');
         
-        console.log('[main] 🚀 Iniciando carga robusta de oportunidades...');
-        console.log('[main] ⏳ Esperando que OportunidadesCacheManager esté disponible...');
+        console.log('[main] 🔄 Cargando oportunidades FRESCAS del backend...');
         
-        // Step 1: Esperar a que boot-cache haya ejecutado
-        let bootIntenta = 0;
-        while (!window.oportunidadesCacheBootReady && bootIntenta < 50) {
-            await new Promise(r => setTimeout(r, 100));
-            bootIntenta++;
-        }
+        const response = await fetch(`${endpoint}/api/public/oportunidades/disponibles?t=${Date.now()}`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            cache: 'no-store',
+            signal: AbortSignal.timeout(8000)
+        });
         
-        // Step 2: Esperar a que la instancia esté disponible
-        let intentos = 0;
-        while (!window.oportunidadesCache && intentos < 100) {
-            await new Promise(r => setTimeout(r, 50));
-            intentos++;
-        }
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
         
-        if (!window.oportunidadesCache) {
-            console.error('[main] ❌ OportunidadesCacheManager no disponible después de 5000ms');
-            console.error('[DEBUG] Window properties:', {
-                oportunidadesCache: !!window.oportunidadesCache,
-                OportunidadesCacheManager: !!window.OportunidadesCacheManager,
-                oportunidadesCacheBootReady: window.oportunidadesCacheBootReady
-            });
-            // Fallback: marcar como cargado para no bloquear
-            window.rifaplusOportunidadesLoaded = true;
-            window.rifaplusOportunidadesDisponibles = [];
-            window.dispatchEvent(new CustomEvent('oportunidadesListas', { detail: { origen: 'error', message: 'OportunidadesCacheManager not available' } }));
+        const data = await response.json();
+        
+        if (!data.success) {
+            console.warn('[main] ⚠️ Backend returned success:false:', data.message);
+            window.rifaplusOportunidadesDisponiblesReal = [];
             return;
         }
         
-        console.log('[main] ✅ OportunidadesCacheManager disponible (boot intento: ' + bootIntenta + ', cache intento: ' + intentos + ')');
+        // Guardar lista REAL del backend
+        window.rifaplusOportunidadesDisponiblesReal = data.disponibles || [];
         
-        // Usar el gestor robusto
-        const resultado = await window.oportunidadesCache.cargar(endpoint);
+        console.log(`✅ [main] Oportunidades FRESCAS del backend: ${window.rifaplusOportunidadesDisponiblesReal.length} disponibles`);
+        console.log(`[main] Rango oculto del backend: ${data.rango?.min}-${data.rango?.max}`);
         
-        console.log('[main] 📦 Resultado de carga:', resultado);
-        
-        // Establecer variables globales para compatibilidad
-        window.rifaplusOportunidadesDisponibles = window.oportunidadesCache.obtenerTodos();
-        window.rifaplusOportunidadesLoaded = true;
-        
-        console.log(`✅ [main] Oportunidades cargadas: ${resultado.cantidad} desde ${resultado.origen}`);
-        
-        // Disparar evento para otros componentes
-        window.dispatchEvent(new CustomEvent('oportunidadesListas', { 
+        // Disparar evento
+        window.dispatchEvent(new CustomEvent('oportunidadesDisponiblesActualizadas', { 
             detail: { 
-                origen: resultado.origen, 
-                cantidad: resultado.cantidad,
-                status: 'success'
+                cantidad: window.rifaplusOportunidadesDisponiblesReal.length,
+                momento: new Date().toISOString()
             } 
         }));
+        
+        return window.rifaplusOportunidadesDisponiblesReal;
         
     } catch (error) {
-        console.error('[main] ❌ Error crítico en cargarOportunidadesDisponibles:', error.message);
-        console.error('[main] Stack:', error.stack);
-        window.rifaplusOportunidadesLoaded = true;
-        window.rifaplusOportunidadesDisponibles = [];
-        window.dispatchEvent(new CustomEvent('oportunidadesListas', { 
-            detail: { 
-                origen: 'error', 
-                message: error.message,
-                status: 'failed'
-            } 
-        }));
+        console.error('[main] ❌ Error cargando oportunidades del backend:', error.message);
+        window.rifaplusOportunidadesDisponiblesReal = [];
+        return [];
     }
-})();
+}
 
 /**
  * ESTRUCTURA DE PROMOCIONES (PAQUETES FIJOS):
