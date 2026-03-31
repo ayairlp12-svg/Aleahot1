@@ -68,6 +68,7 @@ function resolverApiBaseRifaPlus() {
     const globalDeploy = window.__RIFAPLUS_DEPLOY__ || {};
     const metaApiBase = obtenerMetaDeploy('rifaplus-api-base');
     const explicitApiBase = normalizarBaseUrl(globalDeploy.apiBase || metaApiBase);
+    const RAILWAY_API_BASE = 'https://sadev-rifapiloto-production.up.railway.app';
 
     if (explicitApiBase) {
         return explicitApiBase;
@@ -79,6 +80,13 @@ function resolverApiBaseRifaPlus() {
 
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
         return `http://localhost:${puerto}`;
+    }
+
+    if (
+        hostname === 'sadev-rifapiloto.pages.dev' ||
+        hostname.endsWith('.pages.dev')
+    ) {
+        return RAILWAY_API_BASE;
     }
 
     return normalizarBaseUrl(origin);
