@@ -29,21 +29,13 @@
             height: auto;
             min-height: 100%;
             overflow-x: hidden;
-            overflow-y: auto;
-            overscroll-behavior-y: auto;
-            -webkit-overflow-scrolling: touch;
+            overflow-y: visible;
         }
 
-        /* Centrar contenido - tarjetas con ancho suficiente para mostrar toda la información */
         main.container {
             max-width: 100%;
             padding: 2rem 1rem;
             box-sizing: border-box;
-            overflow-x: hidden;
-            overflow-y: visible !important;
-            overscroll-behavior: auto;
-            -webkit-overflow-scrolling: auto;
-            touch-action: pan-y;
         }
         
         .payment-page-header {
@@ -148,14 +140,6 @@
         .payment-section {
             margin: 0 auto;
             width: 100%;
-            height: auto;
-            min-height: 0;
-            max-height: none;
-            overflow-x: visible;
-            overflow-y: visible !important;
-            overscroll-behavior: auto;
-            -webkit-overflow-scrolling: auto;
-            touch-action: pan-y;
         }
         
         .cuentas-grid,
@@ -168,23 +152,11 @@
             width: 100%;
             padding: 0 1rem;
             box-sizing: border-box;
-            height: auto;
-            min-height: 0;
-            max-height: none;
-            overflow-x: visible;
-            overflow-y: visible !important;
-            overscroll-behavior: auto;
-            -webkit-overflow-scrolling: auto;
-            touch-action: pan-y;
         }
 
         .cuenta-card,
         .efectivo-card {
-            overflow-x: visible;
-            overflow-y: visible !important;
-            overscroll-behavior: auto;
-            -webkit-overflow-scrolling: auto;
-            touch-action: pan-y;
+            overflow: visible;
         }
 
         .copy-icon,
@@ -192,7 +164,14 @@
         .cuenta-number-row,
         .beneficiary-row,
         .efectivo-info-value-group {
-            touch-action: pan-y;
+            touch-action: auto;
+        }
+
+        .copy-icon,
+        .copy-icon i,
+        .efectivo-copy-btn,
+        .efectivo-copy-btn i {
+            color: #111 !important;
         }
         
         /* Tablet: 481px - 768px */
@@ -434,6 +413,23 @@
 
             .cuenta-number-row {
                 gap: 0.5rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            html,
+            body {
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            main.container,
+            .payment-section,
+            .cuentas-grid,
+            .efectivo-grid,
+            .cuenta-card,
+            .efectivo-card {
+                overflow: visible !important;
             }
         }
     </style>

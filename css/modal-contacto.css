@@ -549,14 +549,19 @@
 @media (max-width: 640px) {
     .modal-overlay {
         padding: 0.55rem;
+        align-items: flex-start;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
     }
 
     .modal-contacto {
         max-width: 100%;
-        max-height: calc(100vh - 1.1rem);
+        max-height: none;
+        min-height: auto;
         border-radius: 18px;
-        display: flex;
-        flex-direction: column;
+        display: block;
+        margin: 0.4rem 0 1rem;
+        overflow: visible;
     }
 
     .modal-header {
@@ -574,8 +579,8 @@
 
     .modal-body {
         padding: 0.62rem 0.72rem 0.7rem;
-        overflow-y: auto;
-        flex: 1 1 auto;
+        overflow: visible;
+        flex: 0 0 auto;
     }
 
     .form-group {
@@ -595,15 +600,13 @@
     }
 
     .modal-footer-contacto {
-        position: sticky;
-        bottom: 0;
-        z-index: 3;
+        position: static;
         flex-direction: row;
         gap: 0.55rem;
         padding: 0.64rem 0.72rem 0.72rem;
-        margin-top: auto;
+        margin-top: 0;
         border-radius: 0 0 18px 18px;
-        backdrop-filter: blur(8px);
+        backdrop-filter: none;
     }
 
     .modal-footer-contacto .btn {

@@ -369,6 +369,22 @@ async function abrirModalSeleccionCuenta() {
     console.log('[AbrirModal] 📺 Mostrando modal (display: flex)');
     modal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
+    modal.scrollTop = 0;
+
+    const modalBody = modal.querySelector('.modal-body-cuentas');
+    if (modalBody) {
+        modalBody.scrollTop = 0;
+    }
+
+    const modalCard = modal.querySelector('.modal-seleccion-cuentas');
+    if (modalCard) {
+        modalCard.scrollTop = 0;
+    }
+
+    window.requestAnimationFrame(() => {
+        if (modalBody) modalBody.scrollTop = 0;
+        if (modalCard) modalCard.scrollTop = 0;
+    });
     
     // Emitir evento para que otras páginas se enteren
     if (window.rifaplusConfig && typeof window.rifaplusConfig.emitirEvento === 'function') {
@@ -381,12 +397,8 @@ async function abrirModalSeleccionCuenta() {
         closeBtn.onclick = cerrarModalSeleccionCuenta;
     }
     
-    // Cerrar al hacer click en el overlay
-    modal.onclick = function(e) {
-        if (e.target === modal) {
-            cerrarModalSeleccionCuenta();
-        }
-    };
+    // No cerrar al tocar fuera; evita salidas accidentales en móvil
+    modal.onclick = function() {};
 }
 
 function cerrarModalSeleccionCuenta() {

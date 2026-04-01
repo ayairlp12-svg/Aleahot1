@@ -829,7 +829,7 @@ function inicializarMaquinaSuerteMejorada() {
 
     // Configurar controles de cantidad
     if (btnDisminuir && btnAumentar && inputCantidad) {
-        btnDisminuir.addEventListener('click', function() {
+        const decrementarCantidad = function() {
             let cantidad = parseInt(inputCantidad.value, 10);
             if (isNaN(cantidad)) cantidad = 0;
             if (cantidad > 0) {
@@ -837,9 +837,9 @@ function inicializarMaquinaSuerteMejorada() {
                 actualizarTotalMaquina();
                 actualizarEstadoBotonGenerar();
             }
-        });
+        };
         
-        btnAumentar.addEventListener('click', function() {
+        const incrementarCantidad = function() {
             let cantidad = parseInt(inputCantidad.value, 10);
             if (isNaN(cantidad)) cantidad = 0;
             const maxTickets = obtenerMaximoPermitidoMaquinaSuerte();
@@ -848,7 +848,28 @@ function inicializarMaquinaSuerteMejorada() {
                 actualizarTotalMaquina();
                 actualizarEstadoBotonGenerar();
             }
-        });
+        };
+
+        const registrarTapRapido = function(boton, handler) {
+            let ultimoTouch = 0;
+
+            boton.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                ultimoTouch = Date.now();
+                handler();
+            }, { passive: false });
+
+            boton.addEventListener('click', function(e) {
+                if (Date.now() - ultimoTouch < 500) {
+                    e.preventDefault();
+                    return;
+                }
+                handler();
+            });
+        };
+
+        registrarTapRapido(btnDisminuir, decrementarCantidad);
+        registrarTapRapido(btnAumentar, incrementarCantidad);
         
         inputCantidad.addEventListener('change', function() {
             this.value = normalizarCantidadMaquinaSuerte(this.value);
@@ -1551,6 +1572,10 @@ function configurarEventListeners() {
  */
 
 async function manejarClickNumero(boton) {
+    if (boton.classList.contains('is-processing')) {
+        return;
+    }
+
     const numero = parseInt(boton.getAttribute('data-numero'), 10);
     
     if (boton.classList.contains('selected')) {
@@ -1568,6 +1593,14 @@ async function manejarClickNumero(boton) {
     } else {
         // SELECCIONAR: validar disponibilidad y agregar
         console.log(`🔍 Seleccionando boleto #${numero}`);
+        boton.classList.add('is-processing');
+        boton.disabled = true;
+        
+        // Forzar feedback visual inmediato antes de esperar al servidor
+        requestAnimationFrame(() => {
+            boton.classList.add('is-pending');
+        });
+
         const seAgrego = await agregarBoletoDirectoCarrito(numero);
         
         // Animar si se agregó exitosamente
@@ -1576,6 +1609,9 @@ async function manejarClickNumero(boton) {
             // Mostrar efecto en el carrito sin modificar el botón
             animarAgregarAlCarrito(null, numero, false);
         }
+
+        boton.classList.remove('is-pending', 'is-processing');
+        boton.disabled = false;
     }
 }
 

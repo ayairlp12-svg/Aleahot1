@@ -3067,10 +3067,9 @@
                 // 🖼️ IMAGEN PRINCIPAL: Usa SIEMPRE config del admin (rifaplusConfig es la fuente oficial)
                 // Validar que exista, que sea string, y que no esté vacía
                 let imagenPrincipal = 'images/placeholder-cover.svg'; // fallback por defecto
-                
+
                 if (window.rifaplusConfig?.cliente?.imagenPrincipal) {
                     const imgConfig = window.rifaplusConfig.cliente.imagenPrincipal;
-                    // Validar que sea URL válida (contiene http/https o es ruta local válida)
                     if (typeof imgConfig === 'string' && imgConfig.trim().length > 0) {
                         imagenPrincipal = imgConfig.trim();
                     }
@@ -3267,7 +3266,7 @@
                     <!-- Imagen Principal con Nombre del Sorteo -->
                     <div class="orden-imagen-principal">
                         <div class="orden-imagen-principal-titulo">${nombreSorteo || config?.cliente?.nombreSorteo || 'Producto'}</div>
-                        <img class="orden-imagen-dinamica" data-imagen-tipo="cliente.imagenPrincipal" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="${nombreSorteo}" loading="lazy" style="min-height: 150px; background-color: #f0f0f0;" onerror="this.src='images/placeholder-cover.svg'; this.style.opacity='0.5';">
+                        <img class="orden-imagen-dinamica" data-imagen-tipo="cliente.imagenPrincipal" src="${imagenPrincipal}" alt="${nombreSorteo}" loading="eager" fetchpriority="high" decoding="async" style="min-height: 150px; background-color: #f0f0f0;" onerror="this.onerror=null; this.src='images/placeholder-cover.svg'; this.style.opacity='0.5';">
                         <div class="orden-imagen-principal-fecha"><strong>Fecha del sorteo:</strong> <span>${fechaSorteoFormato}</span></div>
                     </div>
 
@@ -4021,15 +4020,20 @@
                     }
 
                     // ✅ Usamos función helper para leer nested properties
-                    const imagenUrl = obtenerValorAninado(window.rifaplusConfig, configKey) || 'images/placeholder-cover.svg';
+                    const imagenUrlRaw = obtenerValorAninado(window.rifaplusConfig, configKey);
+                    const imagenUrl = (typeof imagenUrlRaw === 'string' && imagenUrlRaw.trim())
+                        ? imagenUrlRaw.trim()
+                        : 'images/placeholder-cover.svg';
+                    const imagenActual = img.getAttribute('src') || '';
                     
                     // Solo actualizar si cambió
-                    if (img.src !== imagenUrl) {
+                    if (imagenActual !== imagenUrl) {
                         console.log(`[IMG Dinámicas] Actualizando imagen ${idx + 1}: ${configKey}`, {
-                            anterior: img.src,
+                            anterior: imagenActual,
                             nueva: imagenUrl
                         });
                         img.src = imagenUrl;
+                        img.style.opacity = '1';
                     }
                 });
 

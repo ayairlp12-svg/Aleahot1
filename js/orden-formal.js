@@ -284,6 +284,12 @@ function abrirOrdenFormal(cuenta) {
     if (modal) {
         modal.classList.add('show');
         document.body.style.overflow = 'hidden';
+
+        const contenedor = modal.querySelector('.orden-formal-container');
+        const contenido = modal.querySelector('.orden-formal-content');
+        modal.scrollTop = 0;
+        if (contenedor) contenedor.scrollTop = 0;
+        if (contenido) contenido.scrollTop = 0;
     }
 }
 
