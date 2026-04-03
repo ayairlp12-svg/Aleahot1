@@ -572,7 +572,7 @@ function mostrarOrdenFormalManual(orden) {
             <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
                 <div style="display:flex; align-items:center; gap:12px;">
                     <img src="images/placeholder-logo.svg" alt="logo" style="height:144px; width:auto; object-fit:contain;" />
-                    <div style="font-weight:700; font-size:0.95rem;">${window.rifaplusConfig?.nombreOrganizador || 'RifaPlus'}</div>
+                    <div style="font-weight:700; font-size:0.95rem;">${window.rifaplusConfig?.cliente?.nombre || window.rifaplusConfig?.tecnica?.nombreOrganizador || 'Organizador'}</div>
                 </div>
                 <div style="text-align:right;">
                     <div style="font-size:0.75rem; color:var(--text-light);">Orden</div>

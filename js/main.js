@@ -436,7 +436,7 @@ window.rifaplusUtils = window.utilidadesRifaPlus;
  */
 function inyectarLogoDinamico() {
     try {
-        const logoConfigCrudo = window.rifaplusConfig?.cliente?.logo || window.rifaplusConfig?.cliente?.logotipo || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 96'%3E%3Crect width='240' height='96' rx='20' fill='%230b2235'/%3E%3Ctext x='120' y='58' font-size='34' text-anchor='middle' fill='%23ffffff' font-family='Arial,sans-serif'%3ESaDev%3C/text%3E%3C/svg%3E";
+        const logoConfigCrudo = window.rifaplusConfig?.cliente?.logo || window.rifaplusConfig?.cliente?.logotipo || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 96'%3E%3Crect width='240' height='96' rx='20' fill='%230b2235'/%3E%3Ctext x='120' y='58' font-size='28' text-anchor='middle' fill='%23ffffff' font-family='Arial,sans-serif'%3ERifaPlus%3C/text%3E%3C/svg%3E";
         let logoConfig = logoConfigCrudo;
 
         try {
@@ -476,7 +476,7 @@ function inyectarLogoDinamico() {
                 img.src = logoConfig;
                 img.onerror = function() {
                     console.warn(`Logo no encontrado: ${logoConfig}. Usando fallback inline.`);
-                    this.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 96'%3E%3Crect width='240' height='96' rx='20' fill='%230b2235'/%3E%3Ctext x='120' y='58' font-size='34' text-anchor='middle' fill='%23ffffff' font-family='Arial,sans-serif'%3ESaDev%3C/text%3E%3C/svg%3E";
+                    this.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 96'%3E%3Crect width='240' height='96' rx='20' fill='%230b2235'/%3E%3Ctext x='120' y='58' font-size='28' text-anchor='middle' fill='%23ffffff' font-family='Arial,sans-serif'%3ERifaPlus%3C/text%3E%3C/svg%3E";
                 };
                 if (oldSrc !== logoConfig) {
                     console.debug(`✓ Logo actualizado: ${oldSrc.split('/').pop()} → ${logoConfig.split('/').pop()}`);

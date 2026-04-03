@@ -6,7 +6,7 @@
     <meta name="rifaplus-api-base" content="https://demo1m-production.up.railway.app">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self' http://127.0.0.1:* http://localhost:* http://localhost:5001; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://fonts.googleapis.com http://localhost:5001 http://127.0.0.1:5001 https://demo1m-production.up.railway.app; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; connect-src 'self' http://127.0.0.1:* http://localhost:* https: http://localhost:5001 http://127.0.0.1:5001 https://demo1m-production.up.railway.app ws: wss: ws://localhost:5001 wss://localhost:5001 ws://127.0.0.1:5001 wss://127.0.0.1:5001 wss://demo1m-production.up.railway.app; img-src 'self' data: https:;">
     <!-- METADATOS DINÁMICOS - Cloudflare Functions y js/meta-inyector los actualizan desde la configuración actual -->
-    <title>RifaPlus | Sorteo en linea</title>
+    <title>Sorteo en linea</title>
     <meta name="description" content="Informacion del sorteo en linea, compra de boletos y estado de tu participacion.">
     <!-- Open Graph Meta Tags (base neutra, reemplazados dinamicamente en entrega y navegador) -->
     <meta property="og:title" content="RifaPlus" />
@@ -24,6 +24,39 @@
         (function() {
             const cachedLogo = localStorage.getItem('rifaplus_cached_logo') || 'images/placeholder-logo.svg';
             window.__RIFAPLUS_CACHED_LOGO__ = cachedLogo;
+            window.__RIFAPLUS_INDEX_HERO__ = (function() {
+                let edicion = '';
+                let nombre = '';
+                let descripcion = '';
+
+                try {
+                    edicion = String(localStorage.getItem('rifaplus_index_hero_edicion') || '').trim();
+                    nombre = String(localStorage.getItem('rifaplus_index_hero_nombre') || '').trim();
+                    descripcion = String(localStorage.getItem('rifaplus_index_hero_descripcion') || '').trim();
+                } catch (error) {
+                    edicion = '';
+                    nombre = '';
+                    descripcion = '';
+                }
+
+                if (!edicion || !nombre || !descripcion) {
+                    try {
+                        const configLocal = JSON.parse(localStorage.getItem('rifaplus_config_actual_v2') || '{}');
+                        const rifaLocal = configLocal?.rifa || {};
+                        edicion = edicion || String(rifaLocal.edicionNombre || '').trim();
+                        nombre = nombre || String(rifaLocal.nombreSorteo || '').trim();
+                        descripcion = descripcion || String(rifaLocal.descripcion || '').trim();
+                    } catch (error) {
+                        // Ignorar y mantener fallbacks vacíos
+                    }
+                }
+
+                return {
+                    edicion,
+                    nombre,
+                    descripcion
+                };
+            })();
             document.write('<link rel="preload" as="image" href="' + cachedLogo + '" fetchpriority="high">');
             document.write('<link rel="icon" href="' + cachedLogo + '" sizes="32x32">');
             document.write('<link rel="apple-touch-icon" href="' + cachedLogo + '">');
@@ -165,9 +198,9 @@
             <a href="#top" class="logo" data-logo-src id="logoLink">
                 <div class="logo-circle">
                     <script>
-                        document.write('<img src="' + (window.__RIFAPLUS_CACHED_LOGO__ || "images/placeholder-logo.svg") + '" alt="SORTEOS EL TREBOL" class="logo-image dynamic-logo" data-dynamic-logo="true" fetchpriority="high" width="320" height="137">');
+                        document.write('<img src="' + (window.__RIFAPLUS_CACHED_LOGO__ || "images/placeholder-logo.svg") + '" alt="Logo del organizador" class="logo-image dynamic-logo" data-dynamic-logo="true" fetchpriority="high" width="320" height="137">');
                     </script>
-                    <noscript><img src="images/placeholder-logo.svg" alt="SORTEOS EL TREBOL" class="logo-image dynamic-logo" data-dynamic-logo="true" fetchpriority="high" width="320" height="137"></noscript>
+                    <noscript><img src="images/placeholder-logo.svg" alt="Logo del organizador" class="logo-image dynamic-logo" data-dynamic-logo="true" fetchpriority="high" width="320" height="137"></noscript>
                 </div>
             </a>
 
@@ -204,9 +237,9 @@
     <section class="hero" id="inicio">
         <div class="container">
             <div class="hero-content">
-                <p class="edicion-nombre" id="edicionNombre">Edicion No. 20 de Sorteos Torres</p>
-                <h1 class="hero-title" id="heroTitle">Gana un <span class="highlight" id="heroHighlight">iPhone 15 Pro Max 256GB</span></h1>
-                <p class="hero-description" id="heroDescription">256GB - Último Modelo - Totalmente Nuevo en Caja</p>
+                <p class="edicion-nombre" id="edicionNombre"><script>document.write(window.__RIFAPLUS_INDEX_HERO__?.edicion || '');</script></p>
+                <h1 class="hero-title" id="heroTitle"><span class="highlight" id="heroHighlight"><script>document.write(window.__RIFAPLUS_INDEX_HERO__?.nombre || '');</script></span></h1>
+                <p class="hero-description" id="heroDescription"><script>document.write(window.__RIFAPLUS_INDEX_HERO__?.descripcion || '');</script></p>
                 <button class="btn btn-secondary-accent btn-hero-cta" onclick="window.location.href='compra.html'" aria-label="Comprar boletos ahora">
                     Comprar Boletos Ahora
                     <span class="btn-arrow">→</span>
@@ -810,6 +843,14 @@
         if (edicionNombre) {
             console.log('✅ Actualizando edicionNombre a:', edicionNombre);
             edEl.innerHTML = edicionNombre;
+            try {
+                localStorage.setItem('rifaplus_index_hero_edicion', edicionNombre);
+                if (window.__RIFAPLUS_INDEX_HERO__) {
+                    window.__RIFAPLUS_INDEX_HERO__.edicion = edicionNombre;
+                }
+            } catch (error) {
+                console.warn('⚠️ No se pudo cachear edicionNombre del hero:', error?.message || error);
+            }
         } else {
             console.warn('⚠️ edicionNombre vacío o no definido');
         }
@@ -838,40 +879,50 @@
             return;
         }
         
-        // Si aún no hay datos (sincronización en progreso), mostrar loading
-        if (!rifa.descripcion) {
-            titleEl.innerHTML = '<span class="highlight">Cargando sorteo...</span>';
-            descEl.textContent = 'Cargando...';
-            return;
-        }
-        
-        // Actualizar descripción
-        descEl.textContent = rifa.descripcion;
-        
         // El texto exacto del formulario (sin modificaciones)
         // Usar nombreSorteo (Hero Highlight) - NUNCA usar titulo
         const nombreCompleto = rifa.nombreSorteo?.trim() || '';
+        const descripcion = rifa.descripcion?.trim() || '';
         
         console.log('🎯 [cargarHeroContent] nombreSorteo valor:', nombreCompleto);
         console.log('🎯 [cargarHeroContent] nombreSorteo valor (IGNORADO):', rifa.nombreSorteo);
         
-        // Si no hay nombreSorteo, no actualizar el hero (mantener HTML inicial)
-        if (!nombreCompleto) {
-            console.log('⚠️ [cargarHeroContent] nombreSorteo vacío, manteniendo HTML inicial');
+        // Si no hay datos aún, mantener el HTML inicial cacheado
+        if (!nombreCompleto && !descripcion) {
+            console.log('⚠️ [cargarHeroContent] Aún no hay contenido real, manteniendo hero inicial');
             return;
         }
-        
-        // Renderizar título - exactamente lo que viene del admin sin agregar "Gana un"
-        const tituloFinal = '<span class="highlight">' + nombreCompleto + '</span>';
-        titleEl.innerHTML = tituloFinal;
-        
-        // Actualizar el elemento del highlight para compatibilidad
-        const highlightEl = document.getElementById('heroHighlight');
-        if (highlightEl) {
-            highlightEl.textContent = nombreCompleto;
+
+        if (descripcion) {
+            descEl.textContent = descripcion;
         }
-        
-        console.log('✅ [cargarHeroContent] Hero actualizado SOLO con nombreSorteo:', nombreCompleto);
+
+        if (nombreCompleto) {
+            const tituloFinal = '<span class="highlight" id="heroHighlight">' + nombreCompleto + '</span>';
+            titleEl.innerHTML = tituloFinal;
+
+            try {
+                localStorage.setItem('rifaplus_index_hero_nombre', nombreCompleto);
+                if (window.__RIFAPLUS_INDEX_HERO__) {
+                    window.__RIFAPLUS_INDEX_HERO__.nombre = nombreCompleto;
+                }
+            } catch (error) {
+                console.warn('⚠️ No se pudo cachear nombre del hero:', error?.message || error);
+            }
+        }
+
+        if (descripcion) {
+            try {
+                localStorage.setItem('rifaplus_index_hero_descripcion', descripcion);
+                if (window.__RIFAPLUS_INDEX_HERO__) {
+                    window.__RIFAPLUS_INDEX_HERO__.descripcion = descripcion;
+                }
+            } catch (error) {
+                console.warn('⚠️ No se pudo cachear descripción del hero:', error?.message || error);
+            }
+        }
+
+        console.log('✅ [cargarHeroContent] Hero actualizado con contenido real');
     }
     
     // Cargar precio unitario dinámicamente
@@ -1909,7 +1960,7 @@
     <!-- POR QUÉ CONFIAR EN NOSOTROS -->
     <section class="por-que-confiar-section perf-defer-mobile perf-defer-mobile--large">
         <div class="container">
-            <h2 class="confianza-titulo">¿Por Qué Hacer Tu Plataforma De Sorteos Con SaDev?</h2>
+            <h2 class="confianza-titulo">¿Por Qué Confiar En Esta Plataforma De Sorteos?</h2>
             
             <div class="confianza-content">
                 <div class="confianza-lista">
@@ -2715,7 +2766,7 @@
                 <!-- Columna izquierda: Logo y nombre -->
                 <div class="footer-logo-section">
                     <div class="footer-logo-box">
-                        <img src="images/placeholder-logo.svg" alt="SORTEOS EL TREBOL" class="footer-logo-img dynamic-logo" data-dynamic-logo="true" width="200" height="100">
+                        <img src="images/placeholder-logo.svg" alt="Logo del organizador" class="footer-logo-img dynamic-logo" data-dynamic-logo="true" width="200" height="100">
                     </div>
                     <h3 id="footerNombre" class="footer-client-name">SORTEO</h3>
                     <p id="footerEslogan" class="footer-eslogan">Rifas 100% Transparentes y Seguras</p>
