@@ -253,23 +253,16 @@
             </div>
 
             <script>
-            function obtenerNombreSorteoInicialCompra() {
-                const nombreConfig = String(window.rifaplusConfig?.rifa?.nombreSorteo || '').trim();
+            function obtenerNombreOrganizadorInicialCompra() {
+                const nombreConfig = String(window.rifaplusConfig?.cliente?.nombre || '').trim();
                 if (nombreConfig) return nombreConfig;
 
-                const metaOgTitle = document.querySelector('meta[property="og:title"]')?.content || '';
-                const fuentes = [document.title, metaOgTitle].map((valor) => String(valor || '').trim()).filter(Boolean);
-
-                for (const fuente of fuentes) {
-                    const matchCompra = fuente.match(/^Compra tus boletos para\s+(.+?)(?:\s+\|\s+.+)?$/i);
-                    if (matchCompra?.[1]) {
-                        return matchCompra[1].trim();
-                    }
-
-                    const matchPipe = fuente.match(/^(.+?)\s+\|\s+.+$/);
-                    if (matchPipe?.[1] && !/^Compra tus boletos$/i.test(matchPipe[1].trim())) {
-                        return matchPipe[1].trim();
-                    }
+                try {
+                    const configLocal = JSON.parse(localStorage.getItem('rifaplus_config_actual_v2') || '{}');
+                    const nombreLocal = String(configLocal?.cliente?.nombre || '').trim();
+                    if (nombreLocal) return nombreLocal;
+                } catch (error) {
+                    console.warn('⚠️ No se pudo leer el nombre del organizador desde cache local:', error?.message || error);
                 }
 
                 return '';
@@ -280,18 +273,16 @@
                 const compraHeroSub = document.getElementById('compraHeroSub');
                 if (!compraHeroTitle) return;
 
-                const nombreSorteo = obtenerNombreSorteoInicialCompra();
-                const descripcionSorteo = String(window.rifaplusConfig?.rifa?.descripcion || '').trim();
-                const metaDescription = String(document.querySelector('meta[name="description"]')?.content || '').trim();
+                const organizadorNombre = obtenerNombreOrganizadorInicialCompra();
 
-                if (nombreSorteo) {
-                    compraHeroTitle.textContent = `Elige tus boletos para ${nombreSorteo} y participa ahora`;
+                if (organizadorNombre) {
+                    compraHeroTitle.textContent = `¿Listo para ser el proximo ganador de ${organizadorNombre}? Elige tus boletos y participa ahora`;
                 } else {
                     compraHeroTitle.textContent = 'Elige tus boletos y participa ahora';
                 }
 
                 if (compraHeroSub) {
-                    compraHeroSub.textContent = descripcionSorteo || metaDescription || 'Selecciona los boletos que quieras o deja que la máquina de la suerte elija por ti. ¡Mucha Suerte!';
+                    compraHeroSub.textContent = 'Selecciona los boletos que quieras o deja que la máquina de la suerte elija por ti. ¡Mucha Suerte!';
                 }
             }
 
