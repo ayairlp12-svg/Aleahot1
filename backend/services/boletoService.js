@@ -23,6 +23,42 @@ class BoletoService {
     return copia;
   }
 
+  static _maximoComunDivisor(a, b) {
+    let x = Math.abs(Number(a) || 0);
+    let y = Math.abs(Number(b) || 0);
+
+    while (y !== 0) {
+      const temporal = y;
+      y = x % y;
+      x = temporal;
+    }
+
+    return x || 1;
+  }
+
+  static _construirPasoCoprimo(totalBoletos) {
+    if (totalBoletos <= 1) return 1;
+
+    let intentos = 0;
+    const limiteIntentos = 32;
+
+    while (intentos < limiteIntentos) {
+      intentos += 1;
+      const candidato = Math.floor(Math.random() * (totalBoletos - 1)) + 1;
+      if (this._maximoComunDivisor(candidato, totalBoletos) === 1) {
+        return candidato;
+      }
+    }
+
+    for (let candidato = 1; candidato < totalBoletos; candidato += 1) {
+      if (this._maximoComunDivisor(candidato, totalBoletos) === 1) {
+        return candidato;
+      }
+    }
+
+    return 1;
+  }
+
   static _obtenerTotalBoletosConfig() {
     const configManager = require('../config-manager').getInstance();
     return Number(configManager.totalBoletos) || 0;
@@ -41,6 +77,20 @@ class BoletoService {
     return db('boletos_estado')
       .where('estado', 'disponible')
       .whereNull('numero_orden');
+  }
+
+  static async _obtenerDisponiblesPorNumeros(numeros) {
+    const lista = Array.isArray(numeros)
+      ? numeros.map((numero) => Number(numero)).filter((numero) => Number.isInteger(numero))
+      : [];
+
+    if (lista.length === 0) {
+      return [];
+    }
+
+    return this._queryBoletosDisponibles()
+      .whereIn('numero', lista)
+      .select('numero');
   }
 
   static async _obtenerVentanaDisponiblesDesde(pivote, limite) {
@@ -169,63 +219,55 @@ class BoletoService {
       }
 
       const objetivo = Math.min(cantidadSolicitada, disponiblesTotales);
-      const seleccionados = new Set();
-      const pivotesUsados = new Set();
-      const MAX_RONDAS = objetivo >= 500 ? 4 : 3;
+      const seleccionados = [];
+      const seleccionadosSet = new Set();
+      const desplazamiento = Math.floor(Math.random() * totalBoletos);
+      const paso = this._construirPasoCoprimo(totalBoletos);
+      const loteBase = objetivo >= 250 ? 512 : 256;
+      const tamanoLote = Math.min(1024, Math.max(loteBase, objetivo * 4));
+      let indicePermutacion = 0;
 
-      for (let ronda = 0; ronda < MAX_RONDAS && seleccionados.size < objetivo; ronda += 1) {
-        const faltantes = objetivo - seleccionados.size;
-        const consultasPorRonda = Math.min(4, Math.max(2, Math.ceil(faltantes / 50)));
-        const tamanoVentana = Math.min(
-          4000,
-          Math.max(
-            faltantes * 8,
-            consultasPorRonda * 120
-          )
-        );
+      while (seleccionados.length < objetivo && indicePermutacion < totalBoletos) {
+        const lote = [];
 
-        const consultas = [];
-        let guard = 0;
+        while (lote.length < tamanoLote && indicePermutacion < totalBoletos) {
+          const candidato = (desplazamiento + (indicePermutacion * paso)) % totalBoletos;
+          indicePermutacion += 1;
 
-        while (consultas.length < consultasPorRonda && guard < consultasPorRonda * 10) {
-          guard += 1;
-          const pivote = Math.floor(Math.random() * totalBoletos);
-          if (pivotesUsados.has(pivote)) continue;
-          pivotesUsados.add(pivote);
+          if (excludeSet.has(candidato) || seleccionadosSet.has(candidato)) {
+            continue;
+          }
 
-          consultas.push(this._obtenerVentanaDisponiblesDesde(pivote, tamanoVentana));
-          consultas.push(this._obtenerVentanaDisponiblesAntesDe(pivote, tamanoVentana));
+          lote.push(candidato);
         }
 
-        if (consultas.length === 0) {
-          break;
-        }
-
-        const resultados = await Promise.all(consultas);
-        const candidatos = [];
-
-        resultados.forEach((rows) => {
-          rows.forEach((row) => {
-            const numero = Number(row.numero);
-            if (!Number.isInteger(numero)) return;
-            if (excludeSet.has(numero) || seleccionados.has(numero)) return;
-            candidatos.push(numero);
-          });
-        });
-
-        if (candidatos.length === 0) {
+        if (lote.length === 0) {
           continue;
         }
 
-        const mezcla = this._barajarNumeros(Array.from(new Set(candidatos)));
-        mezcla.forEach((numero) => {
-          if (seleccionados.size < objetivo) {
-            seleccionados.add(numero);
-          }
+        const disponibles = await this._obtenerDisponiblesPorNumeros(lote);
+        const disponiblesSet = new Set(
+          disponibles
+            .map((row) => Number(row.numero))
+            .filter((numero) => Number.isInteger(numero))
+        );
+
+        if (disponiblesSet.size === 0) {
+          continue;
+        }
+
+        // Mantener el orden del lote respeta la permutación aleatoria del universo.
+        lote.forEach((numero) => {
+          if (seleccionados.length >= objetivo) return;
+          if (!disponiblesSet.has(numero)) return;
+          if (excludeSet.has(numero) || seleccionadosSet.has(numero)) return;
+
+          seleccionados.push(numero);
+          seleccionadosSet.add(numero);
         });
       }
 
-      return this._barajarNumeros(Array.from(seleccionados)).slice(0, objetivo);
+      return this._barajarNumeros(seleccionados).slice(0, objetivo);
     } catch (error) {
       console.error('Error obtenerBoletosAleatoriosDisponibles:', error.message);
       throw error;
