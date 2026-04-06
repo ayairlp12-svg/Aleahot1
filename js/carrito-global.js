@@ -120,6 +120,48 @@ function debounceActualizarVistaCarrito() {
     debounceActualizarVista();
 }
 
+function enlazarListenersOportunidadesCarrito(numerosOrdenados) {
+    if (!window.oportunidadesManager) return;
+
+    if (!window.__rifaplusCarritoOppHandlers) {
+        window.__rifaplusCarritoOppHandlers = {};
+    }
+
+    if (window.__rifaplusCarritoOppHandlers.onComplete) {
+        window.oportunidadesManager.off('onComplete', window.__rifaplusCarritoOppHandlers.onComplete);
+    }
+
+    if (window.__rifaplusCarritoOppHandlers.onError) {
+        window.oportunidadesManager.off('onError', window.__rifaplusCarritoOppHandlers.onError);
+    }
+
+    window.__rifaplusCarritoOppHandlers.onComplete = () => {
+        console.log('[CARRITO] ✅ Oportunidades completas, actualizando UI...');
+
+        if (typeof actualizarOportunidadesEnCarrito === 'function') {
+            actualizarOportunidadesEnCarrito(numerosOrdenados);
+        } else if (typeof window.actualizarOportunidadesEnCarrito === 'function') {
+            window.actualizarOportunidadesEnCarrito(numerosOrdenados);
+        } else {
+            console.warn('[CARRITO] ⚠️ Función actualizarOportunidadesEnCarrito no disponible');
+        }
+
+        if (typeof window.sincronizarOportunidadesAlCarrito === 'function') {
+            setTimeout(() => {
+                window.sincronizarOportunidadesAlCarrito();
+                console.log('[CARRITO] ✅ Sincronizadas oportunidades globales para uso en otros módulos');
+            }, 100);
+        }
+    };
+
+    window.__rifaplusCarritoOppHandlers.onError = (error) => {
+        console.warn('[CARRITO] ⚠️ Error cargando oportunidades (carrito continúa funcionando):', error);
+    };
+
+    window.oportunidadesManager.on('onComplete', window.__rifaplusCarritoOppHandlers.onComplete);
+    window.oportunidadesManager.on('onError', window.__rifaplusCarritoOppHandlers.onError);
+}
+
 /* ============================================================ */
 /* EVENT LISTENERS: ESPERAR DATOS DE main.js                  */
 /* ============================================================ */
@@ -429,34 +471,9 @@ function actualizarVistaCarritoGlobal() {
     // ✅ USAR EL NUEVO OPORTUNIDADES MANAGER (PROFESSIONAL)
     if (oportunidadesHabilitadas && window.oportunidadesManager) {
         console.log('[CARRITO] 🚀 Iniciando carga de oportunidades con OportunidadesManager...');
-        
-        // Listener para actualizar UI cuando complete
-        window.oportunidadesManager.on('onComplete', () => {
-            console.log('[CARRITO] ✅ Oportunidades completas, actualizando UI...');
-            
-            // ⚡ Defensivo: si la función existe, llamarla
-            if (typeof actualizarOportunidadesEnCarrito === 'function') {
-                actualizarOportunidadesEnCarrito(numerosOrdenados);
-            } else if (typeof window.actualizarOportunidadesEnCarrito === 'function') {
-                window.actualizarOportunidadesEnCarrito(numerosOrdenados);
-            } else {
-                console.warn('[CARRITO] ⚠️ Función actualizarOportunidadesEnCarrito no disponible');
-            }
-            
-            // ✅ SINCRONIZAR TAMBIÉN LA ESTRUCTURA GLOBAL para orden-formal.js
-            if (typeof window.sincronizarOportunidadesAlCarrito === 'function') {
-                setTimeout(() => {
-                    window.sincronizarOportunidadesAlCarrito();
-                    console.log('[CARRITO] ✅ Sincronizadas oportunidades globales para uso en otros módulos');
-                }, 100);
-            }
-        });
-        
-        // Listener para errores
-        window.oportunidadesManager.on('onError', (error) => {
-            console.warn('[CARRITO] ⚠️ Error cargando oportunidades (carrito continúa funcionando):', error);
-        });
-        
+
+        enlazarListenersOportunidadesCarrito(numerosOrdenados);
+
         // Iniciar carga
         window.oportunidadesManager.cargar(numerosOrdenados).catch(e => {
             console.error('[CARRITO] Error crítico:', e);

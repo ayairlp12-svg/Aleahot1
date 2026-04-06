@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="rifaplus-api-base" content="https://demo1m-production.up.railway.app">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' http://127.0.0.1:* http://localhost:* http://localhost:5001; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://fonts.googleapis.com https://cdn.jsdelivr.net https://demo1m-production.up.railway.app; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; connect-src 'self' http://127.0.0.1:* http://localhost:* https: http://localhost:5001 https://demo1m-production.up.railway.app; img-src 'self' data: https: http://127.0.0.1:* http://localhost:* http://localhost:5001;">
+    <meta name="rifaplus-api-base" content="">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' http://127.0.0.1:* http://localhost:* http://localhost:5001; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://fonts.googleapis.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; connect-src 'self' http://127.0.0.1:* http://localhost:* https: http://localhost:5001; img-src 'self' data: https: http://127.0.0.1:* http://localhost:* http://localhost:5001;">
     <title>Boletos - Panel Admin</title>
     <link rel="icon" href="images/placeholder-logo.svg" sizes="32x32">
     <link rel="preload" as="image" href="images/placeholder-logo.svg" fetchpriority="high">
@@ -30,6 +30,9 @@
             --primary: #7C3AED;
             --primary-dark: #5a2abf;
             --primary-light: #F3E9FF;
+            --ticket-card-public-primary: var(--primary);
+            --ticket-card-public-primary-dark: var(--primary-dark);
+            --ticket-card-public-primary-soft: rgba(124, 58, 237, 0.14);
             --success: #31A24C;
             --danger: #E4163A;
             --warning: #B4740C;
@@ -321,8 +324,8 @@
         .orden-header-top {
             background: linear-gradient(
                 135deg,
-                var(--color-primario, var(--primary, #0F3A7D)) 0%,
-                var(--color-secundario, var(--primary-dark, #1B5FB8)) 100%
+                var(--ticket-card-public-primary) 0%,
+                var(--ticket-card-public-primary-dark) 100%
             );
             padding: var(--spacing-md);
             display: flex;
@@ -393,6 +396,7 @@
             min-width: auto;
             max-width: 220px;
             flex-shrink: 0;
+            color: #ffffff;
         }
 
         .orden-id-numero {
@@ -403,6 +407,7 @@
             margin-bottom: var(--spacing-xs);
             word-break: break-word;
             white-space: normal;
+            text-shadow: 0 1px 0 rgba(0, 0, 0, 0.12);
         }
 
         .orden-fecha-hora {
@@ -748,8 +753,8 @@
             justify-content: space-between;
             align-items: flex-start;
             padding: 1rem;
-            background: linear-gradient(135deg, var(--primary-light) 0%, #f0f2f5 100%);
-            border-bottom: 2px solid var(--primary);
+            background: linear-gradient(135deg, var(--ticket-card-public-primary) 0%, var(--ticket-card-public-primary-dark) 100%);
+            border-bottom: 2px solid var(--ticket-card-public-primary);
             gap: 1rem;
         }
 
@@ -783,17 +788,18 @@
             flex-direction: column;
             align-items: flex-end;
             gap: 0.25rem;
+            color: #ffffff;
         }
 
         .orden-id-numero {
             font-size: 1.5rem;
             font-weight: 900;
-            color: var(--primary);
+            color: #ffffff;
         }
 
         .orden-fecha-hora {
             font-size: 0.75rem;
-            color: var(--text-light);
+            color: rgba(255, 255, 255, 0.82);
             font-weight: 500;
         }
 
@@ -919,7 +925,7 @@
 
         .orden-header-top {
             background:
-                linear-gradient(135deg, rgba(9, 44, 88, 0.96) 0%, rgba(18, 67, 128, 0.96) 100%);
+                linear-gradient(135deg, var(--ticket-card-public-primary) 0%, var(--ticket-card-public-primary-dark) 100%);
             color: #ffffff;
             border-bottom: 1px solid rgba(255,255,255,0.08);
         }
@@ -1861,7 +1867,6 @@
                     || 1000;
                 const oportunidadesConfig = config.oportunidades || {};
                 const oportunidadesEnabled = oportunidadesConfig.enabled === true;
-                const multiplicador = Math.max(0, Number(oportunidadesConfig.multiplicador) || 0);
 
                 if (!oportunidadesEnabled) {
                     return {
@@ -1889,16 +1894,15 @@
                     };
                 }
 
-                const totalOportunidades = totalBoletosBase * multiplicador;
-                const finInferido = Math.max(0, (totalBoletosBase + totalOportunidades) - 1);
+                console.warn('[admin-boletos] Oportunidades habilitadas sin rango oculto válido. Se usará solo el rango visible.');
 
                 return {
-                    inicio: 0,
-                    fin: finInferido,
-                    total: totalBoletosBase + totalOportunidades,
+                    inicio: rangoVisible.inicio,
+                    fin: rangoVisible.fin,
+                    total: rangoVisible.total,
                     totalBoletosBase,
-                    totalOportunidades,
-                    tipo: 'oportunidades-inferidas'
+                    totalOportunidades: 0,
+                    tipo: 'oportunidades-config-incompleta'
                 };
             } catch (error) {
                 console.error('[admin-boletos] Error obteniendo rango de búsqueda:', error);
@@ -1974,9 +1978,52 @@
                 if (dashboardLogo) {
                     dashboardLogo.src = clienteLogo;
                 }
+
+                aplicarColorPublicoTicketCard(config);
             } catch (error) {
                 console.warn('⚠️ Error al inicializar configuración:', error);
                 // No lanzar error, continuar con valores por defecto
+            }
+        }
+
+        function aplicarColorPublicoTicketCard(config = window.rifaplusConfig || {}) {
+            try {
+                const root = document.documentElement;
+                const primaryPublico = String(
+                    config?.tema?.colores?.primary
+                    || config?.cliente?.colorPrimario
+                    || config?.cliente?.colores?.primary
+                    || ''
+                ).trim();
+
+                if (!primaryPublico) {
+                    root.style.removeProperty('--ticket-card-public-primary');
+                    root.style.removeProperty('--ticket-card-public-primary-dark');
+                    root.style.removeProperty('--ticket-card-public-primary-soft');
+                    return;
+                }
+
+                const primaryPublicoDark = String(
+                    config?.tema?.colores?.primaryDark
+                    || config?.cliente?.colorPrimarioDark
+                    || config?.cliente?.colores?.primaryDark
+                    || primaryPublico
+                ).trim() || primaryPublico;
+
+                root.style.setProperty('--ticket-card-public-primary', primaryPublico);
+                root.style.setProperty('--ticket-card-public-primary-dark', primaryPublicoDark);
+
+                const rgb = typeof window.hexToRgbSeguro === 'function'
+                    ? window.hexToRgbSeguro(primaryPublico)
+                    : null;
+
+                if (rgb && Number.isFinite(rgb.r) && Number.isFinite(rgb.g) && Number.isFinite(rgb.b)) {
+                    root.style.setProperty('--ticket-card-public-primary-soft', `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.16)`);
+                } else {
+                    root.style.setProperty('--ticket-card-public-primary-soft', 'rgba(0, 0, 0, 0.12)');
+                }
+            } catch (error) {
+                console.warn('[admin-boletos] No se pudo aplicar el color primario público a ticket card:', error);
             }
         }
 
@@ -2120,8 +2167,19 @@
                 const resBoleto = await fetchWithAuth(`${API_BASE}/api/admin/numero-inteligente/${num}`);
                 
                 if (!resBoleto || !resBoleto.ok) {
-                    showSearchFeedback(`El numero #${num.toLocaleString()} no fue encontrado en el sistema. Verifica el rango e intenta de nuevo.`, 'warning');
-                    showError(`Número #${num} no encontrado`);
+                    let backendMessage = `El numero #${num.toLocaleString()} no fue encontrado en el sistema. Verifica el rango e intenta de nuevo.`;
+
+                    try {
+                        const errorData = await resBoleto.json();
+                        if (errorData?.message) {
+                            backendMessage = errorData.message;
+                        }
+                    } catch (parseError) {
+                        console.debug('[admin-boletos] No se pudo leer el error detallado del backend:', parseError);
+                    }
+
+                    showSearchFeedback(backendMessage, 'warning');
+                    showError(backendMessage);
                     document.getElementById('ticketResult').classList.remove('active');
                     return;
                 }
@@ -2182,6 +2240,7 @@
                 const numeroOrdenRaw = boleto.numero_orden || null; // null si no existe
                 const numeroOrdenDisplay = sanitizeText(boleto.numero_orden || ''); // para mostrar en UI
 
+                const estadoRegistro = (boleto.estado || '').toLowerCase().trim();
                 let estadoBoleto = 'disponible'; // Por defecto
 
                 if (numeroOrdenRaw) {
@@ -2192,7 +2251,13 @@
                         estadoBoleto = 'vendido';
                     } else if (estadoOrden === 'cancelada') {
                         estadoBoleto = 'disponible'; // Si fue cancelado, está disponible de nuevo
+                    } else if (estadoRegistro === 'apartado' || estadoRegistro === 'vendido' || estadoRegistro === 'disponible') {
+                        estadoBoleto = estadoRegistro;
                     }
+                } else if (estadoRegistro === 'apartado' || estadoRegistro === 'vendido' || estadoRegistro === 'disponible') {
+                    // Fallback defensivo: si por alguna razón no viene numero_orden,
+                    // usar el estado real del registro para no marcarlo disponible por error.
+                    estadoBoleto = estadoRegistro;
                 }
                 
                 // Determinar estado
@@ -2280,7 +2345,8 @@
                 agregarBotonesAccion(boleto.numero, {
                     esVendido,
                     esApartado,
-                    esDisponible
+                    esDisponible,
+                    esOportunidad
                 });
                 
             } catch (error) {
@@ -2604,6 +2670,11 @@
                 console.warn('⚠️ Contenedor de botones no encontrado');
                 return;
             }
+
+            if (estadoActual?.esOportunidad) {
+                btnContainer.innerHTML = '';
+                return;
+            }
             
             if (!estadoActual || estadoActual.esDisponible || typeof numero === 'undefined') {
                 btnContainer.innerHTML = '';
@@ -2696,6 +2767,11 @@
         }
 
         async function liberarBoletoNumero(numero) {
+            if (currentBoleto?.es_oportunidad && Number(currentBoleto.numero) === Number(numero)) {
+                showError('Las oportunidades no se liberan desde el flujo de boletos. Debes liberar la orden asociada o el boleto base.');
+                return;
+            }
+
             const confirmar = confirm(`¿Liberar boleto #${numero}?`);
             if (!confirmar) return;
 
@@ -2919,6 +2995,16 @@
                 }
             }, { once: true });
 
+            if (window.rifaplusConfig?.escucharEvento) {
+                window.rifaplusConfig.escucharEvento('configuracionActualizada', (datos) => {
+                    try {
+                        aplicarColorPublicoTicketCard(window.rifaplusConfig || datos || {});
+                    } catch (error) {
+                        console.warn('[admin-boletos] Error aplicando color dinámico del ticket card:', error);
+                    }
+                });
+            }
+
         // ===== FUNCIONES PARA GANADORES =====
         /**
          * Marcar boleto como ganador
@@ -2926,6 +3012,11 @@
          */
         window.markAsWinner = function(numero) {
             console.log('🔴 markAsWinner llamado con número:', numero);
+
+            if (currentBoleto?.es_oportunidad && Number(currentBoleto.numero) === Number(numero)) {
+                alert('⚠️ Las oportunidades no se pueden marcar como ganadoras desde este panel');
+                return;
+            }
             
             if (!window.GanadoresManager) {
                 alert('❌ Sistema de ganadores no disponible');
@@ -3036,6 +3127,10 @@
          * @param {Number} numero - Número del boleto
          */
         window.releaseTicket = function(numero) {
+            if (currentBoleto?.es_oportunidad && Number(currentBoleto.numero) === Number(numero)) {
+                showError('Las oportunidades no se liberan desde el flujo de boletos. Debes liberar la orden asociada o el boleto base.');
+                return;
+            }
             liberarBoletoNumero(numero);
         };
         });

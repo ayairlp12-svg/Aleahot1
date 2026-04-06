@@ -36,7 +36,17 @@ function mostrarModalOrdenConfirmada(datosOrden) {
         const nombre = safe(datosOrden.cliente?.nombre) + ' ' + safe(datosOrden.cliente?.apellidos);
         const whatsapp = safe(datosOrden.cliente?.whatsapp);
         const boletos = safe(datosOrden.cantidad_boletos, '0');
-        const oportunidades = safe(datosOrden.oportunidades, '0');
+        const oportunidadesHabilitadas = window.rifaplusConfig?.rifa?.oportunidades?.enabled === true;
+        const multiplicador = Number(window.rifaplusConfig?.rifa?.oportunidades?.multiplicador || 0);
+        const oportunidadesNumericas = Number(datosOrden.oportunidades ?? 0);
+        const oportunidades = Number.isFinite(oportunidadesNumericas) && oportunidadesNumericas >= 0
+            ? oportunidadesNumericas
+            : 0;
+        const oportunidadesTexto = oportunidades.toLocaleString('es-MX');
+        const mostrarResumenOportunidades = oportunidadesHabilitadas || oportunidades > 0;
+        const detalleMultiplicador = multiplicador > 0
+            ? `${multiplicador} por boleto`
+            : '';
         const subtotalSource = datosOrden.totales?.subtotal;
         const totalSource = datosOrden.totales?.totalFinal ?? datosOrden.totales?.total;
         const descuentoSource = datosOrden.totales?.descuento ?? datosOrden.totales?.descuentoMonto;
@@ -83,7 +93,7 @@ function mostrarModalOrdenConfirmada(datosOrden) {
                             ${nombreVisible}, ya registramos tu orden. En <strong>Mis Boletos</strong> podrás ver el detalle y subir tu comprobante de pago.
                         </p>
 
-                        <div class="resumen-hero-confirmada">
+                        <div class="resumen-hero-confirmada${mostrarResumenOportunidades ? ' resumen-hero-confirmada--with-opps' : ''}">
                             <div class="resumen-hero-item">
                                 <span class="resumen-hero-label">Orden</span>
                                 <span class="resumen-hero-value">${ordenId}</span>
@@ -96,6 +106,13 @@ function mostrarModalOrdenConfirmada(datosOrden) {
                                 <span class="resumen-hero-label">Total</span>
                                 <span class="resumen-hero-value accent">$${total}</span>
                             </div>
+                            ${mostrarResumenOportunidades ? `
+                                <div class="resumen-hero-item resumen-hero-item--oportunidades">
+                                    <span class="resumen-hero-label">Oportunidades</span>
+                                    <span class="resumen-hero-value">${oportunidadesTexto}</span>
+                                    ${detalleMultiplicador ? `<span class="resumen-hero-note">${detalleMultiplicador}</span>` : ''}
+                                </div>
+                            ` : ''}
                         </div>
 
                         <div class="datos-orden-confirmada">
@@ -111,10 +128,10 @@ function mostrarModalOrdenConfirmada(datosOrden) {
                                 <span class="dato-label">WhatsApp</span>
                                 <span class="dato-valor">${whatsapp}</span>
                             </div>
-                            ${Number(oportunidades) > 0 ? `
+                            ${mostrarResumenOportunidades ? `
                                 <div class="dato-fila">
                                     <span class="dato-label">Oportunidades</span>
-                                    <span class="dato-valor">${oportunidades}</span>
+                                    <span class="dato-valor">${oportunidadesTexto}${detalleMultiplicador ? ` · ${detalleMultiplicador}` : ''}</span>
                                 </div>
                             ` : ''}
                             ${subtotalRaw > 0 ? `

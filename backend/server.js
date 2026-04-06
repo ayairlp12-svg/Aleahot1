@@ -27,12 +27,16 @@ const db = require('./db'); // Instancia Knex (Postgres)
 const cloudinary = require('./cloudinary-config'); // ✅ Cloudinary para almacenar comprobantes
 const ordenExpirationService = require('./services/ordenExpirationService'); // Servicio de expiración
 const OportunidadesOrdenService = require('./services/oportunidadesOrdenService'); // Servicio de oportunidades
+const OportunidadesInventoryService = require('./services/oportunidadesInventoryService');
+const NuevaRifaService = require('./services/nuevaRifaService');
 const BoletoService = require('./services/boletoService'); // Servicio de boletos para estadísticas y limpieza
 const comprobanteService = require('./services/comprobanteService'); // ✅ Servicio de comprobantes
+const SorteoFinalizadoSnapshotService = require('./services/sorteoFinalizadoSnapshotService');
 const { inicializarEventosWebSocket } = require('./services/websocket-events'); // 🔌 Eventos de WebSocket
 const { obtenerConfigExpiracion } = require('./config-loader'); // Fallback/base de arranque
 const dbUtils = require('./db-utils');
 const { calcularDescuentoCompartido, auditarConsistenciaPrecios, calcularTotalesServidor } = require('./calculo-precios-server'); // ✅ Cálculo sincronizado
+const { resolverConfigOportunidades } = require('./oportunidades-config');
 
 // ===== VALIDACIÓN CRÍTICA DE CONFIGURACIÓN =====
 // Verificar que variables de entorno REQUERIDAS existan y sean válidas
@@ -154,6 +158,14 @@ function limpiarCacheConfiguracionPublica() {
     serverCache.publicConfigCachedTime = 0;
     serverCache.clienteConfigCached = null;
     serverCache.clienteConfigCachedTime = 0;
+}
+
+function limpiarCacheBoletosPublicos() {
+    global.boletosStatsCache = null;
+    global.boletosStatsCacheTime = null;
+    serverCache.boletosPublicosCached = null;
+    serverCache.boletosPublicosCachedTime = 0;
+    serverCache.boletosPublicosByRange.clear();
 }
 
 // 🔌 VARIABLE GLOBAL: Instancia de eventos WebSocket (se inicializa al arrancar el servidor)
@@ -392,6 +404,74 @@ function sincronizarConfigLegacyEnMemoria(config) {
     }
 }
 
+async function persistirConfigActualizada(config, usuarioAdmin = 'SYSTEM') {
+    const configPath = path.join(__dirname, 'config.json');
+    let guardadoEnBD = false;
+
+    if (configManagerV2) {
+        try {
+            guardadoEnBD = await configManagerV2.guardarEnBD(config, usuarioAdmin);
+        } catch (error) {
+            console.warn('[persistirConfigActualizada] ⚠️ ConfigManagerV2 falló, usando fallback config.json:', error.message);
+        }
+    }
+
+    if (!guardadoEnBD) {
+        fs.writeFileSync(configPath, JSON.stringify(config, null, 2), 'utf8');
+    }
+
+    sincronizarConfigLegacyEnMemoria(configManagerV2?.getConfig?.() || config);
+    limpiarCacheConfiguracionPublica();
+    return guardadoEnBD;
+}
+
+async function obtenerGanadoresPersistidos(runner = db) {
+    return runner('ganadores')
+        .select('*')
+        .orderBy([{ column: 'tipo_ganador', order: 'asc' }, { column: 'posicion', order: 'asc' }, { column: 'id', order: 'asc' }]);
+}
+
+async function asegurarSnapshotModalFinalizado(config, options = {}) {
+    const usuarioAdmin = options.usuarioAdmin || 'SYSTEM';
+    const refrescarGanadores = options.refrescarGanadores === true;
+
+    if (!SorteoFinalizadoSnapshotService.esRifaFinalizada(config?.rifa || {})) {
+        return { persisted: false, snapshot: SorteoFinalizadoSnapshotService.obtenerSnapshot(config) };
+    }
+
+    const snapshotExistente = SorteoFinalizadoSnapshotService.obtenerSnapshot(config);
+    const snapshotCoincide = snapshotExistente
+        ? SorteoFinalizadoSnapshotService.snapshotCorrespondeARifaActual(snapshotExistente, config)
+        : false;
+
+    let snapshotFinal = snapshotExistente;
+
+    if (!snapshotExistente) {
+        const ganadoresRows = await obtenerGanadoresPersistidos();
+        snapshotFinal = SorteoFinalizadoSnapshotService.construirSnapshot(config, ganadoresRows);
+    } else if (refrescarGanadores) {
+        const ganadoresRows = await obtenerGanadoresPersistidos();
+        if (snapshotCoincide) {
+            snapshotFinal = SorteoFinalizadoSnapshotService.construirSnapshot(config, ganadoresRows);
+        } else {
+            snapshotFinal = SorteoFinalizadoSnapshotService.actualizarSoloGanadores(snapshotExistente, ganadoresRows);
+        }
+    } else if (!snapshotCoincide) {
+        return { persisted: false, snapshot: snapshotExistente };
+    }
+
+    const snapshotSerializadoAnterior = JSON.stringify(snapshotExistente || null);
+    const snapshotSerializadoNuevo = JSON.stringify(snapshotFinal || null);
+
+    if (snapshotSerializadoAnterior === snapshotSerializadoNuevo) {
+        return { persisted: false, snapshot: snapshotFinal };
+    }
+
+    SorteoFinalizadoSnapshotService.aplicarSnapshotEnConfig(config, snapshotFinal);
+    await persistirConfigActualizada(config, usuarioAdmin);
+    return { persisted: true, snapshot: snapshotFinal };
+}
+
 function obtenerConfigActual() {
     if (configManagerV2?.getConfig) {
         const configBD = configManagerV2.getConfig();
@@ -419,6 +499,7 @@ function obtenerConfigActual() {
 
 function cargarConfigSorteo() {
     const configActual = obtenerConfigActual();
+    const oportunidadesActuales = configActual?.rifa?.oportunidades || configManager.config?.rifa?.oportunidades || {};
 
     return {
         totalBoletos: configActual?.rifa?.totalBoletos || configManager.totalBoletos,
@@ -440,11 +521,189 @@ function cargarConfigSorteo() {
             promocionPorTiempo: configActual?.rifa?.promocionPorTiempo || configManager.config?.rifa?.promocionPorTiempo || { enabled: false },
             descuentoPorcentaje: configActual?.rifa?.descuentoPorcentaje || configManager.config?.rifa?.descuentoPorcentaje || { enabled: false },
             oportunidades: {
-                enabled: configActual?.rifa?.oportunidades?.enabled || configManager.config?.rifa?.oportunidades?.enabled || false,
-                multiplicador: configActual?.rifa?.oportunidades?.multiplicador || configManager.config?.rifa?.oportunidades?.multiplicador || 3,
-                rango_visible: configActual?.rifa?.oportunidades?.rango_visible || configManager.config?.rifa?.oportunidades?.rango_visible || false
+                enabled: oportunidadesActuales.enabled === true,
+                multiplicador: Number(oportunidadesActuales.multiplicador) > 0
+                    ? Number(oportunidadesActuales.multiplicador)
+                    : 1,
+                rango_visible: oportunidadesActuales.rango_visible || false,
+                rango_oculto: oportunidadesActuales.rango_oculto || null
             }
         }
+    };
+}
+
+function obtenerConfigOportunidadesSistema(configBase = null) {
+    return resolverConfigOportunidades(configBase || cargarConfigSorteo(), {
+        permitirFallbackVisible: true
+    });
+}
+
+function obtenerTotalBoletosConfigurado(configBase = null) {
+    const config = configBase || obtenerConfigActual();
+    const total = Number.parseInt(config?.rifa?.totalBoletos ?? config?.totalBoletos, 10);
+    return Number.isInteger(total) && total > 0 ? total : 0;
+}
+
+async function resolverClasificacionNumeroAdmin(numero, configBase = null) {
+    const config = configBase || obtenerConfigActual();
+    const oportunidadesConfig = obtenerConfigOportunidadesSistema(config);
+    const rangoVisible = oportunidadesConfig.rangoVisible;
+    const rangoOculto = oportunidadesConfig.rangoOculto;
+    const totalBoletosConfigurados = obtenerTotalBoletosConfigurado(config);
+
+    let estaEnRangoVisible = Boolean(
+        rangoVisible
+        && numero >= rangoVisible.inicio
+        && numero <= rangoVisible.fin
+    );
+    let estaEnRangoOculto = Boolean(
+        oportunidadesConfig.enabled
+        && rangoOculto
+        && numero >= rangoOculto.inicio
+        && numero <= rangoOculto.fin
+    );
+
+    let motivoFallback = null;
+
+    if (!estaEnRangoVisible && !estaEnRangoOculto) {
+        if (totalBoletosConfigurados > 0 && numero >= 0 && numero <= totalBoletosConfigurados - 1) {
+            estaEnRangoVisible = true;
+            motivoFallback = 'totalBoletos-config';
+        } else {
+            const boletoExistente = await db('boletos_estado')
+                .select('numero')
+                .where('numero', numero)
+                .first();
+
+            if (boletoExistente) {
+                estaEnRangoVisible = true;
+                motivoFallback = 'boletos_estado';
+            } else {
+                const oportunidadExistente = await db('orden_oportunidades')
+                    .select('numero_oportunidad')
+                    .where('numero_oportunidad', numero)
+                    .first();
+
+                if (oportunidadExistente) {
+                    estaEnRangoOculto = true;
+                    motivoFallback = 'orden_oportunidades';
+                }
+            }
+        }
+    }
+
+    return {
+        oportunidadesConfig,
+        rangoVisible,
+        rangoOculto,
+        totalBoletosConfigurados,
+        estaEnRangoVisible,
+        estaEnRangoOculto,
+        motivoFallback
+    };
+}
+
+function parseBoletosOrdenLegacy(raw) {
+    let boletosArr = [];
+
+    if (!raw) {
+        boletosArr = [];
+    } else if (Array.isArray(raw)) {
+        boletosArr = raw;
+    } else if (typeof raw === 'object' && raw !== null) {
+        boletosArr = Object.values(raw);
+    } else if (typeof raw === 'string') {
+        try {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) {
+                boletosArr = parsed;
+            } else if (typeof parsed === 'object' && parsed !== null) {
+                boletosArr = Object.values(parsed);
+            } else if (typeof parsed === 'string') {
+                boletosArr = parsed.split(',').map((s) => s.trim()).filter(Boolean);
+            }
+        } catch (err) {
+            boletosArr = raw.split(',').map((s) => s.trim()).filter(Boolean);
+        }
+    }
+
+    return boletosArr.map((b) => {
+        if (b === null || typeof b === 'undefined') return NaN;
+        if (typeof b === 'number') return b;
+        if (typeof b === 'string') {
+            const n = Number(b);
+            if (!Number.isNaN(n)) return n;
+            try {
+                const inner = JSON.parse(b);
+                if (inner && typeof inner === 'object') {
+                    return Number(inner.numero || inner.numero_boleto || inner.n || inner.id || NaN);
+                }
+            } catch (e) {
+                return NaN;
+            }
+        }
+        if (typeof b === 'object') {
+            return Number(b.numero || b.numero_boleto || b.n || b.id || NaN);
+        }
+        return NaN;
+    }).filter((n) => !Number.isNaN(n));
+}
+
+async function buscarOrdenActivaPorBoleto(numero, options = {}) {
+    const numeroBoleto = Number(numero);
+    if (!Number.isFinite(numeroBoleto)) {
+        return { orden: null, boletoEstado: null, origen: null };
+    }
+
+    const incluirCanceladas = options.incluirCanceladas === true;
+    const boletoEstado = await db('boletos_estado')
+        .select('numero', 'estado', 'numero_orden', 'created_at', 'updated_at')
+        .where('numero', numeroBoleto)
+        .first();
+
+    if (boletoEstado?.numero_orden) {
+        const ordenPorEstado = await db('ordenes')
+            .select('*')
+            .where('numero_orden', boletoEstado.numero_orden)
+            .modify((qb) => {
+                if (!incluirCanceladas) qb.whereNot('estado', 'cancelada');
+            })
+            .first();
+
+        if (ordenPorEstado) {
+            return {
+                orden: ordenPorEstado,
+                boletoEstado,
+                origen: 'boletos_estado'
+            };
+        }
+    }
+
+    const ordenesLegacy = await dbUtils
+        .ordersContainingBoletoQuery(numeroBoleto)
+        .select('*')
+        .modify((qb) => {
+            if (!incluirCanceladas) qb.whereNot('estado', 'cancelada');
+        });
+
+    let ordenLegacy = null;
+    for (const orden of ordenesLegacy) {
+        try {
+            const boletosNumericos = parseBoletosOrdenLegacy(orden.boletos);
+            if (boletosNumericos.includes(numeroBoleto)) {
+                if (!ordenLegacy || new Date(orden.created_at) > new Date(ordenLegacy.created_at)) {
+                    ordenLegacy = orden;
+                }
+            }
+        } catch (error) {
+            console.warn('[buscarOrdenActivaPorBoleto] Error parseando orden legacy', orden?.numero_orden, error?.message);
+        }
+    }
+
+    return {
+        orden: ordenLegacy,
+        boletoEstado,
+        origen: ordenLegacy ? 'ordenes.boletos' : null
     };
 }
 
@@ -581,6 +840,33 @@ function verificarToken(req, res, next) {
         }
         req.usuario = usuario; // Adjuntar usuario al request
         next();
+    });
+}
+
+function verificarSocketAdminToken(socket, next) {
+    const authToken = socket.handshake?.auth?.token;
+    const headerToken = socket.handshake?.headers?.authorization
+        ? String(socket.handshake.headers.authorization).replace(/^Bearer\s+/i, '')
+        : '';
+    const queryToken = socket.handshake?.query?.token;
+    const token = authToken || headerToken || queryToken;
+
+    if (!token) {
+        return next(new Error('NO_TOKEN'));
+    }
+
+    jwt.verify(token, JWT_SECRET, (err, usuario) => {
+        if (err) {
+            return next(new Error('INVALID_TOKEN'));
+        }
+
+        const rolesPermitidos = ['administrador', 'gestor_ordenes'];
+        if (!rolesPermitidos.includes(usuario?.rol)) {
+            return next(new Error('FORBIDDEN'));
+        }
+
+        socket.adminUser = usuario;
+        return next();
     });
 }
 
@@ -2403,6 +2689,28 @@ app.patch('/api/admin/config', verificarToken, async (req, res) => {
             });
         }
 
+        const tocaDatosVisiblesDeRifaFinalizada = Boolean(
+            req.body.rifa
+            || req.body.cliente
+            || requiereSystemaPremios
+            || req.body.tema
+        );
+
+        if (tocaDatosVisiblesDeRifaFinalizada) {
+            try {
+                await asegurarSnapshotModalFinalizado(config, {
+                    usuarioAdmin: req.usuario?.username || 'SYSTEM'
+                });
+            } catch (snapshotError) {
+                console.error('[PATCH /api/admin/config] ❌ Error asegurando snapshot de rifa finalizada:', snapshotError);
+                return res.status(500).json({
+                    success: false,
+                    message: 'No se pudo congelar el modal de la rifa finalizada antes de aplicar cambios',
+                    error: snapshotError.message
+                });
+            }
+        }
+
         // ✔️ PASO 3: Validar estructura de sistemaPremios (SOLO si fue enviado)
         if (requiereSystemaPremios) {
             // Hacer validaciones más flexibles para arrays que pueden ser vacíos o null
@@ -3583,7 +3891,8 @@ app.post('/api/ordenes', limiterOrdenes, async (req, res) => {
         }
 
         // ===== TRANSACCIÓN ATÓMICA =====
-        const oportunidadesHabilitadas = config?.rifa?.oportunidades?.enabled === true;
+        const oportunidadesConfig = obtenerConfigOportunidadesSistema(config);
+        const oportunidadesHabilitadas = oportunidadesConfig.enabled === true;
 
         const resultado = await db.transaction(async (trx) => {
             if (!ordenId) {
@@ -3596,10 +3905,23 @@ app.post('/api/ordenes', limiterOrdenes, async (req, res) => {
                 .first();
 
             if (ordenExistente) {
+                const cantidadOportunidadesExistente = oportunidadesHabilitadas
+                    ? Number.parseInt(
+                        (
+                            await trx('orden_oportunidades')
+                                .where('numero_orden', ordenExistente.numero_orden)
+                                .count('* as total')
+                                .first()
+                        )?.total,
+                        10
+                    ) || 0
+                    : 0;
+
                 // 200 OK: orden ya existe (idempotencia)
                 return {
                     isDuplicate: true,
-                    ordenExistente: ordenExistente
+                    ordenExistente: ordenExistente,
+                    cantidadOportunidades: cantidadOportunidadesExistente
                 };
             }
 
@@ -3692,30 +4014,105 @@ app.post('/api/ordenes', limiterOrdenes, async (req, res) => {
             }
 
             if (oportunidadesHabilitadas) {
-                // PASO 4.5: Ligar oportunidades a la orden solo si están habilitadas
-                await trx('orden_oportunidades')
+                if (!oportunidadesConfig.configuracionCompleta || !oportunidadesConfig.configuracionConsistente) {
+                    throw {
+                        code: 'OPORTUNIDADES_INCONSISTENTES',
+                        message: 'La configuración de oportunidades es inválida o incompleta',
+                        detalles: {
+                            multiplicador: oportunidadesConfig.multiplicador,
+                            rangoVisible: oportunidadesConfig.rangoVisible,
+                            rangoOculto: oportunidadesConfig.rangoOculto,
+                            totalEsperado: oportunidadesConfig.totalOportunidadesEsperadas,
+                            totalConfigurado: oportunidadesConfig.totalOportunidadesConfiguradas,
+                            errores: oportunidadesConfig.errores
+                        }
+                    };
+                }
+
+                const conteosDisponiblesPorBoleto = await trx('orden_oportunidades')
                     .whereIn('numero_boleto', boletosValidos)
+                    .where('estado', 'disponible')
+                    .whereNull('numero_orden')
+                    .select('numero_boleto')
+                    .count('* as total')
+                    .groupBy('numero_boleto');
+
+                const mapaConteos = new Map(
+                    conteosDisponiblesPorBoleto.map((row) => [
+                        Number(row.numero_boleto),
+                        Number.parseInt(row.total, 10) || 0
+                    ])
+                );
+
+                const boletosConOportunidadesInvalidas = boletosValidos
+                    .map((numero) => ({
+                        numero,
+                        cantidad: mapaConteos.get(Number(numero)) || 0
+                    }))
+                    .filter((item) => item.cantidad !== oportunidadesConfig.multiplicador);
+
+                if (boletosConOportunidadesInvalidas.length > 0) {
+                    throw {
+                        code: 'OPORTUNIDADES_INCONSISTENTES',
+                        message: 'Uno o más boletos no tienen el número correcto de oportunidades preasignadas',
+                        detalles: {
+                            multiplicadorEsperado: oportunidadesConfig.multiplicador,
+                            boletos: boletosConOportunidadesInvalidas
+                        }
+                    };
+                }
+
+                const oportunidadesActualizadas = await trx('orden_oportunidades')
+                    .whereIn('numero_boleto', boletosValidos)
+                    .where('estado', 'disponible')
                     .whereNull('numero_orden')
                     .update({
                         numero_orden: ordenId,
                         estado: 'apartado'
                     });
 
-                console.log(`✅ Orden ${ordenId} creada: ${boletosValidos.length} boletos + oportunidades asignadas`);
+                const oportunidadesEsperadasOrden = boletosValidos.length * oportunidadesConfig.multiplicador;
+                if (oportunidadesActualizadas !== oportunidadesEsperadasOrden) {
+                    throw {
+                        code: 'OPORTUNIDADES_INCONSISTENTES',
+                        message: 'La asignación de oportunidades no coincidió con el multiplicador configurado',
+                        detalles: {
+                            multiplicadorEsperado: oportunidadesConfig.multiplicador,
+                            totalBoletos: boletosValidos.length,
+                            oportunidadesEsperadas: oportunidadesEsperadasOrden,
+                            oportunidadesActualizadas
+                        }
+                    };
+                }
+
+                console.log(`✅ Orden ${ordenId} creada: ${boletosValidos.length} boletos + ${oportunidadesActualizadas} oportunidades asignadas`);
+
+                return {
+                    isDuplicate: false,
+                    ordenId: ordenId,
+                    cantidad: boletosValidos.length,
+                    cantidadOportunidades: oportunidadesActualizadas,
+                    total: total,
+                    precioUnitario,
+                    subtotal,
+                    descuento,
+                    totalFinal: total
+                };
             } else {
                 console.log(`✅ Orden ${ordenId} creada: ${boletosValidos.length} boletos (sin oportunidades)`);
-            }
 
-            return {
-                isDuplicate: false,
-                ordenId: ordenId,
-                cantidad: boletosValidos.length,
-                total: total,
-                precioUnitario,
-                subtotal,
-                descuento,
-                totalFinal: total
-            };
+                return {
+                    isDuplicate: false,
+                    ordenId: ordenId,
+                    cantidad: boletosValidos.length,
+                    cantidadOportunidades: 0,
+                    total: total,
+                    precioUnitario,
+                    subtotal,
+                    descuento,
+                    totalFinal: total
+                };
+            }
         });
 
         // Respuesta
@@ -3735,6 +4132,7 @@ app.post('/api/ordenes', limiterOrdenes, async (req, res) => {
                 data: {
                     numero_orden: resultado.ordenExistente.numero_orden,
                     cantidad_boletos: resultado.ordenExistente.cantidad_boletos,
+                    cantidad_oportunidades: resultado.cantidadOportunidades || 0,
                     totales: {
                         precioUnitario: Number(resultado.ordenExistente.precio_unitario ?? 0),
                         subtotal: Number(resultado.ordenExistente.subtotal ?? 0),
@@ -3763,6 +4161,17 @@ app.post('/api/ordenes', limiterOrdenes, async (req, res) => {
                     cliente: nombre,
                     timestamp: new Date().toISOString()
                 });
+                wsEvents.emitirNuevaOrdenAdmin({
+                    numero_orden: resultado.ordenId,
+                    nombre_cliente: nombre,
+                    telefono_cliente: telefono,
+                    estado: 'pendiente',
+                    cantidad_boletos: resultado.cantidad,
+                    total: resultado.totalFinal,
+                    comprobante_path: null,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                });
                 console.log(`✅ Evento WebSocket emitido: Nueva orden con ${resultado.cantidad} boletos`);
             } catch (wsError) {
                 // No fallar si hay error en WebSocket - es no-crítico
@@ -3779,6 +4188,7 @@ app.post('/api/ordenes', limiterOrdenes, async (req, res) => {
             data: {
                 numero_orden: resultado.ordenId,
                 cantidad_boletos: resultado.cantidad,
+                cantidad_oportunidades: resultado.cantidadOportunidades || 0,
                 totales: {
                     precioUnitario: resultado.precioUnitario,
                     subtotal: resultado.subtotal,
@@ -3806,6 +4216,19 @@ app.post('/api/ordenes', limiterOrdenes, async (req, res) => {
                 message: error.message,
                 boletosConflicto: error.boletosConflicto,
                 boletosDisponibles: error.boletosDisponibles || []  // ← NUEVO: boletos que SÍ están disponibles
+            });
+        }
+
+        if (error.code === 'OPORTUNIDADES_INCONSISTENTES') {
+            log('error', 'Inconsistencia de oportunidades detectada al crear orden', {
+                ordenId,
+                detalles: error.detalles || null
+            });
+            return res.status(409).json({
+                success: false,
+                code: 'OPORTUNIDADES_INCONSISTENTES',
+                message: error.message,
+                detalles: error.detalles || null
             });
         }
 
@@ -4359,7 +4782,7 @@ app.get('/api/ordenes/:id/oportunidades', verificarToken, async (req, res) => {
             .orderBy('numero_oportunidad', 'asc');
         
         const oportunidadesArray = oportunidades.map(op => op.numero_oportunidad);
-        
+
         return res.json({
             success: true,
             numero_orden: id,
@@ -4561,6 +4984,19 @@ app.post('/api/public/ordenes-cliente/:numero_orden/comprobante', async (req, re
             tamaño_mb: resultado.tamaño_mb,
             statusCode: 200
         }, { slowMs: 1500, warnMs: 4000 });
+
+        if (wsEvents) {
+            try {
+                wsEvents.emitirOrdenActualizadaAdmin({
+                    numero_orden,
+                    estado: 'pendiente',
+                    comprobante_path: '__present__',
+                    updated_at: new Date().toISOString()
+                });
+            } catch (wsError) {
+                console.warn(`⚠️  Error emitiendo actualización admin de comprobante:`, wsError.message);
+            }
+        }
 
         // 🔒 NO retornar URL completa al cliente (solo confirmación)
         return res.json({
@@ -4869,21 +5305,23 @@ app.get('/api/admin/boleto-simple/:numero', verificarToken, async (req, res) => 
         }
 
         // 🎯 OBTENER RANGO DINÁMICO desde configuración (NO hardcodeado)
-        const config = cargarConfigSorteo();
-        let rangoMax = 249999; // Default
+        const config = obtenerConfigActual();
+        const oportunidadesConfig = obtenerConfigOportunidadesSistema(config);
+        const totalBoletosConfigurados = obtenerTotalBoletosConfigurado(config);
         let rangoMin = 0;
+        let rangoMax = Math.max(0, totalBoletosConfigurados - 1);
         
         // Caso 1: Oportunidades habilitadas → usar rango_visible
-        if (config?.rifa?.oportunidades?.enabled && config?.rifa?.oportunidades?.rango_visible) {
-            const rango = config.rifa.oportunidades.rango_visible;
+        if (oportunidadesConfig.enabled && oportunidadesConfig.rangoVisible) {
+            const rango = oportunidadesConfig.rangoVisible;
             rangoMin = rango.inicio || 0;
-            rangoMax = rango.fin || 249999;
+            rangoMax = rango.fin || rangoMax;
             console.debug(`[boleto-simple] Usando rango visible (oportunidades): ${rangoMin}-${rangoMax}`);
         } 
         // Caso 2: Sin oportunidades → usar totalBoletos
-        else if (config?.rifa?.totalBoletos) {
+        else if (totalBoletosConfigurados > 0) {
             rangoMin = 0;
-            rangoMax = config.rifa.totalBoletos - 1;
+            rangoMax = totalBoletosConfigurados - 1;
             console.debug(`[boleto-simple] Usando totalBoletos: ${rangoMin}-${rangoMax}`);
         }
 
@@ -5042,8 +5480,8 @@ app.get('/api/admin/boleto-simple/:numero', verificarToken, async (req, res) => 
 /**
  * GET /api/admin/numero-inteligente/:numero
  * Búsqueda inteligente que detecta si es boleto u oportunidad
- * - Si número < 250000: Busca en boletos
- * - Si número >= 250000: Busca en oportunidades
+ * - Si número cae en el rango visible: Busca en boletos
+ * - Si número cae en el rango oculto: Busca en oportunidades
  * Retorna los mismos datos, pero agrega flag 'es_oportunidad'
  * Protegido con JWT
  */
@@ -5058,15 +5496,46 @@ app.get('/api/admin/numero-inteligente/:numero', verificarToken, async (req, res
             });
         }
 
-        // 🎯 OBTENER RANGO DINÁMICO desde configuración
-        const config = cargarConfigSorteo();
-        const totalBoletos = config?.rifa?.totalBoletos || 250000;
-        const inicioOportunidades = totalBoletos;
+        // 🎯 OBTENER RANGO DINÁMICO desde configuración + fallback por inventario
+        const config = obtenerConfigActual();
+        const {
+            oportunidadesConfig,
+            rangoVisible,
+            rangoOculto,
+            totalBoletosConfigurados,
+            estaEnRangoVisible,
+            estaEnRangoOculto,
+            motivoFallback
+        } = await resolverClasificacionNumeroAdmin(numero, config);
+
+        if (oportunidadesConfig.enabled && !oportunidadesConfig.configuracionConsistente) {
+            return res.status(409).json({
+                success: false,
+                message: 'La configuración de oportunidades es inválida o incompleta',
+                detalles: oportunidadesConfig.errores
+            });
+        }
+
+        if (!estaEnRangoVisible && !estaEnRangoOculto) {
+            const rangoPermitido = oportunidadesConfig.enabled && rangoOculto
+                ? `${rangoVisible?.inicio ?? 0}-${rangoVisible?.fin ?? 0} y ${rangoOculto.inicio}-${rangoOculto.fin}`
+                : `${rangoVisible?.inicio ?? 0}-${rangoVisible?.fin ?? 0}`;
+
+            return res.status(400).json({
+                success: false,
+                message: `Número fuera del rango permitido (${rangoPermitido})`,
+                detalles: {
+                    totalBoletosConfigurados,
+                    oportunidadesHabilitadas: oportunidadesConfig.enabled === true,
+                    rangoVisible,
+                    rangoOculto
+                }
+            });
+        }
+
+        const esOportunidad = estaEnRangoOculto;
         
-        // Determinar si es boleto u oportunidad
-        const esOportunidad = numero >= inicioOportunidades;
-        
-        console.log(`[numero-inteligente] Buscando #${numero} (${esOportunidad ? 'OPORTUNIDAD' : 'BOLETO'})`);
+        console.log(`[numero-inteligente] Buscando #${numero} (${esOportunidad ? 'OPORTUNIDAD' : 'BOLETO'})${motivoFallback ? ` [fallback:${motivoFallback}]` : ''}`);
 
         // ===== CASO 1: OPORTUNIDAD =====
         if (esOportunidad) {
@@ -5179,64 +5648,80 @@ app.get('/api/admin/numero-inteligente/:numero', verificarToken, async (req, res
 
         // ===== CASO 2: BOLETO =====
         else {
-            // Buscar órdenes que contienen este boleto
-            const ordenes = await dbUtils.ordersContainingBoletoQuery(numero).select('*');
+            // Fuente de verdad actual: boletos_estado
+            const boletoEstado = await db('boletos_estado')
+                .select('numero', 'estado', 'numero_orden', 'created_at', 'updated_at')
+                .where('numero', numero)
+                .first();
 
             let ordenEncontrada = null;
-            for (const orden of ordenes) {
-                try {
-                    let boletosArr = [];
-                    const raw = orden.boletos;
-                    
-                    if (!raw) {
-                        boletosArr = [];
-                    } else if (Array.isArray(raw)) {
-                        boletosArr = raw;
-                    } else if (typeof raw === 'object' && raw !== null) {
-                        boletosArr = Object.values(raw);
-                    } else if (typeof raw === 'string') {
-                        try {
-                            const parsed = JSON.parse(raw);
-                            if (Array.isArray(parsed)) {
-                                boletosArr = parsed;
-                            } else if (typeof parsed === 'object' && parsed !== null) {
-                                boletosArr = Object.values(parsed);
-                            } else if (typeof parsed === 'string') {
-                                boletosArr = parsed.split(',').map(s => s.trim()).filter(Boolean);
-                            }
-                        } catch (err) {
-                            boletosArr = raw.split(',').map(s => s.trim()).filter(Boolean);
-                        }
-                    }
 
-                    const boletosNumericos = boletosArr.map(b => {
-                        if (b === null || typeof b === 'undefined') return NaN;
-                        if (typeof b === 'number') return b;
-                        if (typeof b === 'string') {
-                            const n = Number(b);
-                            if (!isNaN(n)) return n;
+            if (boletoEstado?.numero_orden) {
+                ordenEncontrada = await db('ordenes')
+                    .where('numero_orden', boletoEstado.numero_orden)
+                    .first();
+            }
+
+            // Fallback legacy: si por algún motivo no hay row en boletos_estado
+            // o la orden asociada se perdió, intentar reconstruir desde ordenes.boletos.
+            if (!ordenEncontrada && (!boletoEstado || boletoEstado.numero_orden)) {
+                const ordenes = await dbUtils.ordersContainingBoletoQuery(numero).select('*');
+
+                for (const orden of ordenes) {
+                    try {
+                        let boletosArr = [];
+                        const raw = orden.boletos;
+
+                        if (!raw) {
+                            boletosArr = [];
+                        } else if (Array.isArray(raw)) {
+                            boletosArr = raw;
+                        } else if (typeof raw === 'object' && raw !== null) {
+                            boletosArr = Object.values(raw);
+                        } else if (typeof raw === 'string') {
                             try {
-                                const inner = JSON.parse(b);
-                                if (inner && typeof inner === 'object') {
-                                    return Number(inner.numero || inner.numero_boleto || inner.n || inner.id || NaN);
+                                const parsed = JSON.parse(raw);
+                                if (Array.isArray(parsed)) {
+                                    boletosArr = parsed;
+                                } else if (typeof parsed === 'object' && parsed !== null) {
+                                    boletosArr = Object.values(parsed);
+                                } else if (typeof parsed === 'string') {
+                                    boletosArr = parsed.split(',').map(s => s.trim()).filter(Boolean);
                                 }
-                            } catch (e) {
-                                return NaN;
+                            } catch (err) {
+                                boletosArr = raw.split(',').map(s => s.trim()).filter(Boolean);
                             }
                         }
-                        if (typeof b === 'object') {
-                            return Number(b.numero || b.numero_boleto || b.n || b.id || NaN);
-                        }
-                        return NaN;
-                    }).filter(n => !isNaN(n));
 
-                    if (boletosNumericos.includes(numero)) {
-                        if (!ordenEncontrada || new Date(orden.created_at) > new Date(ordenEncontrada.created_at)) {
-                            ordenEncontrada = orden;
+                        const boletosNumericos = boletosArr.map(b => {
+                            if (b === null || typeof b === 'undefined') return NaN;
+                            if (typeof b === 'number') return b;
+                            if (typeof b === 'string') {
+                                const n = Number(b);
+                                if (!isNaN(n)) return n;
+                                try {
+                                    const inner = JSON.parse(b);
+                                    if (inner && typeof inner === 'object') {
+                                        return Number(inner.numero || inner.numero_boleto || inner.n || inner.id || NaN);
+                                    }
+                                } catch (e) {
+                                    return NaN;
+                                }
+                            }
+                            if (typeof b === 'object') {
+                                return Number(b.numero || b.numero_boleto || b.n || b.id || NaN);
+                            }
+                            return NaN;
+                        }).filter(n => !isNaN(n));
+
+                        if (boletosNumericos.includes(numero)) {
+                            if (!ordenEncontrada || new Date(orden.created_at) > new Date(ordenEncontrada.created_at)) {
+                                ordenEncontrada = orden;
+                            }
                         }
+                    } catch (e) {
+                        console.warn('Warning parsing boletos for orden', orden.id, e && e.message);
                     }
-                } catch (e) {
-                    console.warn('Warning parsing boletos for orden', orden.id, e && e.message);
                 }
             }
             
@@ -5254,7 +5739,7 @@ app.get('/api/admin/numero-inteligente/:numero', verificarToken, async (req, res
                     es_oportunidad: false,
                     data: {
                         numero: numero,
-                        estado: ordenEncontrada.estado === 'confirmada' ? 'vendido' : 'apartado',
+                        estado: boletoEstado?.estado || (ordenEncontrada.estado === 'confirmada' ? 'vendido' : 'apartado'),
                         numero_orden: ordenEncontrada.numero_orden,
                         nombre_cliente: ordenEncontrada.nombre_cliente || '',
                         apellido_cliente: ordenEncontrada.apellido_cliente || '',
@@ -5270,7 +5755,36 @@ app.get('/api/admin/numero-inteligente/:numero', verificarToken, async (req, res
                         comprobante_pagado_at: ordenEncontrada.comprobante_pagado_at,
                         comprobante_fecha: ordenEncontrada.comprobante_fecha || ordenEncontrada.updated_at || ordenEncontrada.comprobante_pagado_at || ordenEncontrada.created_at,
                         comprobante_path: ordenEncontrada.comprobante_path,
-                        created_at: ordenEncontrada.created_at
+                        created_at: ordenEncontrada.created_at,
+                        updated_at: boletoEstado?.updated_at || ordenEncontrada.updated_at || ordenEncontrada.created_at
+                    }
+                });
+            }
+
+            if (boletoEstado) {
+                return res.json({
+                    success: true,
+                    ok: true,
+                    es_oportunidad: false,
+                    data: {
+                        numero: numero,
+                        estado: boletoEstado.estado || 'disponible',
+                        numero_orden: boletoEstado.numero_orden || null,
+                        nombre_cliente: '',
+                        apellido_cliente: '',
+                        email: '',
+                        telefono: '',
+                        ciudad: '',
+                        estado_cliente: '',
+                        ciudad_cliente: '',
+                        estado_orden: boletoEstado.estado || 'disponible',
+                        total: 0,
+                        fecha_pago: null,
+                        comprobante_pagado_at: null,
+                        comprobante_fecha: null,
+                        comprobante_path: null,
+                        created_at: boletoEstado.created_at || null,
+                        updated_at: boletoEstado.updated_at || null
                     }
                 });
             }
@@ -5418,7 +5932,7 @@ app.get('/api/public/ordenes-stats', async (req, res) => {
  * GET /api/public/boletos
  * ⚠️ CRÍTICO: Devuelve estado REAL DE BOLETOS directamente de boletos_estado
  * - "sold": boletos en estado 'vendido' (ya pagados y confirmados)
- * - "reserved": boletos en estado 'reservado' (en orden pendiente o con comprobante)
+ * - "reserved": boletos en estado 'apartado' (en orden pendiente o con comprobante)
  * 
  * SIN CACHE: Siempre devuelve datos frescos directamente de BD para sincronización 100%
  * Esta es la fuente única de verdad para UI
@@ -5635,7 +6149,7 @@ app.get('/api/public/boletos', async (req, res) => {
             boletosOcultos = parseInt(oportunidadesCount.rows?.[0]?.count || 0, 10) || 0;
             const vendidosGlobales = parseInt(countData.vendidos, 10) || 0;
             const apartadosGlobales = parseInt(countData.apartados, 10) || 0;
-            const disponiblesGlobales = Math.max(0, totalBoletos - vendidosGlobales - apartadosGlobales - boletosOcultos);
+            const disponiblesGlobales = Math.max(0, totalBoletos - vendidosGlobales - apartadosGlobales);
 
             statsGlobales = {
                 vendidos: vendidosGlobales,
@@ -5663,7 +6177,7 @@ app.get('/api/public/boletos', async (req, res) => {
                     .timeout(15000)
                     .orderBy('numero'),
                 db('orden_oportunidades')
-                    .where('estado', 'reservado')
+                    .where('estado', 'apartado')
                     .select('numero_oportunidad')
                     .timeout(15000)
                     .orderBy('numero_oportunidad'),
@@ -5690,8 +6204,8 @@ app.get('/api/public/boletos', async (req, res) => {
         const vendidos = statsGlobales.vendidos || 0;
         const reservados = statsGlobales.apartados || 0;
         boletosOcultos = Number(statsGlobales.boletosOcultos || boletosOcultos || 0);
-        const totalApartados = reservados + boletosOcultos;
-        const disponibles = Math.max(0, statsGlobales.disponibles ?? (totalBoletos - vendidos - totalApartados));
+        const totalApartados = reservados;
+        const disponibles = Math.max(0, statsGlobales.disponibles ?? (totalBoletos - vendidos - reservados));
         const queryTime = Date.now() - startTime;
         
         const payload = {
@@ -6052,42 +6566,71 @@ app.get('/api/admin/stats', verificarToken, async (req, res) => {
 
 /**
  * GET /api/public/boletos/:numero/oportunidades
- * 🎁 Obtiene las 3 oportunidades PRE-ASIGNADAS al boleto desde BD
- * 
- * Las oportunidades se pre-poblaron en orden_oportunidades con:
- * - 750,000 registros (250k boletos × 3 oportunidades)
- * - Asignación 1:1 distribuida (sin repeticiones)
+ * 🎁 Obtiene las oportunidades PRE-ASIGNADAS al boleto desde BD
  * 
  * @param numero - Número del boleto (ej: 1, 100, 500)
- * @returns {Array} Array de 3 números de oportunidades desde BD
+ * @returns {Array} Array de oportunidades desde BD
  */
 app.get('/api/public/boletos/:numero/oportunidades', limiterOrdenes, async (req, res) => {
     try {
         const { numero } = req.params;
         const numeroBoleto = parseInt(numero, 10);
+        const config = cargarConfigSorteo();
+        const oportunidadesConfig = obtenerConfigOportunidadesSistema(config);
+
+        if (!oportunidadesConfig.enabled) {
+            return res.json({
+                success: true,
+                numero_boleto: Number.isInteger(numeroBoleto) ? numeroBoleto : null,
+                oportunidades: [],
+                cantidad: 0
+            });
+        }
+
+        if (!oportunidadesConfig.configuracionCompleta || !oportunidadesConfig.configuracionConsistente) {
+            return res.status(409).json({
+                success: false,
+                message: 'La configuración de oportunidades es inválida o incompleta',
+                detalles: oportunidadesConfig.errores
+            });
+        }
+
+        const rangoVisible = oportunidadesConfig.rangoVisible;
         
-        // Validar que sea un número válido (0-249999)
-        if (isNaN(numeroBoleto) || numeroBoleto < 0 || numeroBoleto > 249999) {
+        if (
+            !Number.isInteger(numeroBoleto)
+            || !rangoVisible
+            || numeroBoleto < rangoVisible.inicio
+            || numeroBoleto > rangoVisible.fin
+        ) {
             return res.status(400).json({
                 success: false,
-                message: 'Número de boleto inválido (debe ser 0-249999)'
+                message: `Número de boleto inválido (debe estar entre ${rangoVisible?.inicio ?? 0} y ${rangoVisible?.fin ?? 0})`
             });
         }
         
-        // 🎯 QUERY SIMPLE: Obtener las 3 oportunidades pre-asignadas a este boleto
-        // Desde la tabla orden_oportunidades que fue pre-poblada
         const oportunidades = await db('orden_oportunidades')
             .where('numero_boleto', numeroBoleto)
             .select('numero_oportunidad')
-            .orderBy('numero_oportunidad')
-            .limit(3);
+            .orderBy('numero_oportunidad');
         
-        // Si no hay registros, error en datos de inicialización
         if (oportunidades.length === 0) {
             return res.status(404).json({
                 success: false,
                 message: `No hay oportunidades pre-asignadas para boleto ${numeroBoleto}`,
-                debug: 'Ejecutar populate-oportunidades.js en backend'
+                debug: 'Ejecuta npm run populate:oportunidades en backend'
+            });
+        }
+
+        if (oportunidades.length !== oportunidadesConfig.multiplicador) {
+            return res.status(409).json({
+                success: false,
+                message: 'La cantidad de oportunidades del boleto no coincide con el multiplicador configurado',
+                detalles: {
+                    numero_boleto: numeroBoleto,
+                    esperadas: oportunidadesConfig.multiplicador,
+                    encontradas: oportunidades.length
+                }
             });
         }
         
@@ -6118,12 +6661,34 @@ app.get('/api/public/boletos/:numero/oportunidades', limiterOrdenes, async (req,
  * - AHORA: 12,000 boletos = 240 requests (batch de 50) = ~8 segundos (15 concurrent)
  * 
  * @body { numeros: [1, 2, 3, ..., 50] }  // Array de hasta 100 boletos
- * @returns { success: true, datos: { 1: [o1, o2, o3], 2: [...], ... } }
+ * @returns { success: true, datos: { 1: [o1, o2, ...], 2: [...], ... } }
  */
 app.post('/api/public/boletos/oportunidades/batch', limiterOrdenes, async (req, res) => {
     try {
         const { numeros } = req.body;
-        
+        const config = cargarConfigSorteo();
+        const oportunidadesConfig = obtenerConfigOportunidadesSistema(config);
+
+        if (!oportunidadesConfig.enabled) {
+            return res.json({
+                success: true,
+                totales: {
+                    solicitados: Array.isArray(numeros) ? numeros.length : 0,
+                    procesados: 0,
+                    oportunidades: 0
+                },
+                datos: {}
+            });
+        }
+
+        if (!oportunidadesConfig.configuracionCompleta || !oportunidadesConfig.configuracionConsistente) {
+            return res.status(409).json({
+                success: false,
+                message: 'La configuración de oportunidades es inválida o incompleta',
+                detalles: oportunidadesConfig.errores
+            });
+        }
+
         // Validar entrada
         if (!Array.isArray(numeros) || numeros.length === 0) {
             return res.status(400).json({
@@ -6139,10 +6704,13 @@ app.post('/api/public/boletos/oportunidades/batch', limiterOrdenes, async (req, 
             });
         }
         
-        // Validar que sean números válidos
+        const rangoVisible = oportunidadesConfig.rangoVisible;
         const numerosValidos = numeros
             .map(n => parseInt(n, 10))
-            .filter(n => !isNaN(n) && n >= 0 && n <= 249999);
+            .filter((n) => Number.isInteger(n)
+                && rangoVisible
+                && n >= rangoVisible.inicio
+                && n <= rangoVisible.fin);
         
         if (numerosValidos.length === 0) {
             return res.status(400).json({
@@ -6170,6 +6738,22 @@ app.post('/api/public/boletos/oportunidades/batch', limiterOrdenes, async (req, 
             }
             resultado[row.numero_boleto].push(row.numero_oportunidad);
         });
+
+        const boletosInconsistentes = numerosValidos
+            .filter((numero) => (resultado[numero] || []).length !== oportunidadesConfig.multiplicador)
+            .map((numero) => ({
+                numero_boleto: numero,
+                esperadas: oportunidadesConfig.multiplicador,
+                encontradas: (resultado[numero] || []).length
+            }));
+
+        if (boletosInconsistentes.length > 0) {
+            return res.status(409).json({
+                success: false,
+                message: 'Uno o más boletos no tienen el número correcto de oportunidades preasignadas',
+                detalles: boletosInconsistentes
+            });
+        }
         
         return res.json({
             success: true,
@@ -6201,9 +6785,9 @@ app.post('/api/public/boletos/oportunidades/batch', limiterOrdenes, async (req, 
  * Respuesta (sin paginación - BACKWARD COMPATIBLE):
  * { 
  *   success: true,
- *   disponibles: [250000, 250001, ...],  // Array de números
- *   cantidad: 750000,                     // Total disponibles
- *   rango: { inicio: 250000, fin: 999999 },
+ *   disponibles: [20000, 20001, ...],    // Array de números
+ *   cantidad: 80000,                      // Total disponibles
+ *   rango: { inicio: 20000, fin: 99999 },
  *   cached: true/false,
  *   timestamp: 1234567890
  * }
@@ -6211,9 +6795,9 @@ app.post('/api/public/boletos/oportunidades/batch', limiterOrdenes, async (req, 
  * Respuesta (con paginación):
  * {
  *   success: true,
- *   disponibles: [250000, 250001, ...],  // 10,000 números max
+ *   disponibles: [20000, 20001, ...],    // 10,000 números max
  *   cantidad: 10000,                      // Números en esta página
- *   total: 750000,                        // Total disponibles en BD
+ *   total: 80000,                         // Total disponibles en BD
  *   offset: 0,
  *   limit: 10000,
  *   paginas: 75,                          // ceil(total / limit)
@@ -6226,7 +6810,29 @@ app.get('/api/public/oportunidades/disponibles', limiterOrdenes, async (req, res
     const tiempoInicio = Date.now();
     try {
         const config = cargarConfigSorteo();
-        const rangoOculto = config?.rifa?.oportunidades?.rango_oculto || { inicio: 250000, fin: 999999 };
+        const oportunidadesConfig = obtenerConfigOportunidadesSistema(config);
+        const rangoOculto = oportunidadesConfig.rangoOculto;
+
+        if (oportunidadesConfig.enabled && !oportunidadesConfig.configuracionConsistente) {
+            return res.status(409).json({
+                success: false,
+                message: 'La configuración de oportunidades es inválida o incompleta',
+                detalles: oportunidadesConfig.errores
+            });
+        }
+
+        if (!oportunidadesConfig.enabled || !rangoOculto) {
+            return res.json({
+                success: true,
+                disponibles: [],
+                cantidad: 0,
+                total: 0,
+                rango: null,
+                timestamp: Date.now(),
+                cached: false,
+                queryTime: Date.now() - tiempoInicio
+            });
+        }
         
         // 📊 PARÁMETROS: Soporte para paginación
         const limit = req.query.limit ? parseInt(req.query.limit) : null;
@@ -6459,6 +7065,88 @@ app.post('/api/public/oportunidades/validar', limiterOrdenes, async (req, res) =
 });
 
 /**
+ * GET /api/admin/oportunidades/inventario/resumen
+ * Evalúa si la secuencia de oportunidades está lista para poblar desde admin
+ */
+app.get('/api/admin/oportunidades/inventario/resumen', verificarToken, async (req, res) => {
+    try {
+        const resumen = await OportunidadesInventoryService.obtenerResumen(cargarConfigSorteo());
+        return res.json({
+            success: true,
+            data: resumen
+        });
+    } catch (error) {
+        log('error', 'GET /api/admin/oportunidades/inventario/resumen error', { error: error.message });
+        return res.status(500).json({
+            success: false,
+            message: 'No se pudo cargar el resumen del inventario de oportunidades',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+    }
+});
+
+/**
+ * POST /api/admin/oportunidades/inventario/preview
+ * Preview no destructivo del estado de oportunidades con la config actual
+ */
+app.post('/api/admin/oportunidades/inventario/preview', verificarToken, async (req, res) => {
+    try {
+        const resumen = await OportunidadesInventoryService.obtenerResumen(cargarConfigSorteo());
+        return res.json({
+            success: true,
+            data: resumen
+        });
+    } catch (error) {
+        log('error', 'POST /api/admin/oportunidades/inventario/preview error', { error: error.message });
+        return res.status(500).json({
+            success: false,
+            message: error.message || 'No se pudo generar el preview de oportunidades'
+        });
+    }
+});
+
+/**
+ * POST /api/admin/oportunidades/inventario/poblar
+ * Poblado controlado desde la configuración actual del sorteo
+ */
+app.post('/api/admin/oportunidades/inventario/poblar', verificarToken, async (req, res) => {
+    try {
+        const shuffle = req.body?.shuffle !== false;
+        const resultado = await OportunidadesInventoryService.poblarDesdeConfig(cargarConfigSorteo(), {
+            shuffle
+        });
+
+        log('info', 'POST /api/admin/oportunidades/inventario/poblar success', {
+            usuario: req.usuario?.username,
+            insertadas: resultado.insertadas,
+            multiplicador: resultado.configuracion?.multiplicador,
+            totalEsperado: resultado.configuracion?.totalOportunidadesEsperadas
+        });
+
+        return res.json({
+            success: true,
+            message: resultado.insertadas > 0
+                ? `Se poblaron ${resultado.insertadas.toLocaleString()} oportunidades preasignadas`
+                : 'El inventario de oportunidades ya estaba correctamente poblado',
+            data: resultado
+        });
+    } catch (error) {
+        const statusCode = error.code === 'INVENTARIO_EN_PROGRESO'
+            ? 409
+            : error.code === 'OPORTUNIDADES_NO_LISTAS'
+                ? 409
+                : 500;
+
+        log('error', 'POST /api/admin/oportunidades/inventario/poblar error', { error: error.message, code: error.code });
+        return res.status(statusCode).json({
+            success: false,
+            message: error.message || 'No se pudo poblar el inventario de oportunidades',
+            code: error.code || 'OPORTUNIDADES_POBLAR_ERROR'
+        });
+    }
+});
+
+/**
  * GET /api/admin/oportunidades-stats
  * Obtiene estadísticas COMPLETAS de oportunidades:
  * - Total configurado (del sistema)
@@ -6510,8 +7198,10 @@ app.get('/api/admin/oportunidades-stats', verificarToken, async (req, res) => {
         console.log('📋 [GET /api/admin/oportunidades-stats] Conteos:', conteos);
 
         // Obtener total configurado del sistema
-        const config = global.rifaplusConfig || {};
-        const totalConfigurado = config.rifa?.totalOportunidades || 750000;
+        const oportunidadesConfig = obtenerConfigOportunidadesSistema(cargarConfigSorteo());
+        const totalConfigurado = oportunidadesConfig.totalOportunidadesConfiguradas
+            || oportunidadesConfig.totalOportunidadesEsperadas
+            || 0;
 
         // Calcular totales
         const totalEnBD = Object.values(conteos).reduce((sum, val) => sum + val, 0);
@@ -6835,6 +7525,20 @@ app.patch('/api/ordenes/:id/estado', verificarToken, async (req, res) => {
             console.log(`✅ Orden ${id} actualizada a estado: ${estado} (${resultado.boletosActualizados} boletos actualizados)`);
         }
 
+        if (wsEvents) {
+            try {
+                const ordenActualizada = await db('ordenes')
+                    .where('numero_orden', id)
+                    .first('numero_orden', 'estado', 'comprobante_path', 'updated_at');
+
+                if (ordenActualizada) {
+                    wsEvents.emitirOrdenActualizadaAdmin(ordenActualizada);
+                }
+            } catch (wsError) {
+                console.warn(`⚠️  Error emitiendo actualización admin de orden ${id}:`, wsError.message);
+            }
+        }
+
         return res.json({
             success: true,
             message: `Orden actualizada a estado: ${estado}`,
@@ -6947,87 +7651,17 @@ app.post('/api/admin/declarar-ganador', verificarToken, async (req, res) => {
             return res.status(400).json({ success: false, message: 'Número de boleto requerido' });
         }
 
-        const [hasOrdenesEmail, hasOrdenesEmailCliente] = await Promise.all([
-            db.schema.hasColumn('ordenes', 'email'),
-            db.schema.hasColumn('ordenes', 'email_cliente')
-        ]);
-
-        // Buscar la orden real del boleto usando la misma lógica tolerante que el resto del sistema.
-        // No limitamos a un único formato de `boletos` ni a una sola variante histórica de esquema.
-        const ordenesQuery = dbUtils
-            .ordersContainingBoletoQuery(numero)
-            .select('numero_orden', 'boletos', 'telefono_cliente', 'nombre_cliente', 'estado', 'created_at')
-            .whereNot('estado', 'cancelada');
-
-        if (hasOrdenesEmail) {
-            ordenesQuery.select(db.raw('email as email'));
-        } else if (hasOrdenesEmailCliente) {
-            ordenesQuery.select(db.raw('email_cliente as email'));
-        }
-
-        const ordenes = await ordenesQuery;
-
-        let ordenEncontrada = null;
-        for (const orden of ordenes) {
-            try {
-                let boletosArr = [];
-                const raw = orden.boletos;
-
-                if (!raw) {
-                    boletosArr = [];
-                } else if (Array.isArray(raw)) {
-                    boletosArr = raw;
-                } else if (typeof raw === 'object' && raw !== null) {
-                    boletosArr = Object.values(raw);
-                } else if (typeof raw === 'string') {
-                    try {
-                        const parsed = JSON.parse(raw);
-                        if (Array.isArray(parsed)) {
-                            boletosArr = parsed;
-                        } else if (typeof parsed === 'object' && parsed !== null) {
-                            boletosArr = Object.values(parsed);
-                        } else if (typeof parsed === 'string') {
-                            boletosArr = parsed.split(',').map(s => s.trim()).filter(Boolean);
-                        }
-                    } catch (err) {
-                        boletosArr = raw.split(',').map(s => s.trim()).filter(Boolean);
-                    }
-                }
-
-                const boletosNumericos = boletosArr.map((b) => {
-                    if (b === null || typeof b === 'undefined') return NaN;
-                    if (typeof b === 'number') return b;
-                    if (typeof b === 'string') {
-                        const n = Number(b);
-                        if (!Number.isNaN(n)) return n;
-                        try {
-                            const inner = JSON.parse(b);
-                            if (inner && typeof inner === 'object') {
-                                return Number(inner.numero || inner.numero_boleto || inner.n || inner.id || NaN);
-                            }
-                        } catch (e) {
-                            return NaN;
-                        }
-                    }
-                    if (typeof b === 'object') {
-                        return Number(b.numero || b.numero_boleto || b.n || b.id || NaN);
-                    }
-                    return NaN;
-                }).filter(n => !Number.isNaN(n));
-
-                if (boletosNumericos.includes(Number(numero))) {
-                    if (!ordenEncontrada || new Date(orden.created_at) > new Date(ordenEncontrada.created_at)) {
-                        ordenEncontrada = orden;
-                    }
-                }
-            } catch (e) {
-                // ignorar
-            }
-        }
+        const { orden: ordenEncontrada, boletoEstado, origen } = await buscarOrdenActivaPorBoleto(numero);
 
         if (!ordenEncontrada) {
             return res.status(404).json({ success: false, message: 'Boleto no encontrado o no vendido' });
         }
+
+        console.log(`[declarar-ganador] Resolviendo boleto #${numero} usando ${origen || 'sin-origen'}`, {
+            numero_orden: ordenEncontrada.numero_orden,
+            estadoOrden: ordenEncontrada.estado,
+            estadoBoleto: boletoEstado?.estado || null
+        });
 
         const tipoGanadorNormalizado = (() => {
             const valor = String(tipo_ganador || 'sorteo').toLowerCase().trim();
@@ -7088,13 +7722,14 @@ app.post('/api/admin/declarar-ganador', verificarToken, async (req, res) => {
         ]);
 
         // Insertar solo columnas realmente existentes para soportar esquemas viejos y optimizados.
+        const configActualGanador = obtenerConfigActual();
         const payload = {};
         if (hasNumeroOrden) payload.numero_orden = numeroOrdenPersistir;
         if (hasNumeroBoleto) payload.numero_boleto = Number(numero) || null;
         if (hasWhatsapp) payload.whatsapp = ordenEncontrada.telefono_cliente || null;
-        if (hasEmail) payload.email = ordenEncontrada.email || null;
+        if (hasEmail) payload.email = ordenEncontrada.email || ordenEncontrada.email_cliente || null;
         if (hasNombreGanador) payload.nombre_ganador = ordenEncontrada.nombre_cliente || null;
-        if (hasNombreSorteo) payload.nombre_sorteo = configManager?.getConfig?.()?.rifa?.nombreSorteo || null;
+        if (hasNombreSorteo) payload.nombre_sorteo = configActualGanador?.rifa?.nombreSorteo || null;
         if (hasPosicion) payload.posicion = Number(posicion) || null;
         if (hasTipoGanador) payload.tipo_ganador = tipoGanadorNormalizado;
         if (hasPremio) payload.premio = premio || null;
@@ -7236,35 +7871,6 @@ app.get('/api/admin/ordenes-expiradas/estado-servicio', verificarToken, async (r
         res.status(500).json({
             success: false,
             message: 'Error obteniendo estado del servicio'
-        });
-    }
-});
-
-/**
- * GET /api/admin/ordenes-expiradas/listado
- * Obtiene listado de órdenes que han sido liberadas por expiración
- */
-app.get('/api/admin/ordenes-expiradas/listado', verificarToken, async (req, res) => {
-    try {
-        const { limite = 100 } = req.query;
-
-        const ordenesExpiradas = await db('ordenes_expiradas_log')
-            .orderBy('fecha_liberacion', 'desc')
-            .limit(Math.min(parseInt(limite), 1000));
-
-        res.json({
-            success: true,
-            data: {
-                total: ordenesExpiradas.length,
-                ordenes: ordenesExpiradas
-            },
-            message: 'Listado de órdenes expiradas'
-        });
-    } catch (error) {
-        console.error('GET /api/admin/ordenes-expiradas/listado error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error obteniendo listado'
         });
     }
 });
@@ -7492,67 +8098,6 @@ app.get('/api/admin/ordenes-estado-resumen', verificarToken, async (req, res) =>
 });
 
 /**
- * POST /api/admin/ordenes-expiradas/restaurar
- * Restaura una orden específica que fue expirada (undo expiración)
- * Body: { numero_orden: "SY-AA001" }
- */
-app.post('/api/admin/ordenes-expiradas/restaurar', verificarToken, async (req, res) => {
-    try {
-        const { numero_orden } = req.body;
-
-        if (!numero_orden) {
-            return res.status(400).json({
-                success: false,
-                message: 'numero_orden es requerido'
-            });
-        }
-
-        // Buscar la orden
-        const orden = await db('ordenes')
-            .where('numero_orden', numero_orden)
-            .first();
-
-        if (!orden) {
-            return res.status(404).json({
-                success: false,
-                message: 'Orden no encontrada'
-            });
-        }
-
-        if (orden.estado_pago !== 'expired') {
-            return res.status(400).json({
-                success: false,
-                message: 'Esta orden no está expirada'
-            });
-        }
-
-        // Restaurar la orden
-        await db('ordenes')
-            .where('numero_orden', numero_orden)
-            .update({
-                estado_pago: 'pending',
-                liberada_at: null,
-                liberada_automaticamente: false,
-                updated_at: new Date()
-            });
-
-        log('info', 'Orden restaurada desde expiración', { numero_orden });
-
-        res.json({
-            success: true,
-            message: `Orden ${numero_orden} restaurada`,
-            data: { numero_orden }
-        });
-    } catch (error) {
-        console.error('POST /api/admin/ordenes-expiradas/restaurar error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error restaurando orden'
-        });
-    }
-});
-
-/**
  * POST /api/admin/ordenes-manual
  * Crear una orden manual de venta en efectivo (protegido con JWT)
  * Body: { cliente_nombre, cliente_whatsapp, boletos: [5000, 5001, ...] }
@@ -7560,7 +8105,7 @@ app.post('/api/admin/ordenes-expiradas/restaurar', verificarToken, async (req, r
 app.post('/api/admin/ordenes-manual', verificarToken, async (req, res) => {
     try {
         const { cliente_nombre, cliente_whatsapp, boletos } = req.body;
-        
+
         if (!cliente_nombre || !Array.isArray(boletos) || boletos.length === 0) {
             return res.status(400).json({
                 success: false,
@@ -7580,6 +8125,24 @@ app.post('/api/admin/ordenes-manual', verificarToken, async (req, res) => {
             updated_at: new Date(),
             total: 0 // Venta en efectivo, sin registro de pago en sistema
         });
+
+        if (wsEvents) {
+            try {
+                wsEvents.emitirNuevaOrdenAdmin({
+                    numero_orden: numeroOrden,
+                    nombre_cliente: cliente_nombre || 'Venta Manual',
+                    telefono_cliente: cliente_whatsapp || '',
+                    estado: 'completada',
+                    cantidad_boletos: boletos.length,
+                    total: 0,
+                    comprobante_path: null,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                });
+            } catch (wsError) {
+                console.warn(`⚠️  Error emitiendo orden manual al canal admin:`, wsError.message);
+            }
+        }
 
         return res.json({
             success: true,
@@ -7676,6 +8239,14 @@ app.patch('/api/admin/boletos/:numero/liberar', verificarToken, async (req, res)
 
                             await trx('ordenes').where('numero_orden', orden.numero_orden).delete();
                         } else {
+                            await trx('orden_oportunidades')
+                                .where('numero_orden', orden.numero_orden)
+                                .where('numero_boleto', numBoleto)
+                                .update({
+                                    estado: 'disponible',
+                                    numero_orden: null
+                                });
+
                             const totalesServidor = calcularTotalesServidor(
                                 numerosArr.length,
                                 configSorteo,
@@ -8097,6 +8668,217 @@ app.get('/api/boletos/estadisticas', verificarToken, async (req, res) => {
 });
 
 /**
+ * GET /api/admin/boletos/inventario/resumen
+ * Resumen del inventario cargado en boletos_estado y su cobertura vs config
+ */
+app.get('/api/admin/boletos/inventario/resumen', verificarToken, async (req, res) => {
+    try {
+        const configSorteo = cargarConfigSorteo();
+        const totalBoletosConfigurado = Number(configSorteo?.totalBoletos) || 0;
+        const resumen = await BoletoService.obtenerResumenInventario(totalBoletosConfigurado);
+
+        return res.json({
+            success: true,
+            data: resumen
+        });
+    } catch (error) {
+        log('error', 'GET /api/admin/boletos/inventario/resumen error', { error: error.message });
+        return res.status(500).json({
+            success: false,
+            message: 'No se pudo cargar el resumen del inventario de boletos',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+    }
+});
+
+/**
+ * POST /api/admin/boletos/inventario/preview
+ * Calcula qué pasaría al poblar o borrar un rango de boletos
+ */
+app.post('/api/admin/boletos/inventario/preview', verificarToken, async (req, res) => {
+    try {
+        const configSorteo = cargarConfigSorteo();
+        const totalBoletosConfigurado = Number(configSorteo?.totalBoletos) || 0;
+        const rango = BoletoService.normalizarRangoOperacion(req.body, totalBoletosConfigurado);
+        const preview = await BoletoService.previsualizarRangoBoletos(rango);
+
+        return res.json({
+            success: true,
+            data: preview
+        });
+    } catch (error) {
+        const statusCode = ['RANGO_INVALIDO', 'CONFIG_INVALIDA', 'RANGO_FUERA_CONFIG'].includes(error.code) ? 400 : 500;
+        log('error', 'POST /api/admin/boletos/inventario/preview error', { error: error.message, code: error.code });
+        return res.status(statusCode).json({
+            success: false,
+            message: error.message || 'No se pudo previsualizar el rango solicitado',
+            code: error.code || 'INVENTARIO_PREVIEW_ERROR'
+        });
+    }
+});
+
+/**
+ * POST /api/admin/boletos/inventario/poblar
+ * Crea boletos faltantes dentro de un rango, sin tocar los existentes
+ */
+app.post('/api/admin/boletos/inventario/poblar', verificarToken, async (req, res) => {
+    try {
+        const configSorteo = cargarConfigSorteo();
+        const totalBoletosConfigurado = Number(configSorteo?.totalBoletos) || 0;
+        const rango = BoletoService.normalizarRangoOperacion(req.body, totalBoletosConfigurado);
+        const resultado = await BoletoService.poblarRangoBoletos(rango);
+
+        log('info', 'POST /api/admin/boletos/inventario/poblar success', {
+            usuario: req.usuario?.username,
+            inicio: rango.inicio,
+            fin: rango.fin,
+            insertados: resultado.insertados
+        });
+
+        return res.json({
+            success: true,
+            message: resultado.insertados > 0
+                ? `Se poblaron ${resultado.insertados.toLocaleString()} boletos faltantes`
+                : 'Ese rango ya estaba completamente poblado',
+            data: resultado
+        });
+    } catch (error) {
+        const statusCode = ['RANGO_INVALIDO', 'CONFIG_INVALIDA', 'RANGO_FUERA_CONFIG'].includes(error.code)
+            ? 400
+            : error.code === 'INVENTARIO_BOLETOS_EN_PROGRESO'
+                ? 409
+                : 500;
+
+        log('error', 'POST /api/admin/boletos/inventario/poblar error', { error: error.message, code: error.code });
+        return res.status(statusCode).json({
+            success: false,
+            message: error.message || 'No se pudo poblar el rango solicitado',
+            code: error.code || 'INVENTARIO_POBLAR_ERROR'
+        });
+    }
+});
+
+/**
+ * POST /api/admin/boletos/inventario/borrar
+ * Borra solo boletos disponibles y sin uso, dentro de un rango
+ */
+app.post('/api/admin/boletos/inventario/borrar', verificarToken, async (req, res) => {
+    try {
+        const configSorteo = cargarConfigSorteo();
+        const totalBoletosConfigurado = Number(configSorteo?.totalBoletos) || 0;
+        const rango = BoletoService.normalizarRangoOperacion(req.body, totalBoletosConfigurado);
+        const resultado = await BoletoService.borrarRangoBoletos(rango);
+
+        log('info', 'POST /api/admin/boletos/inventario/borrar success', {
+            usuario: req.usuario?.username,
+            inicio: rango.inicio,
+            fin: rango.fin,
+            eliminados: resultado.eliminados,
+            oportunidadesEliminadas: resultado.oportunidadesEliminadas
+        });
+
+        return res.json({
+            success: true,
+            message: resultado.eliminados > 0
+                ? `Se eliminaron ${resultado.eliminados.toLocaleString()} boletos seguros del rango`
+                : 'No había boletos seguros para borrar en ese rango',
+            data: resultado
+        });
+    } catch (error) {
+        const statusCode = ['RANGO_INVALIDO', 'CONFIG_INVALIDA', 'RANGO_FUERA_CONFIG'].includes(error.code)
+            ? 400
+            : error.code === 'INVENTARIO_BOLETOS_EN_PROGRESO'
+                ? 409
+                : 500;
+
+        log('error', 'POST /api/admin/boletos/inventario/borrar error', { error: error.message, code: error.code });
+        return res.status(statusCode).json({
+            success: false,
+            message: error.message || 'No se pudo borrar el rango solicitado',
+            code: error.code || 'INVENTARIO_BORRAR_ERROR'
+        });
+    }
+});
+
+/**
+ * GET /api/admin/nueva-rifa/preview
+ * Revisa si la BD operativa está lista para arrancar una nueva rifa usando la misma base
+ */
+app.get('/api/admin/nueva-rifa/preview', verificarToken, async (req, res) => {
+    try {
+        const resumen = await NuevaRifaService.obtenerPreview();
+        return res.json({
+            success: true,
+            data: resumen
+        });
+    } catch (error) {
+        log('error', 'GET /api/admin/nueva-rifa/preview error', { error: error.message, code: error.code });
+        return res.status(500).json({
+            success: false,
+            message: error.message || 'No se pudo revisar el estado de la nueva rifa',
+            code: error.code || 'NUEVA_RIFA_PREVIEW_ERROR'
+        });
+    }
+});
+
+/**
+ * POST /api/admin/nueva-rifa/ejecutar
+ * Limpia la operación anterior para poder montar una nueva rifa sobre la misma BD
+ */
+app.post('/api/admin/nueva-rifa/ejecutar', verificarToken, async (req, res) => {
+    try {
+        if (ordenExpirationService?.isExecuting === true) {
+            return res.status(409).json({
+                success: false,
+                code: 'EXPIRACION_EN_PROGRESO',
+                message: 'Espera a que termine la limpieza automática de órdenes antes de preparar una nueva rifa'
+            });
+        }
+
+        const configActual = obtenerConfigActual();
+        await asegurarSnapshotModalFinalizado(configActual, {
+            usuarioAdmin: req.usuario?.username || 'SYSTEM',
+            refrescarGanadores: true
+        });
+
+        const resultado = await NuevaRifaService.ejecutarReset(req.body || {});
+
+        limpiarCacheBoletosPublicos();
+        limpiarCacheConfiguracionPublica();
+
+        log('info', 'POST /api/admin/nueva-rifa/ejecutar success', {
+            usuario: req.usuario?.username,
+            resultado: resultado.resultado || null
+        });
+
+        return res.json({
+            success: true,
+            message: 'La BD operativa quedó limpia para arrancar una nueva rifa',
+            data: resultado
+        });
+    } catch (error) {
+        const statusCode = error.code === 'CONFIRMACION_INVALIDA'
+            ? 400
+            : ['NUEVA_RIFA_BLOQUEADA', 'NUEVA_RIFA_EN_PROGRESO'].includes(error.code)
+                ? 409
+                : 500;
+
+        log('error', 'POST /api/admin/nueva-rifa/ejecutar error', {
+            error: error.message,
+            code: error.code,
+            detalles: error.detalles || null
+        });
+
+        return res.status(statusCode).json({
+            success: false,
+            message: error.message || 'No se pudo preparar la nueva rifa',
+            code: error.code || 'NUEVA_RIFA_EJECUTAR_ERROR',
+            detalles: error.detalles || null
+        });
+    }
+});
+
+/**
  * POST /api/boletos/init-dev
  * SOLO DESARROLLO: Inicializa boletos sin autenticación
  * ⚠️ NO USAR EN PRODUCCIÓN
@@ -8445,6 +9227,13 @@ app.post('/api/admin/limpiar-ordenes-canceladas', verificarToken, async (req, re
                         updated_at: new Date()
                     });
 
+                await db('orden_oportunidades')
+                    .where('numero_orden', orden.numero_orden)
+                    .update({
+                        estado: 'disponible',
+                        numero_orden: null
+                    });
+
                 if (actualizado > 0) {
                     console.log(`  ✓ ${orden.numero_orden}: ${actualizado} boletos liberados`);
                     boletosLiberadosTotal += actualizado;
@@ -8482,16 +9271,16 @@ async function asegurarTablaOportunidades() {
             console.log('📋 Creando tabla orden_oportunidades...');
             await db.schema.createTable('orden_oportunidades', (table) => {
                 table.increments('id').primary();
-                table.string('numero_orden', 50).notNullable();
-                table.foreign('numero_orden').references('numero_orden').inTable('ordenes').onDelete('CASCADE');
+                table.string('numero_orden', 50).nullable();
+                table.foreign('numero_orden').references('numero_orden').inTable('ordenes').onDelete('SET NULL');
                 table.integer('numero_oportunidad').notNullable();
                 table.enum('estado', ['disponible', 'apartado', 'vendido']).defaultTo('disponible');
-                table.timestamp('created_at').defaultTo(db.raw('CURRENT_TIMESTAMP'));
-                table.timestamp('updated_at').defaultTo(db.raw('CURRENT_TIMESTAMP'));
+                table.integer('numero_boleto').nullable();
+                table.foreign('numero_boleto').references('numero').inTable('boletos_estado').onUpdate('CASCADE').onDelete('CASCADE');
                 table.index('numero_orden');
                 table.index('numero_oportunidad');
+                table.index('numero_boleto');
                 table.index('estado');
-                table.unique(['numero_orden', 'numero_oportunidad']);
             });
             console.log('✅ Tabla orden_oportunidades creada exitosamente');
         } else {
@@ -8515,15 +9304,26 @@ async function asegurarConstraintUnicoOportunidades() {
     try {
         console.log('🔒 Verificando constraint único para oportunidades activas...');
         
-        // Verificar si el índice ya existe
-        const indexExists = await db.raw(`
-            SELECT 1 FROM pg_indexes 
-            WHERE indexname = 'idx_numero_opu_activo'
+        const indexResult = await db.raw(`
+            SELECT indexdef
+            FROM pg_indexes
+            WHERE schemaname = 'public'
+              AND indexname = 'idx_numero_opu_activo'
         `);
-        
-        if (indexExists.rows.length > 0) {
+
+        const definicionActual = String(indexResult?.rows?.[0]?.indexdef || '').toLowerCase();
+        const indiceActualEsCorrecto = definicionActual.includes('numero_oportunidad')
+            && definicionActual.includes('apartado')
+            && definicionActual.includes('vendido');
+
+        if (indexResult.rows.length > 0 && indiceActualEsCorrecto) {
             console.log('✅ Constraint único ya existe');
             return;
+        }
+
+        if (indexResult.rows.length > 0 && !indiceActualEsCorrecto) {
+            console.warn('♻️  Se detectó un idx_numero_opu_activo legacy. Reemplazando definición...');
+            await db.raw('DROP INDEX IF EXISTS idx_numero_opu_activo');
         }
         
         // Crear índice único PARCIAL (solo para estados activos)
@@ -8643,7 +9443,9 @@ server.listen(PORT, () => {
     console.log('🛡️  Protección contra crashes activada\n');
     
     // 🔌 Inicializar eventos de WebSocket
-    wsEvents = inicializarEventosWebSocket(io);
+    wsEvents = inicializarEventosWebSocket(io, {
+        verifyAdminToken: verificarSocketAdminToken
+    });
     console.log('✅ Sistema WebSocket inicializado\n');
 });
 

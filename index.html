@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="rifaplus-api-base" content="https://demo1m-production.up.railway.app">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' http://127.0.0.1:* http://localhost:* http://localhost:5001; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://fonts.googleapis.com http://localhost:5001 http://127.0.0.1:5001 https://demo1m-production.up.railway.app; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; connect-src 'self' http://127.0.0.1:* http://localhost:* https: http://localhost:5001 http://127.0.0.1:5001 https://demo1m-production.up.railway.app ws: wss: ws://localhost:5001 wss://localhost:5001 ws://127.0.0.1:5001 wss://127.0.0.1:5001 wss://demo1m-production.up.railway.app; img-src 'self' data: https:;">
+    <meta name="rifaplus-api-base" content="">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' http://127.0.0.1:* http://localhost:* http://localhost:5001; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://fonts.googleapis.com http://localhost:5001 http://127.0.0.1:5001; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; connect-src 'self' http://127.0.0.1:* http://localhost:* https: http://localhost:5001 http://127.0.0.1:5001 ws: wss: ws://localhost:5001 wss://localhost:5001 ws://127.0.0.1:5001 wss://127.0.0.1:5001; img-src 'self' data: https:;">
     <!-- METADATOS DINÁMICOS - Cloudflare Functions y js/meta-inyector los actualizan desde la configuración actual -->
     <title>Sorteo en linea</title>
     <meta name="description" content="Informacion del sorteo en linea, compra de boletos y estado de tu participacion.">
@@ -12,7 +12,7 @@
     <meta property="og:title" content="RifaPlus" />
     <meta property="og:description" content="Informacion del sorteo en linea." />
     <meta property="og:image" content="images/placeholder-cover.svg" />
-    <meta property="og:url" content="https://demo1m.pages.dev" />
+    <meta property="og:url" content="http://127.0.0.1:5500/" />
     <meta property="og:type" content="website" />
     <meta property="og:locale" content="es_MX" />
     <meta name="twitter:card" content="summary_large_image" />
@@ -1075,7 +1075,9 @@
         // Mostrar/ocultar texto de oportunidades
         const rifa = window.rifaplusConfig?.rifa;
         if (rifa?.oportunidades?.enabled && rifa?.promocionesOportunidades?.enabled && textoEl) {
-            const opxBoleto = rifa.oportunidades.multiplicador || 3;
+            const opxBoleto = Number(rifa.oportunidades?.multiplicador) > 0
+                ? Number(rifa.oportunidades.multiplicador)
+                : 1;
             textoEl.style.display = 'block';
             textoEl.textContent = `Cada boleto que compres te regala ${opxBoleto} oportunidades EXTRA de ganar`;
         } else if (textoEl) {
@@ -1625,9 +1627,9 @@
             justify-content: center;
             gap: 0.42rem;
             padding: 0.8rem 1.15rem;
-            background: #12324b;
+            background: var(--primary);
             color: #ffffff;
-            border: 1px solid rgba(18, 50, 75, 0.28);
+            border: 1px solid rgba(var(--primary-rgb), 0.28);
             border-radius: 999px;
             font-weight: 700;
             font-size: 0.84rem;
@@ -1635,26 +1637,26 @@
             transition: transform 0.25s ease, box-shadow 0.25s ease, filter 0.25s ease, background 0.25s ease;
             white-space: nowrap;
             text-decoration: none;
-            box-shadow: 0 12px 22px rgba(18, 50, 75, 0.2);
+            box-shadow: 0 12px 22px rgba(var(--primary-rgb), 0.2);
             animation: bonoBtnPulse 2.8s ease-in-out infinite;
         }
 
         .bono-btn-redes:hover {
             transform: translateY(-2px);
-            background: #184262;
-            border-color: rgba(18, 50, 75, 0.38);
-            box-shadow: 0 16px 30px rgba(18, 50, 75, 0.28);
+            background: var(--primary-dark);
+            border-color: rgba(var(--primary-rgb), 0.38);
+            box-shadow: 0 16px 30px rgba(var(--primary-rgb), 0.28);
             filter: brightness(1.03);
         }
 
         @keyframes bonoBtnPulse {
             0%, 100% {
                 transform: translateY(0) scale(1);
-                box-shadow: 0 12px 22px rgba(18, 50, 75, 0.2);
+                box-shadow: 0 12px 22px rgba(var(--primary-rgb), 0.2);
             }
             12% {
                 transform: translateY(-1px) scale(1.02);
-                box-shadow: 0 16px 28px rgba(18, 50, 75, 0.28);
+                box-shadow: 0 16px 28px rgba(var(--primary-rgb), 0.28);
             }
             18% {
                 transform: translateY(0) scale(1);
@@ -1688,9 +1690,9 @@
         }
 
         .bono-card.bono-info {
-            --bono-color-start: #3b82f6;
-            --bono-color-end: #1d4ed8;
-            --bono-bg: rgba(59, 130, 246, 0.1);
+            --bono-color-start: var(--primary);
+            --bono-color-end: var(--secondary-dark);
+            --bono-bg: rgba(var(--secondary-rgb), 0.12);
         }
 
         .bono-card.bono-primary {
@@ -1958,7 +1960,7 @@
     </script>
 
     <!-- POR QUÉ CONFIAR EN NOSOTROS -->
-    <section class="por-que-confiar-section perf-defer-mobile perf-defer-mobile--large">
+    <section class="por-que-confiar-section perf-defer-mobile perf-defer-mobile--large" id="confianzaSection">
         <div class="container">
             <h2 class="confianza-titulo">¿Por Qué Confiar En Esta Plataforma De Sorteos?</h2>
             
@@ -2014,6 +2016,27 @@
             </div>
         </div>
     </section>
+
+    <script>
+    (function inicializarVisibilidadConfianza() {
+        function aplicarVisibilidadConfianza() {
+            const section = document.getElementById('confianzaSection');
+            if (!section) return;
+
+            const publicacion = window.rifaplusConfig?.rifa?.publicacion || {};
+            section.style.display = publicacion.confianza !== false ? '' : 'none';
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', aplicarVisibilidadConfianza, { once: true });
+        } else {
+            aplicarVisibilidadConfianza();
+        }
+
+        window.addEventListener('configSyncCompleto', aplicarVisibilidadConfianza);
+        window.addEventListener('configuracionActualizada', aplicarVisibilidadConfianza);
+    })();
+    </script>
 
     <script>
     // Actualizar mensaje de compras dinámicamente

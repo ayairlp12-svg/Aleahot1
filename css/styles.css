@@ -6,52 +6,52 @@
    El admin tiene sus propios estilos independientes en css/admin.css */
 
 :root {
-    --primary: #12324b;
-    --primary-dark: #0b2235;
-    --primary-light: #6f9fc8;
-    --secondary-rgb: 36, 184, 255;
-    --secondary: #24b8ff;
-    --secondary-dark: #1497d8;
-    --success: #5f9270;
-    --success-dark: #47745a;
-    --success-30: rgba(95, 146, 112, 0.30);
-    --danger: #c66f6f;
-    --danger-dark: #a75757;
-    --text-dark: #1b2a38;
-    --text-light: #5e7283;
-    --bg-light: #f7fafc;
+    --primary: #b25379;
+    --primary-dark: #7c3b58;
+    --primary-light: #e9c4d2;
+    --secondary-rgb: 109, 40, 217;
+    --secondary: #6d28d9;
+    --secondary-dark: #5b21b6;
+    --success: #6d8a76;
+    --success-dark: #546a5b;
+    --success-30: rgba(109, 138, 118, 0.30);
+    --danger: #c87c93;
+    --danger-dark: #a85f75;
+    --text-dark: #392733;
+    --text-light: #786470;
+    --bg-light: #fdf7fa;
     --bg-white: #ffffff;
-    --border-color: #d9e4ec;
-    --gray-light: #edf3f8;
-    --primary-rgb: 18, 50, 75;
-    --primary-04: rgba(18, 50, 75, 0.04);
-    --primary-05: rgba(18, 50, 75, 0.05);
-    --primary-08: rgba(18, 50, 75, 0.08);
-    --primary-10: rgba(18, 50, 75, 0.10);
-    --primary-12: rgba(18, 50, 75, 0.12);
-    --primary-15: rgba(18, 50, 75, 0.15);
-    --primary-18: rgba(18, 50, 75, 0.18);
-    --primary-20: rgba(18, 50, 75, 0.20);
-    --primary-25: rgba(18, 50, 75, 0.25);
-    --primary-30: rgba(18, 50, 75, 0.30);
-    --primary-35: rgba(18, 50, 75, 0.35);
+    --border-color: #ead8e2;
+    --gray-light: #f5edf1;
+    --primary-rgb: 178, 83, 121;
+    --primary-04: rgba(178, 83, 121, 0.04);
+    --primary-05: rgba(178, 83, 121, 0.05);
+    --primary-08: rgba(178, 83, 121, 0.08);
+    --primary-10: rgba(178, 83, 121, 0.10);
+    --primary-12: rgba(178, 83, 121, 0.12);
+    --primary-15: rgba(178, 83, 121, 0.15);
+    --primary-18: rgba(178, 83, 121, 0.18);
+    --primary-20: rgba(178, 83, 121, 0.20);
+    --primary-25: rgba(178, 83, 121, 0.25);
+    --primary-30: rgba(178, 83, 121, 0.30);
+    --primary-35: rgba(178, 83, 121, 0.35);
     --surface-base: var(--bg-white);
     --surface-soft: var(--bg-light);
-    --surface-tint: #eef5fb;
-    --surface-accent: #eef8ff;
-    --surface-subtle: #f3f6f9;
-    --surface-card-soft: #f8fafb;
-    --surface-card-cool: #fbfcfe;
-    --surface-card-cool-alt: #fafbfd;
-    --surface-card-cool-soft: #f5f8fc;
-    --surface-card-warm: #faf6f0;
-    --surface-card-warm-strong: #faf4ec;
+    --surface-tint: #fbf0f5;
+    --surface-accent: #f2f1f6;
+    --surface-subtle: #faf4f7;
+    --surface-card-soft: #fffafd;
+    --surface-card-cool: #fcfbfd;
+    --surface-card-cool-alt: #fbf9fc;
+    --surface-card-cool-soft: #f7f3f8;
+    --surface-card-warm: #fff6fa;
+    --surface-card-warm-strong: #fdf0f5;
     --surface-header: var(--primary);
     --card-bg: var(--surface-base);
     --card-bg-soft: linear-gradient(180deg, var(--surface-base), var(--surface-soft));
-    --section-bg-primary: linear-gradient(180deg, #3f6f96 0%, #5a89ae 42%, #7fa8c4 100%);
-    --section-bg-soft: linear-gradient(180deg, var(--surface-base) 0%, var(--surface-tint) 100%);
-    --section-bg-warm: linear-gradient(180deg, #f3f8fc 0%, #ebf3f9 100%);
+    --section-bg-primary: linear-gradient(180deg, #d68eac 0%, #e3bfd0 44%, #dfe3ea 100%);
+    --section-bg-soft: linear-gradient(180deg, var(--surface-base) 0%, #f9eef3 100%);
+    --section-bg-warm: linear-gradient(180deg, #fdf5f8 0%, #f5edf3 100%);
     --header-bg: var(--surface-header);
     --header-border: rgba(255, 255, 255, 0.14);
     --header-ink: #f8fbff;
@@ -64,12 +64,12 @@
     --hero-tint-secondary: rgba(var(--secondary-rgb), 0.35);
     --hero-cta-shadow: 0 12px 26px rgba(var(--primary-rgb), 0.18);
     --hero-cta-shadow-hover: 0 14px 30px rgba(var(--primary-rgb), 0.22);
-    --price-badge-bg: var(--secondary-dark);
+    --price-badge-bg: #161616;
     --price-highlight-bg: var(--surface-accent);
-    --price-card-bg: linear-gradient(180deg, var(--primary) 0%, var(--primary-dark) 100%);
-    --price-card-border: rgba(215, 238, 255, 0.12);
-    --price-card-shadow: 0 18px 36px var(--primary-25);
-    --price-card-shadow-hover: 0 24px 46px var(--primary-35);
+    --price-card-bg: linear-gradient(180deg, #191919 0%, #050505 100%);
+    --price-card-border: rgba(255, 255, 255, 0.12);
+    --price-card-shadow: 0 18px 36px rgba(0, 0, 0, 0.28);
+    --price-card-shadow-hover: 0 24px 46px rgba(0, 0, 0, 0.38);
     --price-kicker-color: rgba(255, 255, 255, 0.74);
     --price-title-color: #f8fbfe;
     --price-main-color: #ffffff;
@@ -80,15 +80,15 @@
     --price-offer-label-color: rgba(255, 255, 255, 0.82);
     --price-offer-value-color: #ffffff;
     --price-vigencia-bg: rgba(255, 255, 255, 0.94);
-    --price-vigencia-border: rgba(var(--primary-rgb), 0.14);
-    --price-vigencia-text: var(--primary-dark);
+    --price-vigencia-border: rgba(0, 0, 0, 0.12);
+    --price-vigencia-text: #1b1b1b;
     
     /* Estados de boletos - Colores para la leyenda y grid */
-    --disponible: #f8fafc;
-    --seleccionado: rgba(39, 82, 126, 0.86);
-    --apartado: #e39a63;
-    --vendido: #111111;
-    --seleccionado-30: rgba(39, 82, 126, 0.30);
+    --disponible: #ffffff;
+    --seleccionado: rgba(var(--secondary-rgb), 0.9);
+    --apartado: #c9938d;
+    --vendido: #2f1d28;
+    --seleccionado-30: rgba(var(--secondary-rgb), 0.3);
     
     /* Variables dinámicas para animaciones (se inyectan desde JS) */
     --fly-to-x: 0;
@@ -138,7 +138,7 @@ html {
 body {
     font-family: 'Inter', sans-serif;
     color: var(--text-dark);
-    background: var(--surface-base);
+    background: linear-gradient(180deg, #fffdfd 0%, var(--surface-soft) 100%);
     line-height: 1.6;
     width: 100%;
     overflow-x: hidden;
@@ -200,7 +200,7 @@ body {
     color: var(--header-ink);
     height: 125px;
     padding: 0;
-    box-shadow: 0 8px 24px rgba(39, 82, 126, 0.08);
+    box-shadow: 0 10px 28px rgba(var(--primary-rgb), 0.12);
     border-bottom: 1px solid var(--header-border);
     position: sticky;
     top: 0;
@@ -306,7 +306,7 @@ body {
     max-height: 95%;
     object-fit: contain;
     pointer-events: none;
-    filter: drop-shadow(0 10px 20px rgba(18, 50, 75, 0.16));
+    filter: drop-shadow(0 10px 20px rgba(var(--primary-rgb), 0.18));
 }
 
 @media (max-width: 1100px) {
@@ -695,8 +695,8 @@ body {
 
 .hero {
     background: var(--section-bg-primary);
-    border-top: 1px solid rgba(18, 50, 75, 0.12);
-    border-bottom: 1px solid rgba(18, 50, 75, 0.18);
+    border-top: 1px solid rgba(var(--primary-rgb), 0.14);
+    border-bottom: 1px solid rgba(var(--primary-rgb), 0.2);
     color: var(--text-dark);
     box-shadow: inset 0 -18px 34px rgba(255, 255, 255, 0.05);
     padding: 6rem 0;
@@ -742,7 +742,7 @@ body {
     text-transform: uppercase;
     letter-spacing: 0.12em;
     animation: slideDown 0.8s ease-out 0.2s both;
-    text-shadow: 0 2px 4px rgba(18, 50, 75, 0.2);
+    text-shadow: 0 2px 4px rgba(var(--primary-rgb), 0.24);
     display: inline-block;
 }
 
@@ -754,8 +754,8 @@ body {
     animation: slideDown 0.8s ease-out;
     color: var(--ink-inverse);
     text-shadow:
-        0 10px 24px rgba(18, 50, 75, 0.22),
-        0 2px 0 rgba(18, 50, 75, 0.08);
+        0 10px 24px rgba(var(--primary-rgb), 0.24),
+        0 2px 0 rgba(var(--primary-rgb), 0.1);
     letter-spacing: -0.03em;
     max-width: 100%;
     margin-left: auto;
@@ -842,11 +842,11 @@ body {
 }
 
 .highlight {
-    color: #a8d8ff;
+    color: #fff0f7;
     font-weight: 900;
     text-shadow:
-        0 2px 8px rgba(24, 119, 242, 0.3),
-        0 0 16px rgba(168, 216, 255, 0.2);
+        0 2px 8px rgba(var(--primary-rgb), 0.32),
+        0 0 16px rgba(var(--secondary-rgb), 0.24);
     position: relative;
     display: inline;
     letter-spacing: -0.01em;
@@ -856,25 +856,25 @@ body {
 @keyframes highlightGlow {
     0%, 100% {
         text-shadow: 
-            0 2px 8px rgba(24, 119, 242, 0.3),
-            0 0 16px rgba(168, 216, 255, 0.2);
+            0 2px 8px rgba(var(--primary-rgb), 0.32),
+            0 0 16px rgba(var(--secondary-rgb), 0.24);
     }
     50% {
         text-shadow: 
-            0 2px 12px rgba(24, 119, 242, 0.5),
-            0 0 24px rgba(168, 216, 255, 0.35);
+            0 2px 12px rgba(var(--primary-rgb), 0.46),
+            0 0 24px rgba(var(--secondary-rgb), 0.32);
     }
 }
 
 .hero-description {
     font-size: 1.25rem;
     margin-bottom: 2rem;
-    color: rgba(236, 245, 255, 0.98);
+    color: var(--secondary);
     opacity: 1;
     animation: slideUp 0.8s ease-out 0.2s both;
     line-height: 1.7;
     text-shadow: 
-        0 2px 6px rgba(18, 50, 75, 0.18);
+        0 2px 6px rgba(var(--secondary-rgb), 0.24);
     max-width: 52ch;
     margin-left: auto;
     margin-right: auto;
@@ -894,7 +894,7 @@ body {
     position: relative !important;
     overflow: hidden !important;
     background: var(--primary) !important;
-    border: 1px solid rgba(88, 112, 133, 0.10) !important;
+    border: 1px solid rgba(var(--secondary-rgb), 0.18) !important;
     border-radius: 18px !important;
     color: var(--ink-inverse) !important;
     animation: slideUp 0.8s ease-out 0.4s both, heroCtaPulse 2.8s ease-in-out 1.4s infinite;
@@ -908,7 +908,7 @@ body {
     position: absolute;
     inset: -6px;
     border-radius: 22px;
-    border: 1px solid rgba(18, 50, 75, 0.14);
+    border: 1px solid rgba(var(--primary-rgb), 0.16);
     opacity: 0;
     pointer-events: none;
     animation: heroCtaRing 2.8s ease-in-out 1.4s infinite;
@@ -1592,16 +1592,16 @@ body {
     0% {
         transform: scale(1) rotate(0deg);
         background-color: var(--cart-confirm-color, var(--seleccionado));
-        box-shadow: 0 0 0 0 var(--cart-confirm-shadow, rgba(39, 82, 126, 0.45));
+        box-shadow: 0 0 0 0 var(--cart-confirm-shadow, rgba(var(--primary-rgb), 0.45));
     }
     50% {
         transform: scale(1.15) rotate(10deg);
-        box-shadow: 0 0 0 15px rgba(39, 82, 126, 0);
+        box-shadow: 0 0 0 15px rgba(var(--primary-rgb), 0);
     }
     100% {
         transform: scale(1.05) rotate(0deg);
         background-color: var(--cart-confirm-color-dark, var(--seleccionado));
-        box-shadow: 0 0 0 0 rgba(39, 82, 126, 0);
+        box-shadow: 0 0 0 0 rgba(var(--primary-rgb), 0);
     }
 }
 
@@ -1840,7 +1840,7 @@ body {
 }
 
 .btn-urgency {
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    background: linear-gradient(135deg, var(--secondary) 0%, var(--secondary-dark) 100%);
     color: var(--ink-inverse);
     padding: 0.875rem 2.5rem;
     font-size: 1rem;
@@ -1849,7 +1849,7 @@ body {
     border-radius: 18px;
     cursor: pointer;
     transition: var(--transition-fast);
-    box-shadow: 0 12px 28px rgba(var(--primary-rgb), 0.18);
+    box-shadow: 0 12px 28px rgba(var(--secondary-rgb), 0.22);
     text-transform: capitalize;
     letter-spacing: 0.3px;
     animation: slideUp 0.8s ease-out 0.4s both;
@@ -1862,13 +1862,13 @@ body {
 }
 
 .btn-urgency:hover {
-    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
-    box-shadow: 0 14px 32px rgba(var(--primary-rgb), 0.24);
+    background: linear-gradient(135deg, var(--secondary-dark) 0%, #4c1d95 100%);
+    box-shadow: 0 14px 32px rgba(var(--secondary-rgb), 0.28);
     transform: translateY(-2px);
 }
 
 .btn-urgency:active {
-    box-shadow: 0 8px 18px rgba(var(--primary-rgb), 0.18);
+    box-shadow: 0 8px 18px rgba(var(--secondary-rgb), 0.22);
     transform: translateY(0);
 }
 
@@ -2121,7 +2121,7 @@ body {
     background: var(--card-bg-soft);
     padding: 2rem;
     border-radius: var(--radius-xl);
-    box-shadow: 0 12px 28px rgba(39, 82, 126, 0.08);
+    box-shadow: 0 12px 28px rgba(var(--primary-rgb), 0.1);
     display: block;
     width: 100%;
     border: 1px solid rgba(88, 112, 133, 0.08);
@@ -2133,7 +2133,7 @@ body {
 
 .precio-card-main:hover {
     transform: translateY(-4px);
-    box-shadow: 0 18px 34px rgba(39, 82, 126, 0.12);
+    box-shadow: 0 18px 34px rgba(var(--primary-rgb), 0.14);
     border-top-color: var(--primary-light);
 }
 
@@ -2390,10 +2390,10 @@ body {
 
 /* Tarjeta de promoción - REFACTORIZADA */
 .promo-card-grande {
-    background: linear-gradient(180deg, var(--surface-base), var(--surface-card-warm));
-    border: 1px solid rgba(23, 26, 32, 0.08);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, #fff7fa 100%);
+    border: 1px solid rgba(var(--primary-rgb), 0.12);
     border-radius: 22px;
-    padding: 1rem 0.95rem 0.95rem;
+    padding: 1.1rem 1rem 1rem;
     text-align: center;
     transition: all var(--transition-normal);
     position: relative;
@@ -2405,8 +2405,8 @@ body {
     width: 100%;
     min-height: 0;
     box-shadow:
-        0 12px 24px rgba(15, 23, 42, 0.05),
-        0 4px 10px rgba(15, 23, 42, 0.03);
+        0 16px 30px rgba(var(--primary-rgb), 0.08),
+        0 4px 12px rgba(15, 23, 42, 0.03);
 }
 
 .promo-card-grande::before {
@@ -2416,29 +2416,30 @@ body {
     left: 0;
     right: 0;
     height: 4px;
-    background: var(--primary);
+    background: linear-gradient(90deg, var(--primary) 0%, rgba(var(--secondary-rgb), 0.82) 100%);
 }
 
 .promo-card-grande:hover {
     transform: translateY(-3px);
-    box-shadow: 0 16px 28px rgba(15, 23, 42, 0.08);
+    border-color: rgba(var(--primary-rgb), 0.2);
+    box-shadow: 0 20px 36px rgba(var(--primary-rgb), 0.12);
 }
 
 .promo-card-grande .btn {
     background: var(--primary) !important;
     color: #FFFFFF !important;
-    border: 2px solid rgba(24, 61, 89, 0.18) !important;
+    border: 2px solid rgba(var(--primary-rgb), 0.18) !important;
 }
 
 .promo-card-grande .btn:hover {
-    background: #183d59 !important;
-    border-color: #183d59 !important;
+    background: linear-gradient(135deg, #c4648a 0%, #9b496c 100%) !important;
+    border-color: #9b496c !important;
     color: #FFFFFF !important;
 }
 
 .promo-card-grande .btn:active {
-    background: #102b40 !important;
-    border-color: #102b40 !important;
+    background: linear-gradient(135deg, #a64f74 0%, #8d3f60 100%) !important;
+    border-color: #8d3f60 !important;
     color: #FFFFFF !important;
 }
 
@@ -2457,8 +2458,8 @@ body {
     justify-content: center;
     padding: 0.32rem 0.58rem;
     border-radius: 999px;
-    background: rgba(15, 23, 42, 0.06);
-    color: var(--primary);
+    background: rgba(var(--secondary-rgb), 0.1);
+    color: #36213d;
     font-size: 0.68rem;
     font-weight: 800;
     letter-spacing: 0.08em;
@@ -2468,21 +2469,21 @@ body {
 .promo-card-cantidad {
     font-size: clamp(1rem, 1.9vw, 1.2rem);
     font-weight: 700;
-    color: var(--primary-dark);
+    color: #24181f;
     margin: 0;
     line-height: 1.2;
 }
 
 .promo-card-label {
     font-size: 0.84rem;
-    color: var(--text-light);
+    color: #7c6772;
     margin: 0;
 }
 
 .promo-card-precio {
     font-size: clamp(1.45rem, 2.8vw, 1.85rem);
     font-weight: 900;
-    color: var(--primary);
+    color: #181014;
     margin: 0;
     line-height: 1;
     letter-spacing: -0.04em;
@@ -2491,16 +2492,16 @@ body {
 }
 
 .promo-card-precio--dark {
-    color: var(--primary-dark);
+    color: #181014;
 }
 
 .promo-card-ahorro {
-    color: var(--secondary-dark);
+    color: #5d2c49;
     font-weight: 700;
     font-size: 0.85rem;
     margin: 0;
     padding: 0.38rem 0.55rem;
-    background: rgba(215, 176, 122, 0.16);
+    background: rgba(var(--primary-rgb), 0.1);
     border-radius: 999px;
 }
 
@@ -2513,9 +2514,9 @@ body {
 
 .promo-card-note {
     font-size: 0.82rem;
-    color: var(--text-light);
+    color: #6f5a65;
     margin: 0;
-    line-height: 1.4;
+    line-height: 1.5;
     max-width: 22ch;
 }
 
@@ -2545,19 +2546,19 @@ body {
 .promo-card-grande .btn.btn-secondary:focus-visible,
 .promo-card-btn.btn-secondary:hover,
 .promo-card-btn.btn-secondary:focus-visible {
-    background: #183d59;
-    border-color: #183d59;
+    background: linear-gradient(135deg, #c4648a 0%, #9b496c 100%);
+    border-color: #9b496c;
     color: #ffffff;
-    box-shadow: 0 10px 22px rgba(18, 50, 75, 0.22);
+    box-shadow: 0 10px 22px rgba(var(--primary-rgb), 0.28);
 }
 
 .promo-card-grande .btn.btn-secondary:active,
 .promo-card-btn.btn-secondary:active {
-    background: #102b40;
-    border-color: #102b40;
+    background: linear-gradient(135deg, #a64f74 0%, #8d3f60 100%);
+    border-color: #8d3f60;
     color: #ffffff;
     transform: translateY(0);
-    box-shadow: 0 6px 14px rgba(18, 50, 75, 0.18);
+    box-shadow: 0 6px 14px rgba(var(--primary-rgb), 0.24);
 }
 
 /* Responsive: Tablet */
@@ -3694,8 +3695,8 @@ footer {
     padding: 3rem 0 2.6rem;
     position: relative;
     overflow: hidden;
-    border-top: 1px solid rgba(18, 50, 75, 0.12);
-    border-bottom: 1px solid rgba(18, 50, 75, 0.18);
+    border-top: 1px solid rgba(var(--primary-rgb), 0.14);
+    border-bottom: 1px solid rgba(var(--primary-rgb), 0.2);
     box-shadow: inset 0 -18px 34px rgba(255, 255, 255, 0.05);
 }
 
@@ -3724,8 +3725,8 @@ footer {
     line-height: 1.1;
     color: #f8fbfe;
     text-shadow:
-        0 10px 24px rgba(18, 50, 75, 0.22),
-        0 2px 0 rgba(18, 50, 75, 0.08);
+        0 10px 24px rgba(var(--primary-rgb), 0.24),
+        0 2px 0 rgba(var(--primary-rgb), 0.1);
     letter-spacing: -0.03em;
     max-width: 24ch;
     width: 100%;
@@ -3737,7 +3738,7 @@ footer {
     color: rgba(229, 238, 246, 0.82);
     max-width: 56ch;
     line-height: 1.65;
-    text-shadow: 0 1px 0 rgba(18, 50, 75, 0.12);
+    text-shadow: 0 1px 0 rgba(var(--primary-rgb), 0.12);
 }
 .compra-hero-cta{
     display:flex;
@@ -3794,8 +3795,8 @@ footer {
 .compra-hero-cta .btn-seleccionar {
     background: var(--primary);
     color: var(--ink-inverse);
-    box-shadow: 0 10px 22px rgba(39, 82, 126, 0.16);
-    border-color: rgba(39, 82, 126, 0.08);
+    box-shadow: 0 10px 22px rgba(var(--primary-rgb), 0.16);
+    border-color: rgba(var(--primary-rgb), 0.08);
 }
 
 .compra-hero-cta .btn-seleccionar .cta-icon {
@@ -3805,14 +3806,14 @@ footer {
 .compra-hero-cta .btn-seleccionar:hover,
 .compra-hero-cta .btn-seleccionar:focus {
     background: var(--primary-dark);
-    box-shadow: 0 12px 26px rgba(39, 82, 126, 0.20);
+    box-shadow: 0 12px 26px rgba(var(--primary-rgb), 0.2);
     transform: translateY(-2px);
     outline: none;
 }
 
 .compra-hero-cta .btn-seleccionar:active {
     transform: translateY(-1px);
-    box-shadow: 0 6px 16px rgba(39, 82, 126, 0.16);
+    box-shadow: 0 6px 16px rgba(var(--primary-rgb), 0.16);
 }
 
 /* Botón Máquina de la Suerte - SECUNDARIO PREMIUM */
@@ -3820,7 +3821,7 @@ footer {
     background: rgba(255, 255, 255, 0.14);
     border: 1px solid rgba(var(--primary-rgb), 0.32);
     color: #f8fbfe;
-    box-shadow: 0 10px 22px rgba(18, 50, 75, 0.12);
+    box-shadow: 0 10px 22px rgba(var(--primary-rgb), 0.12);
     backdrop-filter: blur(10px);
 }
 
@@ -3832,7 +3833,7 @@ footer {
 .compra-hero-cta .btn-maquina:focus {
     background: rgba(255, 255, 255, 0.2);
     border-color: rgba(var(--primary-rgb), 0.44);
-    box-shadow: 0 14px 28px rgba(18, 50, 75, 0.18);
+    box-shadow: 0 14px 28px rgba(var(--primary-rgb), 0.18);
     transform: translateY(-2px);
     outline: none;
 }
@@ -3875,12 +3876,12 @@ footer {
 }
 
 .btn-probar-maquina {
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    background: linear-gradient(135deg, #191919 0%, #050505 100%);
     color: white;
-    border: 2.5px solid var(--secondary); /* Margen amarillo fijo */
+    border: 2.5px solid var(--secondary);
     font-size: 1.05rem;
     padding: 0.75rem 1.5rem;
-    box-shadow: 0 6px 20px var(--primary-30);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
     position: relative;
     overflow: hidden;
     transition: box-shadow var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast);
@@ -3900,12 +3901,12 @@ footer {
 .btn-probar-maquina:focus,
 .btn-probar-maquina:hover {
     transform: translateY(-3px);
-    box-shadow: 0 12px 28px var(--primary-40);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
     border-color: var(--secondary);
 }
 .btn-probar-maquina.selected {
     border-color: var(--secondary);
-    box-shadow: 0 12px 28px rgba(245, 158, 11, 0.4);
+    box-shadow: 0 12px 28px rgba(var(--secondary-rgb), 0.36);
 }
 .btn-probar-maquina:active {
     transform: translateY(-1px);
@@ -4214,15 +4215,15 @@ footer {
 
 /* ===== BARRA DE BÚSQUEDA DE BOLETOS ===== */
 .busqueda-boletos-card {
-    background: linear-gradient(180deg, var(--surface-base), var(--surface-soft));
-    border: 1px solid rgba(15, 23, 42, 0.08);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), #fff8fb);
+    border: 1px solid rgba(var(--primary-rgb), 0.12);
     border-radius: 20px;
     padding: 1.15rem 1.2rem;
     margin-bottom: 1.5rem;
     width: min(100%, 760px);
     margin-left: auto;
     margin-right: auto;
-    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05);
+    box-shadow: 0 14px 28px rgba(var(--primary-rgb), 0.08);
 }
 
 .busqueda-input-group {
@@ -4239,8 +4240,8 @@ footer {
     flex-wrap: wrap;
     padding: 0.9rem 1rem;
     border-radius: 16px;
-    background: rgba(255, 255, 255, 0.65);
-    border: 1px solid rgba(15, 23, 42, 0.08);
+    background: rgba(255, 255, 255, 0.82);
+    border: 1px solid rgba(var(--primary-rgb), 0.08);
 }
 
 .busqueda-toolbar[hidden] {
@@ -4294,7 +4295,7 @@ footer {
     left: 1rem;
     top: 50%;
     transform: translateY(-50%);
-    color: var(--primary);
+    color: var(--secondary);
     opacity: 0.72;
     font-size: 0.95rem;
     pointer-events: none;
@@ -4304,7 +4305,7 @@ footer {
     flex: 1;
     min-height: 50px;
     padding: 0.78rem 1rem 0.78rem 2.7rem;
-    border: 1px solid rgba(15, 23, 42, 0.12);
+    border: 1px solid rgba(var(--primary-rgb), 0.12);
     border-radius: 14px;
     font-size: 0.98rem;
     transition: var(--transition-fast);
@@ -4313,8 +4314,8 @@ footer {
 }
 
 .busqueda-input:focus {
-    border-color: var(--primary);
-    box-shadow: 0 0 0 4px rgba(15, 23, 42, 0.06);
+    border-color: var(--secondary);
+    box-shadow: 0 0 0 4px rgba(var(--secondary-rgb), 0.08);
     background: var(--bg-white);
 }
 
@@ -4336,7 +4337,7 @@ footer {
 .btn-search {
     min-height: 50px;
     padding: 0.78rem 1.15rem;
-    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    background: linear-gradient(135deg, #1a1a1a 0%, #050505 100%);
     color: white;
     border: none;
     border-radius: 14px;
@@ -4344,12 +4345,13 @@ footer {
     cursor: pointer;
     transition: var(--transition-fast);
     white-space: nowrap;
-    box-shadow: 0 8px 18px var(--primary-20);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.22);
 }
 
 .btn-search:hover {
     transform: translateY(-2px);
-    box-shadow: 0 10px 20px var(--primary-25);
+    background: linear-gradient(135deg, #242424 0%, #0b0b0b 100%);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.28);
 }
 
 .btn-search.is-loading,
@@ -4425,8 +4427,9 @@ footer {
     gap: 1rem;
     padding: 0.8rem 0.9rem;
     border-radius: 14px;
-    background: linear-gradient(180deg, var(--surface-base), var(--surface-soft));
-    border: 1px solid rgba(15, 23, 42, 0.08);
+    background: linear-gradient(180deg, rgba(255,255,255,0.98), #fff9fb);
+    border: 1px solid rgba(var(--primary-rgb), 0.08);
+    box-shadow: 0 10px 22px rgba(var(--primary-rgb), 0.05);
 }
 
 .resultado-item--disponible {
@@ -4434,7 +4437,7 @@ footer {
 }
 
 .resultado-item--seleccionado {
-    border-left: 4px solid var(--primary);
+    border-left: 4px solid var(--secondary);
 }
 
 .resultado-item--apartado {
@@ -4453,7 +4456,7 @@ footer {
     display: block;
     font-weight: 800;
     font-size: 0.98rem;
-    color: var(--primary-dark);
+    color: #1a1217;
 }
 
 .resultado-estado {
@@ -4776,9 +4779,14 @@ footer {
     align-items: center;
     gap: 0.5rem;
     font-size: 0.875rem;
-    color: var(--text-light);
+    color: var(--text-dark);
     flex-shrink: 0;
     white-space: nowrap;
+    padding: 0.5rem 0.82rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.72);
+    border: 1px solid rgba(var(--primary-rgb), 0.08);
+    box-shadow: 0 8px 18px rgba(var(--primary-rgb), 0.06);
 }
 
 .leyenda-color {
@@ -4786,11 +4794,12 @@ footer {
     height: 16px;
     border-radius: var(--radius-sm);
     border: 1px solid var(--border-color);
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.56);
 }
 
 .leyenda-color.disponible {
     background: var(--disponible);
-    border-color: #d1d5db;
+    border-color: #d7c2cc;
 }
 
 .leyenda-color.seleccionado {
@@ -4817,12 +4826,12 @@ footer {
 }
 
 .leyenda-estados::-webkit-scrollbar-thumb {
-    background: rgba(15, 23, 42, 0.16);
+    background: rgba(var(--secondary-rgb), 0.24);
     border-radius: 999px;
 }
 
 .leyenda-estados::-webkit-scrollbar-thumb:hover {
-    background: rgba(15, 23, 42, 0.28);
+    background: rgba(var(--secondary-rgb), 0.36);
 }
 
 /* ====================================
@@ -5853,11 +5862,11 @@ body.modal-scroll-locked {
     border-radius: var(--radius-lg);
     overflow: hidden;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    border: 2px solid var(--primary);
+    border: 2px solid #111111;
 }
 
 .number-btn {
-    background: var(--primary);
+    background: linear-gradient(135deg, #1a1a1a 0%, #050505 100%);
     color: white;
     border: none;
     width: 50px;
@@ -5875,7 +5884,7 @@ body.modal-scroll-locked {
 }
 
 .number-btn:hover {
-    background: var(--primary-dark);
+    background: linear-gradient(135deg, #242424 0%, #0b0b0b 100%);
 }
 
 .number-btn:active {
@@ -5929,23 +5938,23 @@ body.modal-scroll-locked {
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 1px;
-    background: linear-gradient(135deg, var(--primary), var(--primary-dark)) !important;
+    background: linear-gradient(135deg, #1a1a1a 0%, #050505 100%) !important;
     border: none;
     border-radius: var(--radius-lg);
-    box-shadow: 0 8px 25px rgba(15, 58, 125, 0.2);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.22);
     transition: box-shadow var(--transition-fast), filter var(--transition-fast);
     margin-top: 1rem;
 }
 
 .btn-generar:hover {
-    background: linear-gradient(135deg, var(--primary), var(--primary-dark)) !important;
-    box-shadow: 0 12px 35px rgba(15, 58, 125, 0.35);
+    background: linear-gradient(135deg, #242424 0%, #0b0b0b 100%) !important;
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.3);
     filter: brightness(1.08);
 }
 
 .btn-generar:active {
-    background: linear-gradient(135deg, var(--primary), var(--primary-dark)) !important;
-    box-shadow: 0 8px 25px rgba(15, 58, 125, 0.25);
+    background: linear-gradient(135deg, #151515 0%, #050505 100%) !important;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.24);
     filter: brightness(1.04);
 }
 
@@ -6174,11 +6183,11 @@ body.modal-scroll-locked {
     padding: 1.15rem;
     border-radius: 24px;
     background:
-        radial-gradient(circle at top right, rgba(215, 176, 122, 0.14), transparent 28%),
-        linear-gradient(180deg, rgba(255,255,255,0.98), rgba(249,245,239,0.98));
-    border: 1px solid rgba(15, 23, 42, 0.08);
+        radial-gradient(circle at top right, rgba(var(--secondary-rgb), 0.1), transparent 30%),
+        linear-gradient(180deg, rgba(255,255,255,0.99), #fff8fb 100%);
+    border: 1px solid rgba(var(--primary-rgb), 0.1);
     box-shadow:
-        0 14px 30px rgba(15, 23, 42, 0.08),
+        0 18px 36px rgba(var(--primary-rgb), 0.08),
         0 4px 12px rgba(15, 23, 42, 0.04);
 }
 
@@ -6193,10 +6202,10 @@ body.modal-scroll-locked {
             from 0deg,
             rgba(255, 255, 255, 0) 0deg,
             rgba(255, 255, 255, 0) 300deg,
-            rgba(215, 176, 122, 0.95) 328deg,
-            rgba(236, 210, 175, 1) 338deg,
+            rgba(var(--primary-rgb), 0.88) 328deg,
+            rgba(var(--secondary-rgb), 0.92) 338deg,
             rgba(255, 255, 255, 0.92) 344deg,
-            rgba(165, 107, 63, 0.95) 350deg,
+            rgba(var(--primary-rgb), 0.68) 350deg,
             rgba(255, 255, 255, 0) 360deg
         );
     animation: maquinaElectricBorder 4.2s linear infinite;
@@ -6222,10 +6231,10 @@ body.modal-scroll-locked {
             from 0deg,
             rgba(255, 255, 255, 0) 0deg,
             rgba(255, 255, 255, 0) 300deg,
-            rgba(215, 176, 122, 0.28) 328deg,
-            rgba(236, 210, 175, 0.42) 338deg,
+            rgba(var(--primary-rgb), 0.24) 328deg,
+            rgba(var(--secondary-rgb), 0.34) 338deg,
             rgba(255, 255, 255, 0.32) 344deg,
-            rgba(165, 107, 63, 0.28) 350deg,
+            rgba(var(--primary-rgb), 0.22) 350deg,
             rgba(255, 255, 255, 0) 360deg
         );
     filter: blur(6px);
@@ -6257,7 +6266,7 @@ body.modal-scroll-locked {
 .maquina-header h3 {
     margin: 0;
     font-size: clamp(1.28rem, 2.2vw, 1.7rem);
-    color: var(--primary-dark);
+    color: #1c1319;
     font-weight: 800;
     letter-spacing: -0.01em;
 }
@@ -6265,18 +6274,20 @@ body.modal-scroll-locked {
 .maquina-sub {
     margin: 0.3rem auto 0;
     max-width: 620px;
-    color: var(--text-light);
+    color: #725f69;
     font-size: 0.97rem;
     font-weight: 600;
 }
 
 .maquina-controls-mejorada {
-    background: linear-gradient(180deg, var(--surface-soft), var(--surface-base));
+    background: linear-gradient(180deg, rgba(255,255,255,0.98), #fffafc);
     border-radius: 22px;
     padding: 1.2rem;
     margin: 1.1rem 0 0;
-    border: 1px solid rgba(15, 23, 42, 0.08);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
+    border: 1px solid rgba(var(--primary-rgb), 0.08);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.82),
+        0 10px 22px rgba(var(--primary-rgb), 0.05);
 }
 
 .cantidad-control {
@@ -6285,7 +6296,7 @@ body.modal-scroll-locked {
 
 .cantidad-control label {
     margin-bottom: 0.8rem;
-    color: var(--primary-dark);
+    color: #1f151b;
     font-size: 1rem;
     font-weight: 700;
 }
@@ -6303,7 +6314,7 @@ body.modal-scroll-locked {
 .number-btn {
     width: 50px;
     height: 50px;
-    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    background: linear-gradient(135deg, #1a1a1a 0%, #050505 100%);
 }
 
 .number-input {
@@ -6311,20 +6322,20 @@ body.modal-scroll-locked {
     height: 50px;
     font-size: 1.22rem;
     font-weight: 800;
-    color: var(--primary-dark);
+    color: #111111;
 }
 
 .number-input:focus {
-    background: rgba(215, 176, 122, 0.10);
+    background: rgba(0, 0, 0, 0.04);
 }
 
 .total-section {
     margin: 1.1rem auto;
     padding: 1rem 1.1rem;
     border-radius: 20px;
-    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
     border: none;
-    box-shadow: 0 14px 30px var(--primary-20);
+    box-shadow: 0 14px 30px rgba(var(--primary-rgb), 0.22);
 }
 
 .total-label {
@@ -6343,7 +6354,7 @@ body.modal-scroll-locked {
 
 .btn-generar {
     border-radius: 18px;
-    box-shadow: 0 12px 28px var(--primary-25);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.24);
 }
 
 .availability-note {
@@ -6356,9 +6367,9 @@ body.modal-scroll-locked {
     margin: 0.25rem 0 0;
     padding: 0.55rem 0.9rem;
     border-radius: 999px;
-    background: rgba(215, 176, 122, 0.10);
-    border: 1px solid rgba(215, 176, 122, 0.18);
-    color: var(--primary-dark);
+    background: rgba(var(--primary-rgb), 0.08);
+    border: 1px solid rgba(var(--primary-rgb), 0.12);
+    color: #2b1e25;
     font-size: 0.85rem;
     font-weight: 700;
 }
@@ -6370,14 +6381,14 @@ body.modal-scroll-locked {
 .maquina-resultado-scroll {
     max-height: 380px;
     border-radius: 18px;
-    border: 1px solid rgba(15, 23, 42, 0.08);
-    background: linear-gradient(180deg, var(--surface-base), var(--surface-soft));
+    border: 1px solid rgba(var(--primary-rgb), 0.08);
+    background: linear-gradient(180deg, rgba(255,255,255,0.98), #fff8fb);
     box-shadow: inset 0 1px 0 rgba(255,255,255,0.75);
 }
 
 .maquina-resultado-scroll h4 {
     margin: 0;
-    color: var(--primary-dark);
+    color: #1c1319;
     font-size: 1.04rem;
     font-weight: 800;
 }
@@ -6391,8 +6402,10 @@ body.modal-scroll-locked {
     min-width: 56px;
     padding: 0.7rem 0.9rem;
     border-radius: 16px;
-    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-    box-shadow: 0 8px 18px var(--primary-20);
+    background: linear-gradient(135deg, rgba(var(--secondary-rgb), 0.14), rgba(var(--primary-rgb), 0.16));
+    color: #1c1319;
+    border: 1px solid rgba(var(--primary-rgb), 0.12);
+    box-shadow: 0 8px 18px rgba(var(--primary-rgb), 0.08);
 }
 
 .generated-actions {
@@ -6424,17 +6437,17 @@ body.modal-scroll-locked {
 }
 
 .generated-actions .btn-outline {
-    background: #ffffff;
+    background: #111111;
     border-width: 2px;
-    border-color: var(--secondary);
-    color: var(--primary-dark);
+    border-color: #111111;
+    color: #ffffff;
 }
 
 .generated-actions .btn-outline:hover {
-    background: rgba(var(--secondary-rgb), 0.08);
-    border-color: var(--secondary-dark);
-    color: var(--secondary-dark);
-    box-shadow: 0 12px 24px rgba(var(--secondary-rgb), 0.16);
+    background: #1d1d1d;
+    border-color: #1d1d1d;
+    color: #ffffff;
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.18);
 }
 
 @keyframes maquinaElectricBorder {
@@ -9173,13 +9186,13 @@ body.modal-scroll-locked {
     min-height: 65px;
     display: flex;
     overflow: visible;
-    box-shadow: 0 2px 6px rgba(24, 119, 242, 0.06);
+    box-shadow: 0 2px 6px rgba(var(--primary-rgb), 0.08);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .ticket-item:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(24, 119, 242, 0.12);
+    box-shadow: 0 4px 10px rgba(var(--primary-rgb), 0.14);
 }
 
 /* Contenedor con línea punteada vertical */

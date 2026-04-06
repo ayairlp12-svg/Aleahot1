@@ -18,13 +18,10 @@
 class OportunidadesManager {
     constructor() {
         // Estado y configuración
-        // La config se inicializa aquí (después de que config.js cargó)
-        this.isEnabled = window.rifaplusConfig?.rifa?.oportunidades?.enabled || false;
-        
-        // ✅ Usar resolvedor central para mantener deploy dinámico
-        this.apiBaseUrl = window.rifaplusConfig?.backend?.apiBase
-            || window.rifaplusConfig?.obtenerApiBase?.()
-            || window.location.origin;
+        // La config pública puede seguir sincronizándose después de crear el singleton.
+        this.isEnabled = false;
+        this.apiBaseUrl = window.location.origin;
+        this._refrescarConfigRuntime();
         
         this.BATCH_SIZE = 50;
         this.MAX_CONCURRENT = 12;
@@ -64,6 +61,21 @@ class OportunidadesManager {
             apiBaseUrl: this.apiBaseUrl
         });
     }
+
+    _resolverEnabled() {
+        return window.rifaplusConfig?.rifa?.oportunidades?.enabled === true;
+    }
+
+    _resolverApiBaseUrl() {
+        return window.rifaplusConfig?.backend?.apiBase
+            || window.rifaplusConfig?.obtenerApiBase?.()
+            || window.location.origin;
+    }
+
+    _refrescarConfigRuntime() {
+        this.isEnabled = this._resolverEnabled();
+        this.apiBaseUrl = this._resolverApiBaseUrl();
+    }
     
     /**
      * 📊 Obtener estadísticas de cache
@@ -100,6 +112,8 @@ class OportunidadesManager {
      * Función principal - robusta y profesional
      */
     async cargar(numerosOrdenados) {
+        this._refrescarConfigRuntime();
+
         // ⚠️ Validación defensiva
         if (!this.isEnabled) {
             console.log('[OppManager] ℹ️ Oportunidades deshabilitadas en configuración');
@@ -288,6 +302,8 @@ class OportunidadesManager {
      * 🎯 Procesar UN batch con reintentos
      */
     async _procesarBatch(batch, esReintento = false) {
+        this._refrescarConfigRuntime();
+
         for (let intento = 0; intento <= this.MAX_REINTENTOS; intento++) {
             try {
                 const response = await this._fetchConTimeout(
@@ -403,6 +419,12 @@ class OportunidadesManager {
         if (this.listeners[event]) {
             this.listeners[event].push(callback);
         }
+        return this;
+    }
+
+    off(event, callback) {
+        if (!this.listeners[event]) return this;
+        this.listeners[event] = this.listeners[event].filter((cb) => cb !== callback);
         return this;
     }
     

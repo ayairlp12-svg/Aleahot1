@@ -1,21 +1,21 @@
 {
   "cliente": {
-    "id": "SaDev",
-    "nombre": "SaDev",
-    "prefijoOrden": "SS",
-    "eslogan": "Desarrollando sueños, creando realidades",
-    "email": "joseayairlp12@gmail.com",
-    "telefono": "+524591109088",
+    "id": "Chicas Bien",
+    "nombre": "Chicas Bien",
+    "prefijoOrden": "CB",
+    "eslogan": "Haciendo realid tus fantasias",
+    "email": "ChicasQRO@gmail.com",
+    "telefono": "+524421208852",
     "imagenPrincipal": "https://res.cloudinary.com/dxu3imvxt/image/upload/v1774666913/rifaplus/sorteos/ymvrzwdkloo3slhkzm2j.png",
     "redesSociales": {
-      "whatsapp": "+524591076909",
+      "whatsapp": "+524421208852",
       "facebook": "https://www.facebook.com/profile.php?id=100008315310869&locale=es_LA",
       "facebookUsuario": "Ayair",
       "instagram": "https://www.instagram.com/joseayair",
       "instagramUsuario": "@joseayair",
       "tiktok": "",
-      "canalWhatsapp": "https://chat.whatsapp.com/grupo-sorteos",
-      "canalWhatsappNombre": "Sorteos Yepe"
+      "canalWhatsapp": "https://chat.whatsapp.com/Chicas bien - contenido y encuentros",
+      "canalWhatsappNombre": "Chicas bien - contenido y encuentros"
     },
     "mensajesWhatsapp": {
       "confirmacion": "",
@@ -27,12 +27,12 @@
     "logotipo": "https://res.cloudinary.com/dxu3imvxt/image/upload/v1774673215/rifaplus/sorteos/qzfjmawh4hhknsi64p1k.png"
   },
   "rifa": {
-    "edicionNombre": "Sorteo Piloto - Campus 2",
-    "nombreSorteo": "Desayuno completo 🥙🍳 + Bebida 🥤 - Cafetería Campus 2",
-    "descripcion": "Este 16 de abril, participa por un almuerzo completo + una bebida de tu preferencia, el costo del boleto es totalmente gratis.\n¡No te quedes sin participar!.",
+    "edicionNombre": "Edicion No.2 con Sandy",
+    "nombreSorteo": "Cumple tus fantasias con Sandy",
+    "descripcion": "Participa en este sorteo y gana tu servicio completo con la hermosa Sndy, no pierdas esta oportunidad de cumplir tus fantasias",
     "totalBoletos": 1000,
     "precioBoleto": 1,
-    "tiempoApartadoHoras": 2,
+    "tiempoApartadoHoras": 1,
     "intervaloLimpiezaMinutos": 10,
     "rangos": [
       {
@@ -60,10 +60,10 @@
       "fechaFin": null
     },
     "descuentoPorcentaje": {
-      "enabled": true,
+      "enabled": false,
       "porcentaje": 100,
       "fechaInicio": "2026-03-31T19:03",
-      "fechaFin": "2026-03-31T22:00"
+      "fechaFin": "2026-04-30T22:00"
     },
     "bonos": {
       "enabled": true,

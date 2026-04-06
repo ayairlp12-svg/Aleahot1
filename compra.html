@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="rifaplus-api-base" content="https://demo1m-production.up.railway.app">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' http://127.0.0.1:* http://localhost:* http://localhost:5001; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://fonts.googleapis.com http://localhost:5001 http://127.0.0.1:5001 https://demo1m-production.up.railway.app; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; connect-src 'self' http://127.0.0.1:* http://localhost:* https: http://localhost:5001 http://127.0.0.1:5001 https://demo1m-production.up.railway.app ws: wss: ws://localhost:5001 wss://localhost:5001 ws://127.0.0.1:5001 wss://127.0.0.1:5001 wss://demo1m-production.up.railway.app; img-src 'self' data: https:;">
+    <meta name="rifaplus-api-base" content="">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' http://127.0.0.1:* http://localhost:* http://localhost:5001; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://fonts.googleapis.com http://localhost:5001 http://127.0.0.1:5001; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; connect-src 'self' http://127.0.0.1:* http://localhost:* https: http://localhost:5001 http://127.0.0.1:5001 ws: wss: ws://localhost:5001 wss://localhost:5001 ws://127.0.0.1:5001 wss://127.0.0.1:5001; img-src 'self' data: https:;">
     <!-- METADATOS DINÁMICOS - Cloudflare Functions y js/meta-inyector los actualizan desde la configuración actual -->
     <title>Compra tus boletos | RifaPlus</title>
     <meta name="description" content="Selecciona tus boletos y participa en el sorteo activo.">
     <meta property="og:title" content="Compra tus boletos | RifaPlus" />
     <meta property="og:description" content="Selecciona tus boletos y participa en el sorteo activo." />
     <meta property="og:image" content="images/placeholder-cover.svg" />
-    <meta property="og:url" content="https://demo1m.pages.dev/compra" />
+    <meta property="og:url" content="http://127.0.0.1:5500/compra.html" />
     <meta property="og:type" content="website" />
     <meta property="og:locale" content="es_MX" />
     <meta name="twitter:card" content="summary_large_image" />
@@ -30,14 +30,6 @@
 
                 if (!organizador) {
                     try {
-                        organizador = String(localStorage.getItem('rifaplus_compra_hero_organizador') || '').trim();
-                    } catch (error) {
-                        organizador = '';
-                    }
-                }
-
-                if (!organizador) {
-                    try {
                         organizador = String(window.rifaplusConfig?.cliente?.nombre || '').trim();
                     } catch (error) {
                         organizador = '';
@@ -48,6 +40,14 @@
                     try {
                         const configLocal = JSON.parse(localStorage.getItem('rifaplus_config_actual_v2') || '{}');
                         organizador = String(configLocal?.cliente?.nombre || '').trim();
+                    } catch (error) {
+                        organizador = '';
+                    }
+                }
+
+                if (!organizador) {
+                    try {
+                        organizador = String(localStorage.getItem('rifaplus_compra_hero_organizador') || '').trim();
                     } catch (error) {
                         organizador = '';
                     }
@@ -292,16 +292,6 @@
 
             <script>
             function obtenerNombreOrganizadorInicialCompra() {
-                const nombrePrecalculado = String(window.__RIFAPLUS_COMPRA_HERO__?.organizador || '').trim();
-                if (nombrePrecalculado) return nombrePrecalculado;
-
-                try {
-                    const nombreCacheHero = String(localStorage.getItem('rifaplus_compra_hero_organizador') || '').trim();
-                    if (nombreCacheHero) return nombreCacheHero;
-                } catch (error) {
-                    console.warn('⚠️ No se pudo leer cache del hero de compra:', error?.message || error);
-                }
-
                 const nombreConfig = String(window.rifaplusConfig?.cliente?.nombre || '').trim();
                 if (nombreConfig) return nombreConfig;
 
@@ -311,6 +301,16 @@
                     if (nombreLocal) return nombreLocal;
                 } catch (error) {
                     console.warn('⚠️ No se pudo leer el nombre del organizador desde cache local:', error?.message || error);
+                }
+
+                const nombrePrecalculado = String(window.__RIFAPLUS_COMPRA_HERO__?.organizador || '').trim();
+                if (nombrePrecalculado) return nombrePrecalculado;
+
+                try {
+                    const nombreCacheHero = String(localStorage.getItem('rifaplus_compra_hero_organizador') || '').trim();
+                    if (nombreCacheHero) return nombreCacheHero;
+                } catch (error) {
+                    console.warn('⚠️ No se pudo leer cache del hero de compra:', error?.message || error);
                 }
 
                 return '';
@@ -406,7 +406,9 @@
                 
                 // Actualizar texto promociones-sub según modalidad habilitada
                 if (oportunidadesPromosActivas) {
-                    const opxBoleto = oportunidadesConfig.multiplicador || oportunidadesConfig.oportunidades_por_boleto || 3;
+                    const opxBoleto = Number(oportunidadesConfig?.multiplicador) > 0
+                        ? Number(oportunidadesConfig.multiplicador)
+                        : 1;
                     promocionesSubText.textContent = `¡Multiplica tus oportunidades de ganar! Cada boleto que compres te regala ${opxBoleto} oportunidades EXTRA. Compra más boletos y aumenta tus probabilidades, ejemplo:`;
                 } else if (descuentosConfig && descuentosConfig.enabled) {
                     promocionesSubText.textContent = 'Aprovecha los paquetes y ahorra al comprar varios boletos';

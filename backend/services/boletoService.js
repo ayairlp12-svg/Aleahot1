@@ -14,6 +14,281 @@ const db = require('../db');
 const retryService = require('./retryService');
 
 class BoletoService {
+  static INVENTARIO_LOCK_KEY = 48200117;
+  static TABLAS_CON_SECUENCIA_ID = new Set([
+    'boletos_estado',
+    'orden_oportunidades',
+    'ordenes',
+    'ganadores',
+    'order_id_counter'
+  ]);
+
+  static _assertTablaConSecuencia(tableName) {
+    if (!this.TABLAS_CON_SECUENCIA_ID.has(tableName)) {
+      throw new Error(`La tabla ${tableName} no está permitida para ajuste de secuencia`);
+    }
+  }
+
+  static _parseEnteroNoNegativo(valor) {
+    const numero = Number.parseInt(valor, 10);
+    return Number.isInteger(numero) && numero >= 0 ? numero : null;
+  }
+
+  static normalizarRangoOperacion(rango, totalBoletosConfigurado = 0) {
+    const inicio = this._parseEnteroNoNegativo(rango?.inicio);
+    const fin = this._parseEnteroNoNegativo(rango?.fin);
+    const totalConfig = Number.parseInt(totalBoletosConfigurado, 10) || 0;
+
+    if (!Number.isInteger(inicio) || !Number.isInteger(fin) || fin < inicio) {
+      const error = new Error('Debes indicar un rango válido con inicio y fin mayores o iguales a 0');
+      error.code = 'RANGO_INVALIDO';
+      throw error;
+    }
+
+    if (totalConfig < 1) {
+      const error = new Error('No hay un total de boletos configurado válido');
+      error.code = 'CONFIG_INVALIDA';
+      throw error;
+    }
+
+    if (fin >= totalConfig) {
+      const error = new Error(`El rango debe quedar dentro del universo configurado: 0 - ${Math.max(0, totalConfig - 1)}`);
+      error.code = 'RANGO_FUERA_CONFIG';
+      throw error;
+    }
+
+    return {
+      inicio,
+      fin,
+      cantidad: (fin - inicio) + 1,
+      totalBoletosConfigurado: totalConfig
+    };
+  }
+
+  static _enteroDesdeFila(valor) {
+    return Number.parseInt(valor, 10) || 0;
+  }
+
+  static async _conLockInventario(callback) {
+    return db.transaction(async (trx) => {
+      const lockResult = await trx.raw('SELECT pg_try_advisory_xact_lock(?) AS locked', [this.INVENTARIO_LOCK_KEY]);
+      const locked = lockResult?.rows?.[0]?.locked === true;
+
+      if (!locked) {
+        const error = new Error('Ya hay otra operación de inventario de boletos en progreso');
+        error.code = 'INVENTARIO_BOLETOS_EN_PROGRESO';
+        throw error;
+      }
+
+      return callback(trx);
+    });
+  }
+
+  static async reiniciarSecuenciaId(tableName, runner = db) {
+    this._assertTablaConSecuencia(tableName);
+    await runner.raw(`SELECT setval(pg_get_serial_sequence('${tableName}', 'id'), 1, false)`);
+  }
+
+  static async sincronizarSecuenciaId(tableName, runner = db) {
+    this._assertTablaConSecuencia(tableName);
+    const row = await runner(tableName).max('id as maxId').first();
+    const maxId = Number.parseInt(row?.maxId, 10) || 0;
+
+    if (maxId > 0) {
+      await runner.raw(`SELECT setval(pg_get_serial_sequence('${tableName}', 'id'), ?, true)`, [maxId]);
+      return;
+    }
+
+    await this.reiniciarSecuenciaId(tableName, runner);
+  }
+
+  static async obtenerResumenInventario(totalBoletosConfigurado = 0, runner = db) {
+    const totalConfig = Number.parseInt(totalBoletosConfigurado, 10) || 0;
+
+    const [general, estados, oportunidades] = await Promise.all([
+      runner('boletos_estado')
+        .select(
+          runner.raw('COUNT(*)::int AS total'),
+          runner.raw('COALESCE(MIN(numero), 0)::int AS minimo'),
+          runner.raw('COALESCE(MAX(numero), 0)::int AS maximo')
+        )
+        .first(),
+      runner('boletos_estado')
+        .select(
+          'estado',
+          runner.raw('COUNT(*)::int AS cantidad')
+        )
+        .groupBy('estado'),
+      runner('orden_oportunidades')
+        .select(
+          runner.raw('COUNT(*)::int AS total_oportunidades'),
+          runner.raw('COUNT(DISTINCT numero_boleto)::int AS boletos_con_oportunidades')
+        )
+        .first()
+    ]);
+
+    const porEstado = {
+      disponible: 0,
+      apartado: 0,
+      vendido: 0,
+      cancelado: 0
+    };
+
+    estados.forEach((row) => {
+      porEstado[row.estado] = this._enteroDesdeFila(row.cantidad);
+    });
+
+    const totalEnBD = this._enteroDesdeFila(general?.total);
+    const faltantesConfigurados = totalConfig > 0
+      ? Math.max(0, totalConfig - totalEnBD)
+      : 0;
+
+    return {
+      totalBoletosConfigurado: totalConfig,
+      totalEnBD,
+      faltantesConfigurados,
+      porcentajeCobertura: totalConfig > 0
+        ? Math.min(100, Math.round((totalEnBD / totalConfig) * 100))
+        : 0,
+      minimo: totalEnBD > 0 ? this._enteroDesdeFila(general?.minimo) : null,
+      maximo: totalEnBD > 0 ? this._enteroDesdeFila(general?.maximo) : null,
+      estados: porEstado,
+      oportunidadesLigadas: this._enteroDesdeFila(oportunidades?.total_oportunidades),
+      boletosConOportunidades: this._enteroDesdeFila(oportunidades?.boletos_con_oportunidades)
+    };
+  }
+
+  static async previsualizarRangoBoletos(rangoNormalizado, runner = db) {
+    const { inicio, fin, cantidad, totalBoletosConfigurado } = rangoNormalizado;
+
+    const query = await runner.raw(`
+      SELECT
+        COUNT(*)::int AS existentes,
+        COALESCE(SUM(CASE WHEN boleto_borrable THEN 1 ELSE 0 END), 0)::int AS boletos_borrables,
+        COALESCE(SUM(CASE WHEN NOT boleto_borrable THEN 1 ELSE 0 END), 0)::int AS boletos_bloqueados_total,
+        COALESCE(SUM(CASE WHEN bloqueado_por_estado THEN 1 ELSE 0 END), 0)::int AS bloqueados_por_estado,
+        COALESCE(SUM(CASE WHEN (NOT bloqueado_por_estado) AND bloqueado_por_oportunidades THEN 1 ELSE 0 END), 0)::int AS bloqueados_por_oportunidades,
+        COALESCE(SUM(total_oportunidades), 0)::int AS oportunidades_ligadas,
+        COALESCE(SUM(CASE WHEN boleto_borrable THEN total_oportunidades ELSE 0 END), 0)::int AS oportunidades_en_boletos_borrables,
+        COALESCE(SUM(oportunidades_bloqueadas), 0)::int AS oportunidades_bloqueadas
+      FROM (
+        SELECT
+          be.numero,
+          (be.estado <> 'disponible' OR be.numero_orden IS NOT NULL) AS bloqueado_por_estado,
+          (COALESCE(opp_stats.oportunidades_bloqueadas, 0) > 0) AS bloqueado_por_oportunidades,
+          CASE
+            WHEN be.estado <> 'disponible' OR be.numero_orden IS NOT NULL THEN FALSE
+            WHEN COALESCE(opp_stats.oportunidades_bloqueadas, 0) > 0 THEN FALSE
+            ELSE TRUE
+          END AS boleto_borrable,
+          COALESCE(opp_stats.total_oportunidades, 0) AS total_oportunidades,
+          COALESCE(opp_stats.oportunidades_bloqueadas, 0) AS oportunidades_bloqueadas
+        FROM boletos_estado be
+        LEFT JOIN (
+          SELECT
+            numero_boleto,
+            COUNT(*)::int AS total_oportunidades,
+            SUM(CASE WHEN estado <> 'disponible' OR numero_orden IS NOT NULL THEN 1 ELSE 0 END)::int AS oportunidades_bloqueadas
+          FROM orden_oportunidades
+          WHERE numero_boleto BETWEEN ? AND ?
+          GROUP BY numero_boleto
+        ) opp_stats
+          ON opp_stats.numero_boleto = be.numero
+        WHERE be.numero BETWEEN ? AND ?
+      ) inventario
+    `, [inicio, fin, inicio, fin]);
+
+    const row = query?.rows?.[0] || {};
+    const existentes = this._enteroDesdeFila(row.existentes);
+
+    return {
+      inicio,
+      fin,
+      cantidadSolicitada: cantidad,
+      totalBoletosConfigurado,
+      existentes,
+      faltantes: Math.max(0, cantidad - existentes),
+      boletosBorrables: this._enteroDesdeFila(row.boletos_borrables),
+      boletosBloqueadosTotal: this._enteroDesdeFila(row.boletos_bloqueados_total),
+      boletosBloqueadosPorEstado: this._enteroDesdeFila(row.bloqueados_por_estado),
+      boletosBloqueadosPorOportunidades: this._enteroDesdeFila(row.bloqueados_por_oportunidades),
+      oportunidadesLigadas: this._enteroDesdeFila(row.oportunidades_ligadas),
+      oportunidadesEnBoletosBorrables: this._enteroDesdeFila(row.oportunidades_en_boletos_borrables),
+      oportunidadesBloqueadas: this._enteroDesdeFila(row.oportunidades_bloqueadas)
+    };
+  }
+
+  static async poblarRangoBoletos(rangoNormalizado) {
+    return this._conLockInventario(async (trx) => {
+      const preview = await this.previsualizarRangoBoletos(rangoNormalizado, trx);
+      const totalTablaAntes = await trx('boletos_estado').count('* as total').first();
+      const tablaVaciaAntes = this._enteroDesdeFila(totalTablaAntes?.total) === 0;
+
+      if (preview.faltantes <= 0) {
+        return {
+          ...preview,
+          insertados: 0
+        };
+      }
+
+      if (tablaVaciaAntes) {
+        await this.reiniciarSecuenciaId('boletos_estado', trx);
+      }
+
+      const insertResult = await trx.raw(`
+        WITH inserted AS (
+          INSERT INTO boletos_estado (numero, estado, created_at, updated_at)
+          SELECT gs::int, 'disponible', NOW(), NOW()
+          FROM generate_series(?::int, ?::int) AS gs
+          ON CONFLICT (numero) DO NOTHING
+          RETURNING numero
+        )
+        SELECT COUNT(*)::int AS total FROM inserted
+      `, [rangoNormalizado.inicio, rangoNormalizado.fin]);
+
+      await this.sincronizarSecuenciaId('boletos_estado', trx);
+
+      return {
+        ...preview,
+        insertados: this._enteroDesdeFila(insertResult?.rows?.[0]?.total)
+      };
+    });
+  }
+
+  static async borrarRangoBoletos(rangoNormalizado) {
+    return this._conLockInventario(async (trx) => {
+      const preview = await this.previsualizarRangoBoletos(rangoNormalizado, trx);
+
+      if (preview.boletosBorrables <= 0) {
+        return {
+          ...preview,
+          eliminados: 0,
+          oportunidadesEliminadas: 0
+        };
+      }
+
+      const eliminados = await trx('boletos_estado')
+        .whereBetween('numero', [rangoNormalizado.inicio, rangoNormalizado.fin])
+        .where('estado', 'disponible')
+        .whereNull('numero_orden')
+        .whereNotExists(function() {
+          this.select(trx.raw('1'))
+            .from('orden_oportunidades as oo')
+            .whereRaw('oo.numero_boleto = boletos_estado.numero')
+            .where(function() {
+              this.whereNot('oo.estado', 'disponible').orWhereNotNull('oo.numero_orden');
+            });
+        })
+        .del();
+
+      return {
+        ...preview,
+        eliminados: Number(eliminados) || 0,
+        oportunidadesEliminadas: preview.oportunidadesEnBoletosBorrables
+      };
+    });
+  }
+
   static _barajarNumeros(numeros) {
     const copia = Array.isArray(numeros) ? [...numeros] : [];
     for (let i = copia.length - 1; i > 0; i -= 1) {

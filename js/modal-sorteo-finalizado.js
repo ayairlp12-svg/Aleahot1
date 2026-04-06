@@ -60,7 +60,7 @@ class ModalSorteoFinalizado {
                 return;
             }
 
-            const estado = sorteoActivo.estado || config?.rifa?.estado || 'activo';
+            const estado = config?.rifa?.estado || sorteoActivo.estado || 'activo';
             const ahora = Date.now();
             const fechaCierre = new Date(sorteoActivo.fechaCierre).getTime();
             const tiempoRestante = fechaCierre - ahora;
@@ -138,10 +138,10 @@ class ModalSorteoFinalizado {
             this.log('Creando modal...', 'modal');
 
             const config = window.rifaplusConfig;
-            const sorteo = config.sorteoActivo;
+            const { snapshot, configModal, sorteoModal } = this.resolverContextoModal(config);
 
             // Obtener ganadores inmediatamente (consulta al servidor y fallback local)
-            const ganadoresReales = await this.obtenerGanadoresReales();
+            const ganadoresReales = await this.obtenerGanadoresReales(snapshot);
 
             const tieneGanadores = ganadoresReales && Object.keys(ganadoresReales).some(tipo =>
                 ganadoresReales[tipo] && ganadoresReales[tipo].length > 0
@@ -154,7 +154,8 @@ class ModalSorteoFinalizado {
             const overlay = document.createElement('div');
             overlay.id = 'modalSorteoFinalizadoOverlay';
             overlay.className = 'modal-sorteo-overlay';
-            overlay.innerHTML = this.generarHTMLModal(sorteo, config, ganadoresReales);
+            overlay.innerHTML = this.generarHTMLModal(sorteoModal, configModal, ganadoresReales);
+            this.aplicarTemaSnapshotAlOverlay(overlay, snapshot);
 
             // Agregar al DOM
             document.body.appendChild(overlay);
@@ -181,6 +182,73 @@ class ModalSorteoFinalizado {
             this.log(`❌ Error en mostrarModal: ${error.message}`, 'error');
             console.error(error);
         }
+    }
+
+    obtenerSnapshotFinalizado(config) {
+        const estado = config?.rifa?.estado || config?.sorteoActivo?.estado || 'activo';
+        const snapshot = config?.rifa?.modalFinalizadoSnapshot;
+        if (estado !== 'finalizado') return null;
+        return snapshot && typeof snapshot === 'object' ? snapshot : null;
+    }
+
+    resolverContextoModal(config) {
+        const snapshot = this.obtenerSnapshotFinalizado(config);
+        if (!snapshot) {
+            return {
+                snapshot: null,
+                configModal: config,
+                sorteoModal: config?.sorteoActivo
+            };
+        }
+
+        const configModal = {
+            ...config,
+            cliente: {
+                ...(config?.cliente || {}),
+                ...(snapshot?.cliente || {})
+            },
+            rifa: {
+                ...(config?.rifa || {}),
+                ...(snapshot?.rifa || {}),
+                sistemaPremios: snapshot?.rifa?.sistemaPremios || config?.rifa?.sistemaPremios || {}
+            }
+        };
+
+        const sorteoModal = {
+            ...(config?.sorteoActivo || {}),
+            ...(snapshot?.sorteo || {}),
+            ganadores: snapshot?.ganadores || (config?.sorteoActivo?.ganadores || {})
+        };
+
+        return {
+            snapshot,
+            configModal,
+            sorteoModal
+        };
+    }
+
+    aplicarTemaSnapshotAlOverlay(overlay, snapshot) {
+        if (!overlay || !snapshot?.tema) return;
+
+        const tema = snapshot.tema || {};
+        const colores = tema.colores || {};
+
+        const asignaciones = {
+            '--modal-primary': colores.primary || colores.colorPrimario || tema.colorPrimario || '',
+            '--modal-primary-dark': colores.primaryDark || tema.colorPrimarioOscuro || '',
+            '--modal-secondary': colores.secondary || colores.colorSecundario || tema.colorSecundario || '',
+            '--modal-secondary-dark': colores.secondaryDark || '',
+            '--modal-surface': colores.surface || colores.colorSuperficie || '',
+            '--modal-surface-accent': colores.surfaceAccent || '',
+            '--modal-text': colores.textDark || colores.colorTexto || '',
+            '--modal-text-muted': colores.textMuted || colores.colorTextoSecundario || ''
+        };
+
+        Object.entries(asignaciones).forEach(([variable, valor]) => {
+            if (typeof valor === 'string' && valor.trim()) {
+                overlay.style.setProperty(variable, valor.trim());
+            }
+        });
     }
 
     /**
@@ -514,7 +582,7 @@ class ModalSorteoFinalizado {
      * Obtener ganadores reales desde GanadoresManager o localStorage
      * Retorna objeto con claves: principal, presorte, ruletazo
      */
-    async obtenerGanadoresReales() {
+    async obtenerGanadoresReales(snapshot = null) {
         try {
             this.log('🔍 Intentando obtener ganadores...', 'info');
             
@@ -562,6 +630,15 @@ class ModalSorteoFinalizado {
                 }
             } catch (e) {
                 this.log('⚠️ Error al consultar /api/ganadores: ' + (e && e.message), 'warning');
+            }
+
+            if (snapshot?.ganadores) {
+                this.log('ℹ️ Usando snapshot persistido de ganadores', 'info');
+                return {
+                    sorteo: snapshot.ganadores.sorteo || [],
+                    presorteo: snapshot.ganadores.presorteo || [],
+                    ruletazos: snapshot.ganadores.ruletazos || []
+                };
             }
 
             this.log('⚠️ Usando GanadoresManager/localStorage como fallback', 'warning');

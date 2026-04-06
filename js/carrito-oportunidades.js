@@ -88,8 +88,10 @@ function _actualizarDOMOportunidad(numero) {
     }
     
     try {
-        // Formatear números: "000001, 000023, 000456"
-        const oppStr = opps.map(n => String(n).padStart(6, '0')).join(', ');
+        const formatearNumero = typeof window.rifaplusConfig?.formatearNumeroBoleto === 'function'
+            ? window.rifaplusConfig.formatearNumeroBoleto.bind(window.rifaplusConfig)
+            : (n => String(n));
+        const oppStr = opps.map(formatearNumero).join(', ');
         
         // Actualizar HTML
         container.innerHTML = `<div class="carrito-item-numero carrito-item-numero--full"><span class="carrito-item-oportunidades-text"><i class="fas fa-check-circle carrito-item-oportunidades-check"></i><strong>Oportunidades:</strong> ${oppStr}</span></div>`;

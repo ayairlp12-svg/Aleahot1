@@ -22,6 +22,7 @@
         heartbeat: null,
         vibrate: null
     };
+    let missingButtonLogged = false;
 
     function reduceMotionActiva() {
         return typeof window.matchMedia === 'function'
@@ -107,9 +108,14 @@
     function startAnimations() {
         const button = document.querySelector(CONFIG.SELECTOR);
         if (!button) {
-            console.warn(`⚠️  [Animator] Botón ${CONFIG.SELECTOR} no encontrado`);
+            if (!missingButtonLogged) {
+                console.warn(`⚠️  [Animator] Botón ${CONFIG.SELECTOR} no encontrado`);
+                missingButtonLogged = true;
+            }
             return;
         }
+
+        missingButtonLogged = false;
 
         if (!debeAnimar()) {
             removeAnimationClasses(button);

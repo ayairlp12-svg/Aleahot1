@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="rifaplus-api-base" content="https://demo1m-production.up.railway.app">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' http://127.0.0.1:* http://localhost:*; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://fonts.googleapis.com https://cdn.jsdelivr.net https://demo1m-production.up.railway.app; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; connect-src 'self' http://127.0.0.1:* http://localhost:* https: https://demo1m-production.up.railway.app; img-src 'self' data: https:;">
+    <meta name="rifaplus-api-base" content="">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' http://127.0.0.1:* http://localhost:*; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://fonts.googleapis.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; connect-src 'self' http://127.0.0.1:* http://localhost:* https: http://localhost:5001; img-src 'self' data: https:;">
     <title>Configuración - Panel Admin</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%230b2235'/%3E%3Ctext x='32' y='41' font-size='28' text-anchor='middle' fill='%23ffffff' font-family='Arial,sans-serif'%3ES%3C/text%3E%3C/svg%3E" sizes="32x32">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -618,15 +618,15 @@
         }
 
         .theme-preview-panel {
-            --theme-preview-primary: #1d4ed8;
-            --theme-preview-primary-dark: #1e40af;
-            --theme-preview-primary-light: #dbeafe;
-            --theme-preview-secondary: #0f172a;
-            --theme-preview-bg-light: #f8fafc;
+            --theme-preview-primary: #b25379;
+            --theme-preview-primary-dark: #7c3b58;
+            --theme-preview-primary-light: #e9c4d2;
+            --theme-preview-secondary: #6d28d9;
+            --theme-preview-bg-light: #fdf7fa;
             --theme-preview-bg-white: #ffffff;
-            --theme-preview-text-dark: #0f172a;
-            --theme-preview-text-light: #64748b;
-            --theme-preview-border: #dbe2ea;
+            --theme-preview-text-dark: #392733;
+            --theme-preview-text-light: #786470;
+            --theme-preview-border: #ead8e2;
             display: grid;
             gap: 0.9rem;
             background: linear-gradient(180deg, #ffffff 0%, #f9fbff 100%);
@@ -2532,6 +2532,140 @@
                             <i class="fas fa-save"></i> Guardar Boletaje y Rangos
                         </button>
                     </div>
+
+                    <div style="margin-top: var(--spacing-xl); padding: 1rem 1.1rem; border: 1px solid #dbe7f3; border-radius: 16px; background: linear-gradient(180deg, #f8fbff 0%, #eef6ff 100%);">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem;">
+                            <div style="min-width: 240px; flex: 1;">
+                                <div class="section-subheader" style="margin-bottom: 0.35rem;">
+                                    <i class="fas fa-database"></i> Inventario de Boletos en BD
+                                </div>
+                                <div class="form-helper" style="margin: 0;">
+                                    Usa este módulo para poblar o limpiar rangos de <code>boletos_estado</code> de forma segura. Nunca borra boletos apartados, vendidos ni boletos con oportunidades comprometidas.
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-secondary" id="btn-recargar-inventario-boletos">
+                                <i class="fas fa-rotate-right"></i> Recargar resumen
+                            </button>
+                        </div>
+
+                        <div id="inventario-boletos-resumen" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.75rem; margin-bottom: 1rem;">
+                            <div style="padding: 0.9rem; border-radius: 12px; background: #fff; border: 1px solid #e5e7eb;">
+                                <div style="font-size: 0.78rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.04em;">Configurado</div>
+                                <div id="inventario-total-configurado" style="font-size: 1.2rem; font-weight: 700; color: #0f172a;">0</div>
+                            </div>
+                            <div style="padding: 0.9rem; border-radius: 12px; background: #fff; border: 1px solid #e5e7eb;">
+                                <div style="font-size: 0.78rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.04em;">Cargados en BD</div>
+                                <div id="inventario-total-bd" style="font-size: 1.2rem; font-weight: 700; color: #0f172a;">0</div>
+                            </div>
+                            <div style="padding: 0.9rem; border-radius: 12px; background: #fff; border: 1px solid #e5e7eb;">
+                                <div style="font-size: 0.78rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.04em;">Faltantes</div>
+                                <div id="inventario-faltantes-bd" style="font-size: 1.2rem; font-weight: 700; color: #b45309;">0</div>
+                            </div>
+                            <div style="padding: 0.9rem; border-radius: 12px; background: #fff; border: 1px solid #e5e7eb;">
+                                <div style="font-size: 0.78rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.04em;">Cobertura</div>
+                                <div id="inventario-cobertura-bd" style="font-size: 1.2rem; font-weight: 700; color: #0369a1;">0%</div>
+                            </div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.9rem; align-items: end;">
+                            <div>
+                                <label class="form-label">Inicio del rango</label>
+                                <input type="number" class="form-input" id="inventario-boletos-inicio" min="0" step="1" placeholder="Ej: 0">
+                            </div>
+                            <div>
+                                <label class="form-label">Fin del rango</label>
+                                <input type="number" class="form-input" id="inventario-boletos-fin" min="0" step="1" placeholder="Ej: 19999">
+                            </div>
+                            <div>
+                                <label class="form-label">Cantidad calculada</label>
+                                <input type="text" class="form-input" id="inventario-boletos-cantidad" value="0" readonly>
+                            </div>
+                        </div>
+
+                        <div class="form-helper" style="margin-top: 0.65rem;">
+                            El rango siempre debe quedar dentro del universo configurado en “Total de boletos”. Al borrar, solo se eliminarán boletos disponibles y sin uso; si tienen oportunidades disponibles ligadas, también se eliminarán por cascada.
+                        </div>
+
+                        <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1rem;">
+                            <button type="button" class="btn btn-secondary" id="btn-preview-inventario-boletos">
+                                <i class="fas fa-search"></i> Preview del rango
+                            </button>
+                            <button type="button" class="btn btn-primary" id="btn-poblar-rango-boletos">
+                                <i class="fas fa-layer-group"></i> Poblar rango faltante
+                            </button>
+                            <button type="button" class="btn btn-secondary" id="btn-borrar-rango-boletos" style="background: #fff1f2; border-color: #fecdd3; color: #be123c;">
+                                <i class="fas fa-trash"></i> Borrar boletos seguros
+                            </button>
+                        </div>
+
+                        <div id="inventario-boletos-preview" style="margin-top: 1rem; padding: 1rem; border-radius: 14px; background: #fff; border: 1px dashed #cbd5e1; color: #475569;">
+                            El preview del rango aparecerá aquí antes de poblar o borrar.
+                        </div>
+                    </div>
+
+                    <div style="margin-top: var(--spacing-xl); padding: 1rem 1.1rem; border: 1px solid #fde68a; border-radius: 16px; background: linear-gradient(180deg, #fffdf5 0%, #fff7e6 100%);">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem;">
+                            <div style="min-width: 240px; flex: 1;">
+                                <div class="section-subheader" style="margin-bottom: 0.35rem;">
+                                    <i class="fas fa-rotate-left"></i> Preparar Nueva Rifa en Esta BD
+                                </div>
+                                <div class="form-helper" style="margin: 0;">
+                                    Este módulo limpia solo los datos operativos de la rifa anterior para reutilizar la misma BD. Se bloquea automáticamente si aún hay órdenes pendientes o apartados activos.
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-secondary" id="btn-recargar-nueva-rifa-preview">
+                                <i class="fas fa-rotate-right"></i> Revisar estado
+                            </button>
+                        </div>
+
+                        <div id="nueva-rifa-resumen" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.75rem; margin-bottom: 1rem;">
+                            <div style="padding: 0.9rem; border-radius: 12px; background: #fff; border: 1px solid #e5e7eb;">
+                                <div style="font-size: 0.78rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.04em;">Estado</div>
+                                <div id="nueva-rifa-estado" style="font-size: 1.05rem; font-weight: 700; color: #0f172a;">Sin revisar</div>
+                            </div>
+                            <div style="padding: 0.9rem; border-radius: 12px; background: #fff; border: 1px solid #e5e7eb;">
+                                <div style="font-size: 0.78rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.04em;">Órdenes en BD</div>
+                                <div id="nueva-rifa-ordenes" style="font-size: 1.05rem; font-weight: 700; color: #0f172a;">0</div>
+                            </div>
+                            <div style="padding: 0.9rem; border-radius: 12px; background: #fff; border: 1px solid #e5e7eb;">
+                                <div style="font-size: 0.78rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.04em;">Boletos en BD</div>
+                                <div id="nueva-rifa-boletos" style="font-size: 1.05rem; font-weight: 700; color: #0f172a;">0</div>
+                            </div>
+                            <div style="padding: 0.9rem; border-radius: 12px; background: #fff; border: 1px solid #e5e7eb;">
+                                <div style="font-size: 0.78rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.04em;">Oportunidades en BD</div>
+                                <div id="nueva-rifa-oportunidades" style="font-size: 1.05rem; font-weight: 700; color: #0f172a;">0</div>
+                            </div>
+                            <div style="padding: 0.9rem; border-radius: 12px; background: #fff; border: 1px solid #e5e7eb;">
+                                <div style="font-size: 0.78rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.04em;">Ganadores</div>
+                                <div id="nueva-rifa-ganadores" style="font-size: 1.05rem; font-weight: 700; color: #0f172a;">0</div>
+                            </div>
+                            <div style="padding: 0.9rem; border-radius: 12px; background: #fff; border: 1px solid #e5e7eb;">
+                                <div style="font-size: 0.78rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.04em;">Contadores de orden</div>
+                                <div id="nueva-rifa-contadores" style="font-size: 1.05rem; font-weight: 700; color: #0f172a;">0</div>
+                            </div>
+                        </div>
+
+                        <div id="nueva-rifa-checklist" style="display: grid; gap: 0.6rem; margin-bottom: 1rem;">
+                            <div style="padding: 0.85rem; border-radius: 12px; background: #fff; border: 1px dashed #cbd5e1; color: #64748b;">
+                                El checklist de seguridad aparecerá aquí.
+                            </div>
+                        </div>
+
+                        <div id="nueva-rifa-preview" style="padding: 1rem; border-radius: 14px; background: #fff; border: 1px dashed #cbd5e1; color: #475569; margin-bottom: 1rem;">
+                            Revisa primero el estado operativo actual. Si todo está listo, aquí verás exactamente qué se limpiará y cuál es la palabra de confirmación requerida.
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: minmax(220px, 320px) auto; gap: 0.75rem; align-items: end;">
+                            <div>
+                                <label class="form-label" for="nueva-rifa-confirmacion">Confirmación obligatoria</label>
+                                <input type="text" class="form-input" id="nueva-rifa-confirmacion" placeholder="Escribe la palabra requerida">
+                                <div class="form-helper">Para ejecutar el reset escribe exactamente la palabra indicada en el preview.</div>
+                            </div>
+                            <button type="button" class="btn btn-secondary" id="btn-ejecutar-nueva-rifa" style="background: #fff1f2; border-color: #fecdd3; color: #be123c;">
+                                <i class="fas fa-broom-ball"></i> Preparar nueva rifa
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- PREMIOS Y GANADORES POR MODALIDAD -->
@@ -3230,7 +3364,86 @@
                                 Estado actual: <strong id="oportunidades-status-text">Habilitadas</strong>
                             </p>
                             <p style="margin: 0.5rem 0 0 0; color: var(--text-light); font-size: 0.85rem;" id="oportunidades-status-help">Cada boleto seguirá asignando oportunidades en compras nuevas.</p>
-                            <p style="margin: 0.5rem 0 0 0; color: var(--text-light); font-size: 0.85rem;">El multiplicador actual es de <strong id="oportunidades-multiplicador-text">3 oportunidades por boleto</strong>.</p>
+                            <p style="margin: 0.5rem 0 0 0; color: var(--text-light); font-size: 0.85rem;">El multiplicador actual es de <strong id="oportunidades-multiplicador-text">cargando...</strong>.</p>
+                        </div>
+
+                        <div style="margin-bottom: var(--spacing-lg); padding: var(--spacing-md); background: #FFF; border-radius: var(--rounded-md); border: 1px solid var(--divider);">
+                            <h5 style="margin: 0 0 var(--spacing-sm) 0; font-weight: 600; color: var(--text-dark);">⚙️ Oportunidades por boleto</h5>
+                            <p style="margin: 0 0 var(--spacing-md) 0; color: var(--text-light); font-size: 0.85rem;">
+                                Define cuántas oportunidades se asignan automáticamente por cada boleto comprado.
+                            </p>
+                            <div class="form-group-row" style="align-items: end;">
+                                <div class="form-group-single">
+                                    <label class="form-label" for="oportunidades-multiplicador-input">Multiplicador</label>
+                                    <input type="number" class="form-input" id="oportunidades-multiplicador-input" min="1" max="100" step="1" placeholder="Ej: 4">
+                                    <div class="form-helper">Usa un número entero mayor a 0. Ejemplo: 4 = 4 oportunidades por boleto.</div>
+                                </div>
+                                <div class="form-group-single" style="max-width: 220px;">
+                                    <button type="button" class="btn btn-primary" id="btn-guardar-multiplicador-opp" style="width: 100%;">
+                                        <i class="fas fa-save"></i> Guardar multiplicador
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom: var(--spacing-lg); padding: var(--spacing-md); background: linear-gradient(180deg, #fcfdff 0%, #f4f8ff 100%); border-radius: var(--rounded-md); border: 1px solid #dbe7f3;">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; margin-bottom: var(--spacing-md);">
+                                <div style="min-width: 240px; flex: 1;">
+                                    <h5 style="margin: 0 0 0.35rem 0; font-weight: 600; color: var(--text-dark);">🧠 Inventario de Oportunidades en BD</h5>
+                                    <p style="margin: 0; color: var(--text-light); font-size: 0.85rem;">
+                                        Este módulo solo permite poblar oportunidades cuando la secuencia completa está lista: oportunidades habilitadas, multiplicador válido, rangos consistentes y boletos base ya cargados en la BD.
+                                    </p>
+                                </div>
+                                <button type="button" class="btn btn-secondary" id="btn-recargar-inventario-oportunidades">
+                                    <i class="fas fa-rotate-right"></i> Recargar resumen
+                                </button>
+                            </div>
+
+                            <div id="inventario-oportunidades-resumen" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.75rem; margin-bottom: 1rem;">
+                                <div style="padding: 0.9rem; border-radius: 12px; background: #fff; border: 1px solid #e5e7eb;">
+                                    <div style="font-size: 0.78rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.04em;">Estado</div>
+                                    <div id="opp-inv-estado" style="font-size: 1.05rem; font-weight: 700; color: #0f172a;">Sin revisar</div>
+                                </div>
+                                <div style="padding: 0.9rem; border-radius: 12px; background: #fff; border: 1px solid #e5e7eb;">
+                                    <div style="font-size: 0.78rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.04em;">Multiplicador</div>
+                                    <div id="opp-inv-multiplicador" style="font-size: 1.05rem; font-weight: 700; color: #0f172a;">0</div>
+                                </div>
+                                <div style="padding: 0.9rem; border-radius: 12px; background: #fff; border: 1px solid #e5e7eb;">
+                                    <div style="font-size: 0.78rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.04em;">Boletos base listos</div>
+                                    <div id="opp-inv-boletos-base" style="font-size: 1.05rem; font-weight: 700; color: #0f172a;">0 / 0</div>
+                                </div>
+                                <div style="padding: 0.9rem; border-radius: 12px; background: #fff; border: 1px solid #e5e7eb;">
+                                    <div style="font-size: 0.78rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.04em;">Esperadas</div>
+                                    <div id="opp-inv-esperadas" style="font-size: 1.05rem; font-weight: 700; color: #0f172a;">0</div>
+                                </div>
+                                <div style="padding: 0.9rem; border-radius: 12px; background: #fff; border: 1px solid #e5e7eb;">
+                                    <div style="font-size: 0.78rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.04em;">Existentes en BD</div>
+                                    <div id="opp-inv-existentes" style="font-size: 1.05rem; font-weight: 700; color: #0f172a;">0</div>
+                                </div>
+                                <div style="padding: 0.9rem; border-radius: 12px; background: #fff; border: 1px solid #e5e7eb;">
+                                    <div style="font-size: 0.78rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.04em;">Rango oculto</div>
+                                    <div id="opp-inv-rango-oculto" style="font-size: 1.05rem; font-weight: 700; color: #0f172a;">-</div>
+                                </div>
+                            </div>
+
+                            <div id="inventario-oportunidades-prerequisitos" style="display: grid; gap: 0.6rem; margin-bottom: 1rem;">
+                                <div style="padding: 0.85rem; border-radius: 12px; background: #fff; border: 1px dashed #cbd5e1; color: #64748b;">
+                                    El checklist de prerequisitos aparecerá aquí.
+                                </div>
+                            </div>
+
+                            <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1rem;">
+                                <button type="button" class="btn btn-secondary" id="btn-preview-inventario-oportunidades">
+                                    <i class="fas fa-search"></i> Preview de oportunidades
+                                </button>
+                                <button type="button" class="btn btn-primary" id="btn-poblar-oportunidades-admin">
+                                    <i class="fas fa-wand-magic-sparkles"></i> Poblar oportunidades
+                                </button>
+                            </div>
+
+                            <div id="inventario-oportunidades-preview" style="padding: 1rem; border-radius: 14px; background: #fff; border: 1px dashed #cbd5e1; color: #475569;">
+                                El resumen operativo de oportunidades aparecerá aquí antes de poblar.
+                            </div>
                         </div>
 
                         <div id="oportunidades-config-contenido">
@@ -3468,6 +3681,17 @@
                         </label>
                         <label class="publish-item">
                             <div class="publish-item-copy">
+                                <div class="publish-item-title">Confianza en la plataforma</div>
+                                <div class="publish-item-text">Muestra u oculta el bloque “Por qué confiar en nosotros” del inicio.</div>
+                            </div>
+                            <label class="toggle-label">
+                                <input type="checkbox" id="publicacion-confianza" class="toggle-input">
+                                <span class="toggle-bg"></span>
+                                <span class="toggle-circle"></span>
+                            </label>
+                        </label>
+                        <label class="publish-item">
+                            <div class="publish-item-copy">
                                 <div class="publish-item-title">Testimonios</div>
                                 <div class="publish-item-text">Activa o reserva el espacio para prueba social del sorteo.</div>
                             </div>
@@ -3522,13 +3746,13 @@
                     <div class="theme-presets" id="theme-presets-grid">
                         <button type="button" class="theme-preset" data-theme-preset="clasico">
                             <div class="theme-swatch-row">
-                                <div class="theme-swatch" style="background:#1d4ed8;"></div>
-                                <div class="theme-swatch" style="background:#0f172a;"></div>
-                                <div class="theme-swatch" style="background:#f8fafc;"></div>
+                                <div class="theme-swatch" style="background:#b25379;"></div>
+                                <div class="theme-swatch" style="background:#6d28d9;"></div>
+                                <div class="theme-swatch" style="background:#fdf7fa;"></div>
                                 <div class="theme-swatch" style="background:#ffffff;"></div>
                             </div>
-                            <div class="theme-preset-name">Clásico Ejecutivo</div>
-                            <div class="theme-preset-desc">Azules sólidos y contraste sobrio para una presencia confiable.</div>
+                            <div class="theme-preset-name">Rosa Editorial</div>
+                            <div class="theme-preset-desc">Rosa elegante, plata suave y fondos luminosos para una presencia femenina y cuidada.</div>
                         </button>
                         <button type="button" class="theme-preset" data-theme-preset="dorado">
                             <div class="theme-swatch-row">
@@ -3582,8 +3806,8 @@
                                         <div class="theme-color-role">Botones y llamados a la acción</div>
                                     </div>
                                     <div class="theme-color-input-row">
-                                        <input type="color" class="theme-color-picker" id="tema-color-primario-picker" data-theme-color-picker="colorPrimario" value="#1d4ed8">
-                                        <input type="text" class="form-input" id="tema-color-primario" data-theme-color-text="colorPrimario" placeholder="#1d4ed8">
+                                        <input type="color" class="theme-color-picker" id="tema-color-primario-picker" data-theme-color-picker="colorPrimario" value="#b25379">
+                                        <input type="text" class="form-input" id="tema-color-primario" data-theme-color-text="colorPrimario" placeholder="#b25379">
                                     </div>
                                     <div class="theme-color-helper">Se usa en botones principales, enlaces destacados y acentos de marca.</div>
                                 </div>
@@ -3593,8 +3817,8 @@
                                         <div class="theme-color-role">Titulares, etiquetas y contraste</div>
                                     </div>
                                     <div class="theme-color-input-row">
-                                        <input type="color" class="theme-color-picker" id="tema-color-acento-picker" data-theme-color-picker="colorAcento" value="#0f172a">
-                                        <input type="text" class="form-input" id="tema-color-acento" data-theme-color-text="colorAcento" placeholder="#0f172a">
+                                        <input type="color" class="theme-color-picker" id="tema-color-acento-picker" data-theme-color-picker="colorAcento" value="#6d28d9">
+                                        <input type="text" class="form-input" id="tema-color-acento" data-theme-color-text="colorAcento" placeholder="#6d28d9">
                                     </div>
                                     <div class="theme-color-helper">Ideal para dar seriedad al diseño sin competir con el color principal.</div>
                                 </div>
@@ -3950,12 +4174,12 @@
         const timeoutGuardado = 30000; // 30 segundos máximo por petición
         const TEMA_PRESETS = {
             clasico: {
-                nombre: 'Clásico Ejecutivo',
-                colorPrimario: '#1d4ed8',
-                colorAcento: '#0f172a',
-                colorFondo: '#f8fafc',
+                nombre: 'Rosa Editorial',
+                colorPrimario: '#b25379',
+                colorAcento: '#6d28d9',
+                colorFondo: '#fdf7fa',
                 colorSuperficie: '#ffffff',
-                colorTexto: '#0f172a'
+                colorTexto: '#392733'
             },
             dorado: {
                 nombre: 'Dorado Premium',
@@ -4064,6 +4288,7 @@
             publicacion: {
                 bonos: true,
                 promociones: true,
+                confianza: true,
                 testimonios: false,
                 ruletazo: true,
                 presorteo: true,
@@ -4311,7 +4536,7 @@
             renderizarPreviewTema();
         }
 
-        function normalizarHexColorSeguro(valor, fallback = '#1d4ed8') {
+        function normalizarHexColorSeguro(valor, fallback = '#b25379') {
             const limpio = String(valor || '').trim();
             const match = limpio.match(/^#?([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/);
             if (!match) return fallback;
@@ -4432,7 +4657,7 @@
 
         function sincronizarPickerTema(campo, valor) {
             const picker = document.querySelector(`[data-theme-color-picker="${campo}"]`);
-            if (picker) picker.value = normalizarHexColorSeguro(valor, picker.value || '#1d4ed8');
+            if (picker) picker.value = normalizarHexColorSeguro(valor, picker.value || '#b25379');
         }
 
         function sincronizarPickersTemaDesdeTexto() {
@@ -4625,6 +4850,7 @@
             document.getElementById('wa-template-ganador').value = mensajes.ganador || '';
             document.getElementById('publicacion-bonos').checked = publicacion.bonos !== false;
             document.getElementById('publicacion-promociones').checked = publicacion.promociones !== false;
+            document.getElementById('publicacion-confianza').checked = publicacion.confianza !== false;
             document.getElementById('publicacion-testimonios').checked = publicacion.testimonios === true;
             document.getElementById('publicacion-ruletazo').checked = publicacion.ruletazo !== false;
             document.getElementById('publicacion-presorteo').checked = publicacion.presorteo !== false;
@@ -4707,6 +4933,7 @@
                     publicacion: {
                         bonos: data.publicacion?.bonos !== false,
                         promociones: data.publicacion?.promociones !== false,
+                        confianza: data.publicacion?.confianza !== false,
                         testimonios: data.publicacion?.testimonios === true,
                         ruletazo: data.publicacion?.ruletazo !== false,
                         presorteo: data.publicacion?.presorteo !== false,
@@ -4780,6 +5007,7 @@
                 publicacion: {
                     bonos: document.getElementById('publicacion-bonos').checked,
                     promociones: document.getElementById('publicacion-promociones').checked,
+                    confianza: document.getElementById('publicacion-confianza').checked,
                     testimonios: document.getElementById('publicacion-testimonios').checked,
                     ruletazo: document.getElementById('publicacion-ruletazo').checked,
                     presorteo: document.getElementById('publicacion-presorteo').checked,
@@ -7202,7 +7430,7 @@
                     renderizarPreviewTema();
                 });
                 input.addEventListener('blur', () => {
-                    input.value = normalizarHexColorSeguro(input.value, input.value || '#1d4ed8');
+                    input.value = normalizarHexColorSeguro(input.value, input.value || '#b25379');
                     sincronizarPickerTema(input.dataset.themeColorText, input.value);
                     renderizarPreviewTema();
                 });
@@ -7343,10 +7571,12 @@
                     if (data.tipo === 'oportunidades' || data.tipo === 'sincronizacion_backend') {
                         cargarConfiguracionOportunidades();
                         cargarEjemplosOportunidades();
+                        cargarResumenInventarioOportunidades().catch(() => {});
                     }
                     if (data.tipo === 'sincronizacion_backend') {
                         cargarConfiguracionBoletajeYRangos();
                         guardarValoresOriginaleSorteo();
+                        cargarResumenInventarioBoletos().catch(() => {});
                     }
                     renderizarAlertasConfiguracion();
                 });
@@ -7403,7 +7633,28 @@
             
             // Listeners para oportunidades
             document.getElementById('oportunidades-enabled')?.addEventListener('change', toggleOportunidades);
+            document.getElementById('btn-guardar-multiplicador-opp')?.addEventListener('click', guardarMultiplicadorOportunidades);
+            document.getElementById('oportunidades-multiplicador-input')?.addEventListener('input', actualizarPreviewMultiplicadorOportunidades);
+            document.getElementById('oportunidades-multiplicador-input')?.addEventListener('keydown', function(event) {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    guardarMultiplicadorOportunidades();
+                }
+            });
             document.getElementById('btn-agregar-ejemplo-opp')?.addEventListener('click', agregarEjemploOportunidad);
+
+            document.getElementById('btn-recargar-inventario-boletos')?.addEventListener('click', () => cargarResumenInventarioBoletos(true));
+            document.getElementById('btn-preview-inventario-boletos')?.addEventListener('click', previewInventarioBoletos);
+            document.getElementById('btn-poblar-rango-boletos')?.addEventListener('click', poblarRangoInventarioBoletos);
+            document.getElementById('btn-borrar-rango-boletos')?.addEventListener('click', borrarRangoInventarioBoletos);
+            document.getElementById('inventario-boletos-inicio')?.addEventListener('input', actualizarCantidadRangoInventarioBoletos);
+            document.getElementById('inventario-boletos-fin')?.addEventListener('input', actualizarCantidadRangoInventarioBoletos);
+            document.getElementById('btn-recargar-inventario-oportunidades')?.addEventListener('click', () => cargarResumenInventarioOportunidades(true));
+            document.getElementById('btn-preview-inventario-oportunidades')?.addEventListener('click', previewInventarioOportunidades);
+            document.getElementById('btn-poblar-oportunidades-admin')?.addEventListener('click', poblarInventarioOportunidades);
+            document.getElementById('btn-recargar-nueva-rifa-preview')?.addEventListener('click', () => cargarPreviewNuevaRifa(true));
+            document.getElementById('btn-ejecutar-nueva-rifa')?.addEventListener('click', ejecutarNuevaRifa);
+            document.getElementById('nueva-rifa-confirmacion')?.addEventListener('input', actualizarEstadoBotonNuevaRifa);
             
             // Botón principal para guardar todas las promociones
             document.getElementById('btn-guardar-todas-promociones')?.addEventListener('click', guardarTodasLasPromociones);
@@ -7423,6 +7674,15 @@
             // Guardar valores originales del sorteo (para detectar cambios)
             setTimeout(() => {
                 guardarValoresOriginaleSorteo();
+                cargarResumenInventarioBoletos().catch((error) => {
+                    console.warn('⚠️ No se pudo cargar el resumen inicial del inventario:', error.message);
+                });
+                cargarResumenInventarioOportunidades().catch((error) => {
+                    console.warn('⚠️ No se pudo cargar el resumen inicial de oportunidades:', error.message);
+                });
+                cargarPreviewNuevaRifa().catch((error) => {
+                    console.warn('⚠️ No se pudo cargar el preview inicial de nueva rifa:', error.message);
+                });
                 // Restaurar modal si estaba guardado en sessionStorage (recarga automática)
                 restaurarModalSorteoSiNecesario();
                 console.log('✅ Estado del sorteo inicializado');
@@ -7581,6 +7841,646 @@
             if (visibleFin) visibleFin.value = Number.isInteger(Number(rangoVisible?.fin)) ? Number(rangoVisible.fin) : '';
             if (ocultoInicio) ocultoInicio.value = Number.isInteger(Number(rangoOculto?.inicio)) ? Number(rangoOculto.inicio) : '';
             if (ocultoFin) ocultoFin.value = Number.isInteger(Number(rangoOculto?.fin)) ? Number(rangoOculto.fin) : '';
+
+            const inventarioInicio = document.getElementById('inventario-boletos-inicio');
+            const inventarioFin = document.getElementById('inventario-boletos-fin');
+            if (inventarioInicio && inventarioInicio.value === '') inventarioInicio.value = 0;
+            if (inventarioFin && inventarioFin.value === '' && Number.isInteger(totalBoletos) && totalBoletos > 0) {
+                inventarioFin.value = Math.max(0, totalBoletos - 1);
+            }
+            actualizarCantidadRangoInventarioBoletos();
+        }
+
+        let inventarioBoletosEstado = {
+            cargando: false,
+            preview: null,
+            resumen: null
+        };
+
+        function formatearNumeroAdmin(valor) {
+            const numero = Number(valor);
+            if (!Number.isFinite(numero)) return '0';
+            return numero.toLocaleString('es-MX');
+        }
+
+        function actualizarCantidadRangoInventarioBoletos() {
+            const inicio = parseInt(document.getElementById('inventario-boletos-inicio')?.value, 10);
+            const fin = parseInt(document.getElementById('inventario-boletos-fin')?.value, 10);
+            const cantidadInput = document.getElementById('inventario-boletos-cantidad');
+            if (!cantidadInput) return;
+
+            if (Number.isInteger(inicio) && Number.isInteger(fin) && fin >= inicio) {
+                cantidadInput.value = formatearNumeroAdmin((fin - inicio) + 1);
+            } else {
+                cantidadInput.value = '0';
+            }
+        }
+
+        function obtenerPayloadInventarioBoletos() {
+            const inicio = parseInt(document.getElementById('inventario-boletos-inicio')?.value, 10);
+            const fin = parseInt(document.getElementById('inventario-boletos-fin')?.value, 10);
+            const totalBoletos = Number(window.rifaplusConfig?.rifa?.totalBoletos) || 0;
+
+            if (!Number.isInteger(inicio) || !Number.isInteger(fin) || inicio < 0 || fin < inicio) {
+                throw new Error('Debes indicar un rango válido para el inventario de boletos');
+            }
+
+            if (!Number.isInteger(totalBoletos) || totalBoletos < 1) {
+                throw new Error('Primero define un total de boletos válido en la configuración');
+            }
+
+            if (fin >= totalBoletos) {
+                throw new Error(`El rango debe quedar dentro de 0 - ${Math.max(0, totalBoletos - 1)}`);
+            }
+
+            return { inicio, fin };
+        }
+
+        function renderizarResumenInventarioBoletos(data = null) {
+            const resumen = data || inventarioBoletosEstado.resumen;
+            if (!resumen) return;
+
+            const totalConfigurado = Number(resumen.totalBoletosConfigurado) || 0;
+            const totalEnBD = Number(resumen.totalEnBD) || 0;
+            const faltantes = Number(resumen.faltantesConfigurados) || 0;
+            const cobertura = Number(resumen.porcentajeCobertura) || 0;
+
+            document.getElementById('inventario-total-configurado').textContent = formatearNumeroAdmin(totalConfigurado);
+            document.getElementById('inventario-total-bd').textContent = formatearNumeroAdmin(totalEnBD);
+            document.getElementById('inventario-faltantes-bd').textContent = formatearNumeroAdmin(faltantes);
+            document.getElementById('inventario-cobertura-bd').textContent = `${cobertura}%`;
+        }
+
+        function renderizarPreviewInventarioBoletos(preview, modo = 'preview') {
+            inventarioBoletosEstado.preview = preview || null;
+
+            const contenedor = document.getElementById('inventario-boletos-preview');
+            if (!contenedor) return;
+
+            if (!preview) {
+                contenedor.innerHTML = 'El preview del rango aparecerá aquí antes de poblar o borrar.';
+                return;
+            }
+
+            const etiquetaModo = modo === 'poblar'
+                ? 'Resultado de poblado'
+                : modo === 'borrar'
+                    ? 'Resultado de borrado'
+                    : 'Preview del rango';
+
+            const eliminados = Number(preview.eliminados) || 0;
+            const insertados = Number(preview.insertados) || 0;
+
+            contenedor.innerHTML = `
+                <div style="display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 0.9rem;">
+                    <div>
+                        <div style="font-size: 0.8rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.04em;">${etiquetaModo}</div>
+                        <div style="font-size: 1.05rem; font-weight: 700; color: #0f172a;">Rango ${formatearNumeroAdmin(preview.inicio)} - ${formatearNumeroAdmin(preview.fin)}</div>
+                    </div>
+                    <div style="font-size: 0.92rem; color: #475569;">
+                        Solicitados: <strong>${formatearNumeroAdmin(preview.cantidadSolicitada)}</strong>
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 0.75rem;">
+                    <div style="padding: 0.8rem; border-radius: 12px; background: #f8fafc; border: 1px solid #e5e7eb;">
+                        <div style="font-size: 0.78rem; color: #64748b;">Ya existen</div>
+                        <div style="font-size: 1.1rem; font-weight: 700;">${formatearNumeroAdmin(preview.existentes)}</div>
+                    </div>
+                    <div style="padding: 0.8rem; border-radius: 12px; background: #f8fafc; border: 1px solid #e5e7eb;">
+                        <div style="font-size: 0.78rem; color: #64748b;">Faltantes por poblar</div>
+                        <div style="font-size: 1.1rem; font-weight: 700; color: #0369a1;">${formatearNumeroAdmin(preview.faltantes)}</div>
+                    </div>
+                    <div style="padding: 0.8rem; border-radius: 12px; background: #f8fafc; border: 1px solid #e5e7eb;">
+                        <div style="font-size: 0.78rem; color: #64748b;">Borrables seguros</div>
+                        <div style="font-size: 1.1rem; font-weight: 700; color: #15803d;">${formatearNumeroAdmin(preview.boletosBorrables)}</div>
+                    </div>
+                    <div style="padding: 0.8rem; border-radius: 12px; background: #f8fafc; border: 1px solid #e5e7eb;">
+                        <div style="font-size: 0.78rem; color: #64748b;">Bloqueados</div>
+                        <div style="font-size: 1.1rem; font-weight: 700; color: #b45309;">${formatearNumeroAdmin(preview.boletosBloqueadosTotal)}</div>
+                    </div>
+                </div>
+                <div style="margin-top: 0.9rem; font-size: 0.92rem; color: #475569; display: grid; gap: 0.35rem;">
+                    <div>Bloqueados por estado/orden: <strong>${formatearNumeroAdmin(preview.boletosBloqueadosPorEstado)}</strong></div>
+                    <div>Bloqueados por oportunidades comprometidas: <strong>${formatearNumeroAdmin(preview.boletosBloqueadosPorOportunidades)}</strong></div>
+                    <div>Oportunidades ligadas en el rango: <strong>${formatearNumeroAdmin(preview.oportunidadesLigadas)}</strong></div>
+                    <div>Oportunidades que se eliminarían junto con boletos seguros: <strong>${formatearNumeroAdmin(preview.oportunidadesEnBoletosBorrables)}</strong></div>
+                    <div>Oportunidades bloqueadas en el rango: <strong>${formatearNumeroAdmin(preview.oportunidadesBloqueadas)}</strong></div>
+                    ${insertados > 0 ? `<div style="color: #0369a1;">Insertados en la última operación: <strong>${formatearNumeroAdmin(insertados)}</strong></div>` : ''}
+                    ${eliminados > 0 ? `<div style="color: #be123c;">Eliminados en la última operación: <strong>${formatearNumeroAdmin(eliminados)}</strong></div>` : ''}
+                </div>
+            `;
+        }
+
+        function establecerEstadoInventarioBoletos(cargando) {
+            inventarioBoletosEstado.cargando = cargando === true;
+            [
+                'btn-recargar-inventario-boletos',
+                'btn-preview-inventario-boletos',
+                'btn-poblar-rango-boletos',
+                'btn-borrar-rango-boletos'
+            ].forEach((id) => {
+                const boton = document.getElementById(id);
+                if (boton) boton.disabled = inventarioBoletosEstado.cargando;
+            });
+        }
+
+        async function requestInventarioBoletos(endpoint, options = {}) {
+            const token = obtenerToken();
+            if (!token) {
+                throw new Error('No hay sesión activa');
+            }
+
+            const { method = 'GET', body } = options;
+            const config = {
+                method,
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            };
+
+            if (body !== undefined) {
+                config.headers['Content-Type'] = 'application/json';
+                config.body = JSON.stringify(body);
+            }
+
+            const response = await fetch(`${API_BASE}${endpoint}`, config);
+            const payload = await response.json().catch(() => ({}));
+
+            if (!response.ok || payload.success === false) {
+                throw new Error(payload.message || `HTTP ${response.status}`);
+            }
+
+            return payload.data || payload;
+        }
+
+        async function cargarResumenInventarioBoletos(mostrarToast = false) {
+            try {
+                const resumen = await requestInventarioBoletos('/api/admin/boletos/inventario/resumen');
+                inventarioBoletosEstado.resumen = resumen;
+                renderizarResumenInventarioBoletos(resumen);
+                if (mostrarToast) {
+                    mostrarAlerta('✅ Resumen del inventario de boletos actualizado', 'success');
+                }
+                return resumen;
+            } catch (error) {
+                console.error('❌ Error cargando resumen del inventario:', error);
+                if (mostrarToast) {
+                    mostrarAlerta(`❌ ${error.message}`, 'error');
+                }
+                throw error;
+            }
+        }
+
+        async function previewInventarioBoletos() {
+            try {
+                establecerEstadoInventarioBoletos(true);
+                const rango = obtenerPayloadInventarioBoletos();
+                const preview = await requestInventarioBoletos('/api/admin/boletos/inventario/preview', {
+                    method: 'POST',
+                    body: rango
+                });
+                renderizarPreviewInventarioBoletos(preview, 'preview');
+                mostrarAlerta('✅ Preview del rango generado correctamente', 'success');
+                return preview;
+            } catch (error) {
+                console.error('❌ Error generando preview de inventario:', error);
+                mostrarAlerta(`❌ ${error.message}`, 'error');
+                throw error;
+            } finally {
+                establecerEstadoInventarioBoletos(false);
+            }
+        }
+
+        async function poblarRangoInventarioBoletos() {
+            try {
+                establecerEstadoInventarioBoletos(true);
+                const rango = obtenerPayloadInventarioBoletos();
+                const preview = await requestInventarioBoletos('/api/admin/boletos/inventario/preview', {
+                    method: 'POST',
+                    body: rango
+                });
+
+                renderizarPreviewInventarioBoletos(preview, 'preview');
+
+                if ((Number(preview.faltantes) || 0) <= 0) {
+                    mostrarAlerta('ℹ️ Ese rango ya está completamente poblado', 'warning');
+                    return;
+                }
+
+                const confirmar = confirm(
+                    `Se poblarán ${formatearNumeroAdmin(preview.faltantes)} boleto(s) faltante(s) en el rango ${formatearNumeroAdmin(preview.inicio)}-${formatearNumeroAdmin(preview.fin)}.\n\n` +
+                    `Ya existen ${formatearNumeroAdmin(preview.existentes)} boleto(s) y no se tocarán.\n\n¿Deseas continuar?`
+                );
+
+                if (!confirmar) return;
+
+                const resultado = await requestInventarioBoletos('/api/admin/boletos/inventario/poblar', {
+                    method: 'POST',
+                    body: rango
+                });
+
+                renderizarPreviewInventarioBoletos(resultado, 'poblar');
+                await cargarResumenInventarioBoletos();
+                mostrarAlerta(`✅ Se poblaron ${formatearNumeroAdmin(resultado.insertados)} boletos faltantes`, 'success');
+            } catch (error) {
+                console.error('❌ Error poblando rango de boletos:', error);
+                mostrarAlerta(`❌ ${error.message}`, 'error');
+            } finally {
+                establecerEstadoInventarioBoletos(false);
+            }
+        }
+
+        async function borrarRangoInventarioBoletos() {
+            try {
+                establecerEstadoInventarioBoletos(true);
+                const rango = obtenerPayloadInventarioBoletos();
+                const preview = await requestInventarioBoletos('/api/admin/boletos/inventario/preview', {
+                    method: 'POST',
+                    body: rango
+                });
+
+                renderizarPreviewInventarioBoletos(preview, 'preview');
+
+                if ((Number(preview.boletosBorrables) || 0) <= 0) {
+                    mostrarAlerta('ℹ️ No hay boletos seguros para borrar en ese rango', 'warning');
+                    return;
+                }
+
+                const confirmacion = prompt(
+                    `Se intentarán borrar ${formatearNumeroAdmin(preview.boletosBorrables)} boleto(s) seguros del rango ${formatearNumeroAdmin(preview.inicio)}-${formatearNumeroAdmin(preview.fin)}.\n` +
+                    `Se omitirán ${formatearNumeroAdmin(preview.boletosBloqueadosTotal)} boleto(s) bloqueados.\n` +
+                    `También se eliminarían ${formatearNumeroAdmin(preview.oportunidadesEnBoletosBorrables)} oportunidad(es) disponibles ligadas.\n\n` +
+                    `Escribe BORRAR para continuar.`
+                );
+
+                if (confirmacion !== 'BORRAR') {
+                    mostrarAlerta('Operación cancelada. No se borró ningún boleto.', 'warning');
+                    return;
+                }
+
+                const resultado = await requestInventarioBoletos('/api/admin/boletos/inventario/borrar', {
+                    method: 'POST',
+                    body: rango
+                });
+
+                renderizarPreviewInventarioBoletos(resultado, 'borrar');
+                await cargarResumenInventarioBoletos();
+                mostrarAlerta(
+                    `✅ Se eliminaron ${formatearNumeroAdmin(resultado.eliminados)} boleto(s) seguros y ${formatearNumeroAdmin(resultado.oportunidadesEliminadas)} oportunidad(es) ligadas`,
+                    'success'
+                );
+            } catch (error) {
+                console.error('❌ Error borrando rango de boletos:', error);
+                mostrarAlerta(`❌ ${error.message}`, 'error');
+            } finally {
+                establecerEstadoInventarioBoletos(false);
+            }
+        }
+
+        let nuevaRifaEstado = {
+            cargando: false,
+            preview: null
+        };
+
+        function establecerEstadoNuevaRifa(cargando) {
+            nuevaRifaEstado.cargando = cargando === true;
+            [
+                'btn-recargar-nueva-rifa-preview',
+                'btn-ejecutar-nueva-rifa',
+                'nueva-rifa-confirmacion'
+            ].forEach((id) => {
+                const elemento = document.getElementById(id);
+                if (!elemento) return;
+                if (id === 'nueva-rifa-confirmacion') {
+                    elemento.disabled = nuevaRifaEstado.cargando;
+                } else if (id === 'btn-recargar-nueva-rifa-preview') {
+                    elemento.disabled = nuevaRifaEstado.cargando;
+                }
+            });
+
+            actualizarEstadoBotonNuevaRifa();
+        }
+
+        async function requestNuevaRifa(endpoint, options = {}) {
+            const token = obtenerToken();
+            if (!token) {
+                throw new Error('No hay sesión activa');
+            }
+
+            const { method = 'GET', body } = options;
+            const config = {
+                method,
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            };
+
+            if (body !== undefined) {
+                config.headers['Content-Type'] = 'application/json';
+                config.body = JSON.stringify(body);
+            }
+
+            const response = await fetch(`${API_BASE}${endpoint}`, config);
+            const payload = await response.json().catch(() => ({}));
+
+            if (!response.ok || payload.success === false) {
+                const error = new Error(payload.message || `HTTP ${response.status}`);
+                error.status = response.status;
+                error.payload = payload;
+                throw error;
+            }
+
+            return payload.data || payload;
+        }
+
+        function renderizarNuevaRifaNoDisponible(mensaje = 'Este backend todavía no expone el módulo de nueva rifa. Reinicia o despliega el servidor actualizado para habilitarlo.') {
+            nuevaRifaEstado.preview = {
+                estado: 'no_disponible',
+                resumenEstado: 'Módulo no disponible en este backend',
+                canExecute: false,
+                confirmacionRequerida: '',
+                tablas: {
+                    ordenes: 0,
+                    boletos: 0,
+                    oportunidades: 0,
+                    ganadores: 0,
+                    contadoresOrden: 0
+                },
+                bloqueos: {
+                    ordenesPendientes: 0,
+                    boletosApartados: 0,
+                    oportunidadesApartadas: 0
+                },
+                ordenes: {
+                    confirmadas: 0,
+                    canceladas: 0,
+                    otras: 0
+                },
+                boletos: {
+                    vendidos: 0
+                },
+                oportunidades: {
+                    vendidas: 0
+                },
+                checklist: [
+                    {
+                        titulo: 'Backend actualizado',
+                        ok: false,
+                        detalle: mensaje
+                    }
+                ],
+                siguientesPasos: [
+                    'Reinicia el backend local para que cargue las rutas nuevas',
+                    'Si estás en producción, despliega la versión del servidor que ya incluye este módulo'
+                ]
+            };
+
+            renderizarResumenNuevaRifa(nuevaRifaEstado.preview);
+
+            const preview = document.getElementById('nueva-rifa-preview');
+            if (preview) {
+                preview.innerHTML = `
+                    <div style="font-size: 0.95rem; color: #92400e;">
+                        <strong>Módulo no disponible:</strong> ${mensaje}
+                    </div>
+                `;
+            }
+        }
+
+        function renderizarChecklistNuevaRifa(checklist = []) {
+            const contenedor = document.getElementById('nueva-rifa-checklist');
+            if (!contenedor) return;
+
+            if (!Array.isArray(checklist) || checklist.length === 0) {
+                contenedor.innerHTML = `
+                    <div style="padding: 0.85rem; border-radius: 12px; background: #fff; border: 1px dashed #cbd5e1; color: #64748b;">
+                        El checklist de seguridad aparecerá aquí.
+                    </div>
+                `;
+                return;
+            }
+
+            contenedor.innerHTML = checklist.map((item) => `
+                <div style="padding: 0.85rem; border-radius: 12px; background: #fff; border: 1px solid ${item.ok ? '#bbf7d0' : '#fed7aa'}; display: flex; gap: 0.75rem; align-items: flex-start;">
+                    <div style="font-size: 1rem; color: ${item.ok ? '#15803d' : '#c2410c'};">
+                        <i class="fas fa-${item.ok ? 'check-circle' : 'triangle-exclamation'}"></i>
+                    </div>
+                    <div>
+                        <div style="font-weight: 700; color: #0f172a; margin-bottom: 0.2rem;">${item.titulo || 'Paso'}</div>
+                        <div style="font-size: 0.9rem; color: #475569;">${item.detalle || ''}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderizarResumenNuevaRifa(data = null) {
+            const resumen = data || nuevaRifaEstado.preview;
+            if (!resumen) return;
+
+            document.getElementById('nueva-rifa-estado').textContent = resumen.resumenEstado || 'Sin revisar';
+            document.getElementById('nueva-rifa-ordenes').textContent = formatearNumeroAdmin(resumen?.tablas?.ordenes || 0);
+            document.getElementById('nueva-rifa-boletos').textContent = formatearNumeroAdmin(resumen?.tablas?.boletos || 0);
+            document.getElementById('nueva-rifa-oportunidades').textContent = formatearNumeroAdmin(resumen?.tablas?.oportunidades || 0);
+            document.getElementById('nueva-rifa-ganadores').textContent = formatearNumeroAdmin(resumen?.tablas?.ganadores || 0);
+            document.getElementById('nueva-rifa-contadores').textContent = formatearNumeroAdmin(resumen?.tablas?.contadoresOrden || 0);
+
+            const estadoEl = document.getElementById('nueva-rifa-estado');
+            if (estadoEl) {
+                const color = resumen.estado === 'listo'
+                    ? '#0369a1'
+                    : resumen.estado === 'limpio' || resumen.estado === 'completado'
+                        ? '#15803d'
+                        : '#b45309';
+                estadoEl.style.color = color;
+            }
+
+            renderizarChecklistNuevaRifa(resumen.checklist || []);
+            renderizarPreviewNuevaRifa(resumen, 'preview');
+            actualizarEstadoBotonNuevaRifa();
+        }
+
+        function renderizarPreviewNuevaRifa(data = null, modo = 'preview') {
+            const resumen = data || nuevaRifaEstado.preview;
+            const contenedor = document.getElementById('nueva-rifa-preview');
+            if (!contenedor) return;
+
+            if (!resumen) {
+                contenedor.innerHTML = 'Revisa primero el estado operativo actual. Si todo está listo, aquí verás exactamente qué se limpiará y cuál es la palabra de confirmación requerida.';
+                return;
+            }
+
+            const colorEstado = resumen.estado === 'listo'
+                ? '#0369a1'
+                : resumen.estado === 'limpio' || resumen.estado === 'completado'
+                    ? '#15803d'
+                    : '#b45309';
+
+            const resultado = resumen.resultado || {};
+            const siguientesPasos = Array.isArray(resumen.siguientesPasos) ? resumen.siguientesPasos : [];
+
+            contenedor.innerHTML = `
+                <div style="display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 0.9rem;">
+                    <div>
+                        <div style="font-size: 0.8rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.04em;">${modo === 'resultado' ? 'Resultado del reset' : 'Preview operativo'}</div>
+                        <div style="font-size: 1.05rem; font-weight: 700; color: ${colorEstado};">${resumen.resumenEstado || 'Sin estado'}</div>
+                    </div>
+                    <div style="font-size: 0.92rem; color: #475569;">
+                        Confirmación requerida: <strong>${resumen.confirmacionRequerida || 'N/A'}</strong>
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 0.75rem;">
+                    <div style="padding: 0.8rem; border-radius: 12px; background: #f8fafc; border: 1px solid #e5e7eb;">
+                        <div style="font-size: 0.78rem; color: #64748b;">Órdenes pendientes</div>
+                        <div style="font-size: 1.1rem; font-weight: 700; color: ${(resumen?.bloqueos?.ordenesPendientes || 0) > 0 ? '#b45309' : '#15803d'};">${formatearNumeroAdmin(resumen?.bloqueos?.ordenesPendientes || 0)}</div>
+                    </div>
+                    <div style="padding: 0.8rem; border-radius: 12px; background: #f8fafc; border: 1px solid #e5e7eb;">
+                        <div style="font-size: 0.78rem; color: #64748b;">Boletos apartados</div>
+                        <div style="font-size: 1.1rem; font-weight: 700; color: ${(resumen?.bloqueos?.boletosApartados || 0) > 0 ? '#b45309' : '#15803d'};">${formatearNumeroAdmin(resumen?.bloqueos?.boletosApartados || 0)}</div>
+                    </div>
+                    <div style="padding: 0.8rem; border-radius: 12px; background: #f8fafc; border: 1px solid #e5e7eb;">
+                        <div style="font-size: 0.78rem; color: #64748b;">Oportunidades apartadas</div>
+                        <div style="font-size: 1.1rem; font-weight: 700; color: ${(resumen?.bloqueos?.oportunidadesApartadas || 0) > 0 ? '#b45309' : '#15803d'};">${formatearNumeroAdmin(resumen?.bloqueos?.oportunidadesApartadas || 0)}</div>
+                    </div>
+                    <div style="padding: 0.8rem; border-radius: 12px; background: #f8fafc; border: 1px solid #e5e7eb;">
+                        <div style="font-size: 0.78rem; color: #64748b;">Órdenes confirmadas</div>
+                        <div style="font-size: 1.1rem; font-weight: 700;">${formatearNumeroAdmin(resumen?.ordenes?.confirmadas || 0)}</div>
+                    </div>
+                </div>
+                <div style="margin-top: 0.9rem; font-size: 0.92rem; color: #475569; display: grid; gap: 0.35rem;">
+                    <div>Órdenes canceladas: <strong>${formatearNumeroAdmin(resumen?.ordenes?.canceladas || 0)}</strong></div>
+                    <div>Órdenes en otros estados: <strong>${formatearNumeroAdmin(resumen?.ordenes?.otras || 0)}</strong></div>
+                    <div>Boletos vendidos históricos: <strong>${formatearNumeroAdmin(resumen?.boletos?.vendidos || 0)}</strong></div>
+                    <div>Oportunidades vendidas históricas: <strong>${formatearNumeroAdmin(resumen?.oportunidades?.vendidas || 0)}</strong></div>
+                    ${resultado.boletos !== undefined ? `<div style="color: #be123c;">Boletos eliminados en esta ejecución: <strong>${formatearNumeroAdmin(resultado.boletos || 0)}</strong></div>` : ''}
+                    ${resultado.oportunidades !== undefined ? `<div style="color: #be123c;">Oportunidades eliminadas en esta ejecución: <strong>${formatearNumeroAdmin(resultado.oportunidades || 0)}</strong></div>` : ''}
+                    ${resultado.ordenes !== undefined ? `<div style="color: #be123c;">Órdenes eliminadas en esta ejecución: <strong>${formatearNumeroAdmin(resultado.ordenes || 0)}</strong></div>` : ''}
+                    ${resultado.ganadores !== undefined ? `<div style="color: #be123c;">Ganadores eliminados en esta ejecución: <strong>${formatearNumeroAdmin(resultado.ganadores || 0)}</strong></div>` : ''}
+                    ${resultado.contadoresOrden !== undefined ? `<div style="color: #be123c;">Contadores reiniciados en esta ejecución: <strong>${formatearNumeroAdmin(resultado.contadoresOrden || 0)}</strong></div>` : ''}
+                    ${resultado.secuenciasReiniciadas !== undefined ? `<div style="color: #0369a1;">Secuencias internas reiniciadas: <strong>${formatearNumeroAdmin(resultado.secuenciasReiniciadas || 0)}</strong></div>` : ''}
+                </div>
+                ${siguientesPasos.length > 0 ? `
+                    <div style="margin-top: 1rem; padding-top: 0.9rem; border-top: 1px solid #e5e7eb;">
+                        <div style="font-size: 0.8rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.55rem;">Siguientes pasos</div>
+                        <div style="display: grid; gap: 0.35rem; font-size: 0.92rem; color: #334155;">
+                            ${siguientesPasos.map((paso) => `<div><strong>•</strong> ${paso}</div>`).join('')}
+                        </div>
+                    </div>
+                ` : ''}
+            `;
+        }
+
+        function actualizarEstadoBotonNuevaRifa() {
+            const boton = document.getElementById('btn-ejecutar-nueva-rifa');
+            if (!boton) return;
+
+            const confirmacion = String(document.getElementById('nueva-rifa-confirmacion')?.value || '').trim();
+            const preview = nuevaRifaEstado.preview;
+            const confirmacionEsperada = String(preview?.confirmacionRequerida || '').trim();
+            const confirmacionOk = confirmacionEsperada !== '' && confirmacion === confirmacionEsperada;
+
+            boton.disabled = nuevaRifaEstado.cargando || !preview || preview.canExecute !== true || !confirmacionOk;
+
+            if (nuevaRifaEstado.cargando) {
+                boton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Preparando...';
+            } else if (preview?.estado === 'completado' || preview?.estado === 'limpio') {
+                boton.innerHTML = '<i class="fas fa-check"></i> BD lista para nueva rifa';
+            } else {
+                boton.innerHTML = '<i class="fas fa-broom-ball"></i> Preparar nueva rifa';
+            }
+        }
+
+        async function cargarPreviewNuevaRifa(mostrarToast = false) {
+            try {
+                establecerEstadoNuevaRifa(true);
+                const preview = await requestNuevaRifa('/api/admin/nueva-rifa/preview');
+                nuevaRifaEstado.preview = preview;
+                renderizarResumenNuevaRifa(preview);
+                if (mostrarToast) {
+                    mostrarAlerta('✅ Estado de nueva rifa actualizado', 'success');
+                }
+                return preview;
+            } catch (error) {
+                if (error.status === 404) {
+                    console.warn('⚠️ El backend actual aún no expone el módulo de nueva rifa');
+                    renderizarNuevaRifaNoDisponible('La ruta /api/admin/nueva-rifa/preview respondió 404. Reinicia el backend local o despliega la versión nueva del servidor.');
+                    if (mostrarToast) {
+                        mostrarAlerta('ℹ️ El backend actual todavía no tiene habilitado el módulo de nueva rifa', 'warning');
+                    }
+                    return null;
+                }
+
+                console.error('❌ Error cargando preview de nueva rifa:', error);
+                if (mostrarToast) {
+                    mostrarAlerta(`❌ ${error.message}`, 'error');
+                }
+                throw error;
+            } finally {
+                establecerEstadoNuevaRifa(false);
+            }
+        }
+
+        async function ejecutarNuevaRifa() {
+            try {
+                if (!nuevaRifaEstado.preview || nuevaRifaEstado.preview.canExecute !== true) {
+                    mostrarAlerta('⚠️ Primero revisa el estado y asegúrate de que no haya operaciones activas bloqueando el reset', 'warning');
+                    return;
+                }
+
+                const confirmacionRequerida = String(nuevaRifaEstado.preview.confirmacionRequerida || '').trim();
+                const confirmacionCapturada = String(document.getElementById('nueva-rifa-confirmacion')?.value || '').trim();
+
+                if (!confirmacionRequerida || confirmacionCapturada !== confirmacionRequerida) {
+                    mostrarAlerta(`⚠️ Debes escribir exactamente ${confirmacionRequerida || 'la confirmación requerida'}`, 'warning');
+                    return;
+                }
+
+                const confirmado = confirm(
+                    'Se limpiarán los datos operativos de la rifa actual en esta misma BD.\n\n' +
+                    `Boletos: ${formatearNumeroAdmin(nuevaRifaEstado.preview?.tablas?.boletos || 0)}\n` +
+                    `Oportunidades: ${formatearNumeroAdmin(nuevaRifaEstado.preview?.tablas?.oportunidades || 0)}\n` +
+                    `Órdenes: ${formatearNumeroAdmin(nuevaRifaEstado.preview?.tablas?.ordenes || 0)}\n` +
+                    `Ganadores: ${formatearNumeroAdmin(nuevaRifaEstado.preview?.tablas?.ganadores || 0)}\n\n` +
+                    'La estructura de la BD no se toca, solo los datos operativos.\n\n¿Deseas continuar?'
+                );
+
+                if (!confirmado) return;
+
+                establecerEstadoNuevaRifa(true);
+
+                const resultado = await requestNuevaRifa('/api/admin/nueva-rifa/ejecutar', {
+                    method: 'POST',
+                    body: {
+                        confirmacion: confirmacionCapturada
+                    }
+                });
+
+                nuevaRifaEstado.preview = resultado;
+                renderizarResumenNuevaRifa(resultado);
+                renderizarPreviewNuevaRifa(resultado, 'resultado');
+
+                const confirmacionInput = document.getElementById('nueva-rifa-confirmacion');
+                if (confirmacionInput) confirmacionInput.value = '';
+
+                await Promise.allSettled([
+                    cargarResumenInventarioBoletos(),
+                    cargarResumenInventarioOportunidades()
+                ]);
+
+                mostrarAlerta('✅ La BD operativa quedó limpia. Ahora guarda la nueva configuración y vuelve a poblar el inventario.', 'success');
+            } catch (error) {
+                if (error.status === 404) {
+                    console.warn('⚠️ El backend actual aún no expone el endpoint de ejecutar nueva rifa');
+                    renderizarNuevaRifaNoDisponible('La ruta /api/admin/nueva-rifa/ejecutar respondió 404. Reinicia el backend local o despliega la versión nueva del servidor.');
+                    mostrarAlerta('ℹ️ Reinicia el backend para habilitar el módulo de nueva rifa', 'warning');
+                    return;
+                }
+
+                console.error('❌ Error preparando nueva rifa:', error);
+                mostrarAlerta(`❌ ${error.message}`, 'error');
+                throw error;
+            } finally {
+                establecerEstadoNuevaRifa(false);
+            }
         }
 
         async function guardarBoletajeYRangos() {
@@ -7628,6 +8528,43 @@
 
                 if (rangoOculto && rangoOculto.fin < rangoOculto.inicio) {
                     throw new Error('El rango oculto de oportunidades es inválido');
+                }
+
+                const oportunidadesEnabled = window.rifaplusConfig?.rifa?.oportunidades?.enabled === true;
+                const multiplicadorOportunidades = Number(window.rifaplusConfig?.rifa?.oportunidades?.multiplicador) > 0
+                    ? Number(window.rifaplusConfig.rifa.oportunidades.multiplicador)
+                    : 1;
+                const totalVisibleOportunidades = rangoVisible
+                    ? ((rangoVisible.fin - rangoVisible.inicio) + 1)
+                    : totalBoletos;
+
+                if (oportunidadesEnabled && rangoVisible && totalVisibleOportunidades !== totalBoletos) {
+                    throw new Error('El rango visible de oportunidades debe cubrir exactamente el total de boletos configurado');
+                }
+
+                if (oportunidadesEnabled && !rangoVisible) {
+                    throw new Error('Debes definir un rango visible cuando las oportunidades están habilitadas');
+                }
+
+                if (oportunidadesEnabled && rangoVisible && (rangoVisible.inicio !== 0 || rangoVisible.fin !== totalBoletos - 1)) {
+                    throw new Error(`El rango visible debe ser exactamente 0 - ${Math.max(0, totalBoletos - 1)}`);
+                }
+
+                if (oportunidadesEnabled && !rangoOculto) {
+                    throw new Error('Debes definir un rango oculto cuando las oportunidades están habilitadas');
+                }
+
+                if (oportunidadesEnabled && rangoOculto) {
+                    if (rangoVisible && rangoOculto.inicio <= rangoVisible.fin && rangoVisible.inicio <= rangoOculto.fin) {
+                        throw new Error('El rango oculto no puede traslaparse con el rango visible');
+                    }
+
+                    const totalOcultoOportunidades = (rangoOculto.fin - rangoOculto.inicio) + 1;
+                    const oportunidadesEsperadas = totalVisibleOportunidades * multiplicadorOportunidades;
+
+                    if (totalOcultoOportunidades !== oportunidadesEsperadas) {
+                        throw new Error(`El rango oculto debe contener exactamente ${oportunidadesEsperadas.toLocaleString()} oportunidades (${totalVisibleOportunidades.toLocaleString()} boletos × ${multiplicadorOportunidades})`);
+                    }
                 }
 
                 const token = localStorage.getItem('rifaplus_token') ||
@@ -7701,6 +8638,9 @@
                 actualizarAyudaLimiteMaquinaSuerte();
 
                 guardarValoresOriginaleSorteo();
+                cargarResumenInventarioBoletos().catch((error) => {
+                    console.warn('⚠️ No se pudo refrescar el resumen de inventario tras guardar boletaje:', error.message);
+                });
                 mostrarModalGuardadoExitoso({
                     titulo: '¡Boletaje Guardado Correctamente!',
                     subtitulo: 'El total de boletos, la búsqueda, el tiempo de apartado, la máquina de la suerte y los rangos ya quedaron actualizados.'
@@ -8529,13 +9469,257 @@
             }
         }
 
+        let inventarioOportunidadesEstado = {
+            cargando: false,
+            resumen: null
+        };
+
+        function establecerEstadoInventarioOportunidades(cargando) {
+            inventarioOportunidadesEstado.cargando = cargando === true;
+            [
+                'btn-recargar-inventario-oportunidades',
+                'btn-preview-inventario-oportunidades',
+                'btn-poblar-oportunidades-admin'
+            ].forEach((id) => {
+                const boton = document.getElementById(id);
+                if (boton) boton.disabled = inventarioOportunidadesEstado.cargando;
+            });
+        }
+
+        async function requestInventarioOportunidades(endpoint, options = {}) {
+            const token = obtenerToken();
+            if (!token) {
+                throw new Error('No hay sesión activa');
+            }
+
+            const { method = 'GET', body } = options;
+            const config = {
+                method,
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            };
+
+            if (body !== undefined) {
+                config.headers['Content-Type'] = 'application/json';
+                config.body = JSON.stringify(body);
+            }
+
+            const response = await fetch(`${API_BASE}${endpoint}`, config);
+            const payload = await response.json().catch(() => ({}));
+
+            if (!response.ok || payload.success === false) {
+                throw new Error(payload.message || `HTTP ${response.status}`);
+            }
+
+            return payload.data || payload;
+        }
+
+        function renderizarChecklistInventarioOportunidades(prerequisitos = []) {
+            const contenedor = document.getElementById('inventario-oportunidades-prerequisitos');
+            if (!contenedor) return;
+
+            if (!Array.isArray(prerequisitos) || prerequisitos.length === 0) {
+                contenedor.innerHTML = `
+                    <div style="padding: 0.85rem; border-radius: 12px; background: #fff; border: 1px dashed #cbd5e1; color: #64748b;">
+                        El checklist de prerequisitos aparecerá aquí.
+                    </div>
+                `;
+                return;
+            }
+
+            contenedor.innerHTML = prerequisitos.map((item) => `
+                <div style="padding: 0.85rem; border-radius: 12px; background: #fff; border: 1px solid ${item.ok ? '#bbf7d0' : '#fed7aa'}; display: flex; gap: 0.75rem; align-items: flex-start;">
+                    <div style="font-size: 1rem; color: ${item.ok ? '#15803d' : '#c2410c'};">
+                        <i class="fas fa-${item.ok ? 'check-circle' : 'triangle-exclamation'}"></i>
+                    </div>
+                    <div>
+                        <div style="font-weight: 700; color: #0f172a; margin-bottom: 0.2rem;">${item.titulo}</div>
+                        <div style="font-size: 0.9rem; color: #475569;">${item.detalle}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderizarPreviewInventarioOportunidades(resumen = null, modo = 'preview') {
+            const contenedor = document.getElementById('inventario-oportunidades-preview');
+            if (!contenedor) return;
+
+            if (!resumen) {
+                contenedor.innerHTML = 'El resumen operativo de oportunidades aparecerá aquí antes de poblar.';
+                return;
+            }
+
+            const estadoColor = resumen.estado === 'listo'
+                ? '#0369a1'
+                : resumen.estado === 'poblado'
+                    ? '#15803d'
+                    : '#b45309';
+
+            const insertadas = Number(resumen.insertadas) || 0;
+
+            contenedor.innerHTML = `
+                <div style="display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 0.9rem;">
+                    <div>
+                        <div style="font-size: 0.8rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.04em;">${modo === 'resultado' ? 'Resultado de poblado' : 'Preview operativo'}</div>
+                        <div style="font-size: 1.05rem; font-weight: 700; color: ${estadoColor};">${resumen.resumenEstado || 'Sin estado'}</div>
+                    </div>
+                    <div style="font-size: 0.92rem; color: #475569;">
+                        Esperadas: <strong>${formatearNumeroAdmin(resumen?.configuracion?.totalOportunidadesEsperadas || 0)}</strong>
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 0.75rem;">
+                    <div style="padding: 0.8rem; border-radius: 12px; background: #f8fafc; border: 1px solid #e5e7eb;">
+                        <div style="font-size: 0.78rem; color: #64748b;">Total en BD</div>
+                        <div style="font-size: 1.1rem; font-weight: 700;">${formatearNumeroAdmin(resumen?.oportunidades?.totalGlobal || 0)}</div>
+                    </div>
+                    <div style="padding: 0.8rem; border-radius: 12px; background: #f8fafc; border: 1px solid #e5e7eb;">
+                        <div style="font-size: 0.78rem; color: #64748b;">Dentro del rango oculto</div>
+                        <div style="font-size: 1.1rem; font-weight: 700;">${formatearNumeroAdmin(resumen?.oportunidades?.totalHidden || 0)}</div>
+                    </div>
+                    <div style="padding: 0.8rem; border-radius: 12px; background: #f8fafc; border: 1px solid #e5e7eb;">
+                        <div style="font-size: 0.78rem; color: #64748b;">Fuera del rango oculto</div>
+                        <div style="font-size: 1.1rem; font-weight: 700; color: #b45309;">${formatearNumeroAdmin(resumen?.oportunidades?.totalFueraRango || 0)}</div>
+                    </div>
+                    <div style="padding: 0.8rem; border-radius: 12px; background: #f8fafc; border: 1px solid #e5e7eb;">
+                        <div style="font-size: 0.78rem; color: #64748b;">Boletos con cantidad incorrecta</div>
+                        <div style="font-size: 1.1rem; font-weight: 700; color: #b45309;">${formatearNumeroAdmin(resumen?.oportunidades?.boletosConCantidadIncorrecta || 0)}</div>
+                    </div>
+                </div>
+                <div style="margin-top: 0.9rem; font-size: 0.92rem; color: #475569; display: grid; gap: 0.35rem;">
+                    <div>Disponibles: <strong>${formatearNumeroAdmin(resumen?.oportunidades?.disponibles || 0)}</strong></div>
+                    <div>Apartadas: <strong>${formatearNumeroAdmin(resumen?.oportunidades?.apartadas || 0)}</strong></div>
+                    <div>Vendidas: <strong>${formatearNumeroAdmin(resumen?.oportunidades?.vendidas || 0)}</strong></div>
+                    <div>Boletos sin oportunidades ligadas: <strong>${formatearNumeroAdmin(resumen?.oportunidades?.boletosSinOportunidades || 0)}</strong></div>
+                    <div>Errores de configuración detectados: <strong>${formatearNumeroAdmin((resumen?.erroresConfig || []).length)}</strong></div>
+                    ${insertadas > 0 ? `<div style="color: #15803d;">Insertadas en esta ejecución: <strong>${formatearNumeroAdmin(insertadas)}</strong></div>` : ''}
+                </div>
+            `;
+        }
+
+        function renderizarResumenInventarioOportunidades(data = null) {
+            const resumen = data || inventarioOportunidadesEstado.resumen;
+            if (!resumen) return;
+
+            const config = resumen.configuracion || {};
+            const boletosBase = resumen.boletosBase || {};
+            const oportunidades = resumen.oportunidades || {};
+            const botonPoblar = document.getElementById('btn-poblar-oportunidades-admin');
+
+            document.getElementById('opp-inv-estado').textContent = resumen.resumenEstado || 'Sin revisar';
+            document.getElementById('opp-inv-multiplicador').textContent = String(config.multiplicador || 0);
+            document.getElementById('opp-inv-boletos-base').textContent = `${formatearNumeroAdmin(boletosBase.encontrados || 0)} / ${formatearNumeroAdmin(boletosBase.esperados || 0)}`;
+            document.getElementById('opp-inv-esperadas').textContent = formatearNumeroAdmin(config.totalOportunidadesEsperadas || 0);
+            document.getElementById('opp-inv-existentes').textContent = formatearNumeroAdmin(oportunidades.totalGlobal || 0);
+            document.getElementById('opp-inv-rango-oculto').textContent = config.rangoOculto
+                ? `${formatearNumeroAdmin(config.rangoOculto.inicio)} - ${formatearNumeroAdmin(config.rangoOculto.fin)}`
+                : '-';
+
+            renderizarChecklistInventarioOportunidades(resumen.prerequisitos || []);
+            renderizarPreviewInventarioOportunidades(resumen, 'preview');
+
+            if (botonPoblar) {
+                botonPoblar.disabled = inventarioOportunidadesEstado.cargando || resumen.canPopulate !== true;
+                if (resumen.alreadyPopulated) {
+                    botonPoblar.innerHTML = '<i class="fas fa-check"></i> Oportunidades ya pobladas';
+                } else {
+                    botonPoblar.innerHTML = '<i class="fas fa-wand-magic-sparkles"></i> Poblar oportunidades';
+                }
+            }
+        }
+
+        async function cargarResumenInventarioOportunidades(mostrarToast = false) {
+            try {
+                const resumen = await requestInventarioOportunidades('/api/admin/oportunidades/inventario/resumen');
+                inventarioOportunidadesEstado.resumen = resumen;
+                renderizarResumenInventarioOportunidades(resumen);
+                if (mostrarToast) {
+                    mostrarAlerta('✅ Resumen del inventario de oportunidades actualizado', 'success');
+                }
+                return resumen;
+            } catch (error) {
+                console.error('❌ Error cargando resumen del inventario de oportunidades:', error);
+                if (mostrarToast) {
+                    mostrarAlerta(`❌ ${error.message}`, 'error');
+                }
+                throw error;
+            }
+        }
+
+        async function previewInventarioOportunidades() {
+            try {
+                establecerEstadoInventarioOportunidades(true);
+                const resumen = await requestInventarioOportunidades('/api/admin/oportunidades/inventario/preview', {
+                    method: 'POST',
+                    body: {}
+                });
+                inventarioOportunidadesEstado.resumen = resumen;
+                renderizarResumenInventarioOportunidades(resumen);
+                mostrarAlerta('✅ Preview de oportunidades actualizado', 'success');
+                return resumen;
+            } catch (error) {
+                console.error('❌ Error generando preview de oportunidades:', error);
+                mostrarAlerta(`❌ ${error.message}`, 'error');
+                throw error;
+            } finally {
+                establecerEstadoInventarioOportunidades(false);
+            }
+        }
+
+        async function poblarInventarioOportunidades() {
+            try {
+                establecerEstadoInventarioOportunidades(true);
+                const resumen = await requestInventarioOportunidades('/api/admin/oportunidades/inventario/preview', {
+                    method: 'POST',
+                    body: {}
+                });
+                inventarioOportunidadesEstado.resumen = resumen;
+                renderizarResumenInventarioOportunidades(resumen);
+
+                if (resumen.alreadyPopulated) {
+                    mostrarAlerta('ℹ️ Las oportunidades ya están correctamente pobladas', 'warning');
+                    return;
+                }
+
+                if (!resumen.canPopulate) {
+                    mostrarAlerta('⚠️ Primero completa la secuencia indicada en el checklist', 'warning');
+                    return;
+                }
+
+                const confirmacion = confirm(
+                    `Se crearán ${formatearNumeroAdmin(resumen?.configuracion?.totalOportunidadesEsperadas || 0)} oportunidad(es) usando la configuración actual.\n\n` +
+                    `Multiplicador: ${resumen?.configuracion?.multiplicador || 0}\n` +
+                    `Rango visible: ${formatearNumeroAdmin(resumen?.configuracion?.rangoVisible?.inicio || 0)} - ${formatearNumeroAdmin(resumen?.configuracion?.rangoVisible?.fin || 0)}\n` +
+                    `Rango oculto: ${formatearNumeroAdmin(resumen?.configuracion?.rangoOculto?.inicio || 0)} - ${formatearNumeroAdmin(resumen?.configuracion?.rangoOculto?.fin || 0)}\n\n` +
+                    `La tabla de oportunidades debe estar vacía y la operación se bloqueará si detecta inconsistencias.\n\n¿Deseas continuar?`
+                );
+
+                if (!confirmacion) return;
+
+                const resultado = await requestInventarioOportunidades('/api/admin/oportunidades/inventario/poblar', {
+                    method: 'POST',
+                    body: {}
+                });
+
+                inventarioOportunidadesEstado.resumen = resultado;
+                renderizarResumenInventarioOportunidades(resultado);
+                renderizarPreviewInventarioOportunidades(resultado, 'resultado');
+                mostrarAlerta(`✅ Se poblaron ${formatearNumeroAdmin(resultado.insertadas || 0)} oportunidades preasignadas`, 'success');
+            } catch (error) {
+                console.error('❌ Error poblando oportunidades desde admin:', error);
+                mostrarAlerta(`❌ ${error.message}`, 'error');
+            } finally {
+                establecerEstadoInventarioOportunidades(false);
+            }
+        }
+
         function cargarConfiguracionOportunidades() {
             try {
                 const oportunidadesConfig = window.rifaplusConfig?.rifa?.oportunidades || {};
-                const enabled = oportunidadesConfig.enabled !== false;
+                const enabled = oportunidadesConfig.enabled === true;
                 const multiplicador = Number(oportunidadesConfig.multiplicador) > 0
                     ? Number(oportunidadesConfig.multiplicador)
-                    : 3;
+                    : 1;
 
                 const checkbox = document.getElementById('oportunidades-enabled');
                 const contenido = document.getElementById('oportunidades-config-contenido');
@@ -8544,11 +9728,16 @@
                 const statusText = document.getElementById('oportunidades-status-text');
                 const statusHelp = document.getElementById('oportunidades-status-help');
                 const multiplicadorText = document.getElementById('oportunidades-multiplicador-text');
+                const multiplicadorInput = document.getElementById('oportunidades-multiplicador-input');
+                const btnGuardarMultiplicador = document.getElementById('btn-guardar-multiplicador-opp');
                 const btnAgregar = document.getElementById('btn-agregar-ejemplo-opp');
                 const inputBoletos = document.getElementById('ejemplo-boletos');
                 const inputOportunidades = document.getElementById('ejemplo-oportunidades');
 
                 if (checkbox) checkbox.checked = enabled;
+                if (multiplicadorInput) {
+                    multiplicadorInput.value = String(multiplicador);
+                }
                 if (multiplicadorText) {
                     multiplicadorText.textContent = `${multiplicador} oportunidad${multiplicador === 1 ? '' : 'es'} por boleto`;
                 }
@@ -8572,11 +9761,123 @@
                     contenido.style.pointerEvents = enabled ? 'auto' : 'none';
                 }
 
-                [btnAgregar, inputBoletos, inputOportunidades].forEach((elemento) => {
+                [btnGuardarMultiplicador, multiplicadorInput, btnAgregar, inputBoletos, inputOportunidades].forEach((elemento) => {
                     if (elemento) elemento.disabled = !enabled;
                 });
+
+                if (!inventarioOportunidadesEstado.cargando) {
+                    const botonPoblar = document.getElementById('btn-poblar-oportunidades-admin');
+                    if (botonPoblar && inventarioOportunidadesEstado.resumen?.canPopulate !== true) {
+                        botonPoblar.disabled = true;
+                    }
+                }
             } catch (error) {
                 console.error('❌ Error cargando configuración de oportunidades:', error);
+            }
+        }
+
+        function actualizarPreviewMultiplicadorOportunidades() {
+            try {
+                const input = document.getElementById('oportunidades-multiplicador-input');
+                const multiplicadorText = document.getElementById('oportunidades-multiplicador-text');
+                if (!input || !multiplicadorText) return;
+
+                const valor = parseInt(input.value, 10);
+                if (!Number.isInteger(valor) || valor <= 0) return;
+
+                multiplicadorText.textContent = `${valor} oportunidad${valor === 1 ? '' : 'es'} por boleto`;
+            } catch (error) {
+                console.warn('⚠️ No se pudo actualizar la vista previa del multiplicador:', error.message);
+            }
+        }
+
+        async function guardarMultiplicadorOportunidades() {
+            const input = document.getElementById('oportunidades-multiplicador-input');
+            const boton = document.getElementById('btn-guardar-multiplicador-opp');
+            if (!input || !boton) return;
+
+            const multiplicador = parseInt(input.value, 10);
+            if (!Number.isInteger(multiplicador) || multiplicador < 1 || multiplicador > 100) {
+                mostrarAlerta('❌ Ingresa un multiplicador válido entre 1 y 100', 'error');
+                input.focus();
+                return;
+            }
+
+            const token = localStorage.getItem(TOKEN_KEY) || localStorage.getItem('rifaplus_admin_token');
+            if (!token) {
+                mostrarAlerta('❌ No hay sesión activa para guardar oportunidades', 'error');
+                return;
+            }
+
+            const oportunidadesActuales = window.rifaplusConfig?.rifa?.oportunidades || {};
+            const multiplicadorAnterior = Number(oportunidadesActuales.multiplicador) > 0
+                ? Number(oportunidadesActuales.multiplicador)
+                : 1;
+
+            if (!window.rifaplusConfig) window.rifaplusConfig = {};
+            if (!window.rifaplusConfig.rifa) window.rifaplusConfig.rifa = {};
+
+            window.rifaplusConfig.rifa.oportunidades = {
+                ...oportunidadesActuales,
+                multiplicador
+            };
+
+            actualizarPreviewMultiplicadorOportunidades();
+
+            try {
+                boton.disabled = true;
+                boton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+
+                const response = await fetch(`${API_BASE}/api/admin/config`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    cache: 'no-store',
+                    body: JSON.stringify({
+                        rifa: {
+                            oportunidades: {
+                                ...window.rifaplusConfig.rifa.oportunidades
+                            }
+                        }
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.message || `HTTP ${response.status}`);
+                }
+
+                const result = await response.json();
+                if (result?.data?.rifa?.oportunidades) {
+                    window.rifaplusConfig.rifa.oportunidades = result.data.rifa.oportunidades;
+                }
+
+                if (typeof window.rifaplusConfig?.sincronizarConfigDelBackend === 'function') {
+                    await window.rifaplusConfig.sincronizarConfigDelBackend({ force: true });
+                }
+
+                await cargarInfoSorteoDelServidor();
+                cargarConfiguracionOportunidades();
+                cargarResumenInventarioOportunidades().catch(() => {});
+
+                if (window.rifaplusConfig?.emitirEvento) {
+                    window.rifaplusConfig.emitirEvento('configuracionActualizada', {
+                        tipo: 'oportunidades',
+                        datos: window.rifaplusConfig.rifa.oportunidades
+                    });
+                }
+
+                mostrarAlerta(`✅ Multiplicador actualizado a ${multiplicador} oportunidad${multiplicador === 1 ? '' : 'es'} por boleto`, 'success');
+            } catch (error) {
+                console.error('❌ Error guardando multiplicador de oportunidades:', error);
+                window.rifaplusConfig.rifa.oportunidades.multiplicador = multiplicadorAnterior;
+                cargarConfiguracionOportunidades();
+                mostrarAlerta(`❌ Error al guardar el multiplicador: ${error.message}`, 'error');
+            } finally {
+                boton.disabled = false;
+                boton.innerHTML = '<i class="fas fa-save"></i> Guardar multiplicador';
             }
         }
 
@@ -8645,6 +9946,7 @@
                 await cargarInfoSorteoDelServidor();
 
                 cargarConfiguracionOportunidades();
+                cargarResumenInventarioOportunidades().catch(() => {});
 
                 if (window.rifaplusConfig?.emitirEvento) {
                     window.rifaplusConfig.emitirEvento('configuracionActualizada', {
@@ -10018,6 +11320,7 @@
                 
                 // Recolectar SOLO la parte de rifa con las promociones
                 const payloadRifa = {
+                    oportunidades: config.rifa?.oportunidades,
                     promocionesOportunidades: config.rifa?.promocionesOportunidades,
                     descuentoPorcentaje: config.rifa?.descuentoPorcentaje,
                     promocionPorTiempo: config.rifa?.promocionPorTiempo,

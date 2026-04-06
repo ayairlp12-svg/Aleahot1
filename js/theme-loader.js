@@ -11,6 +11,34 @@
     // Contador de reintentos para evitar spam en consola
     let attemptCount = 0;
     const MAX_ATTEMPTS = 50; // Máximo 50 reintentos (2.5 segundos)
+    const THEME_RGBA_SUFFIXES = ['-rgb', '-06', '-08', '-10', '-15', '-20', '-25', '-30', '-35', '-40', '-50'];
+    const BASE_THEME_KEYS = [
+        'colorPrimario',
+        'colorSecundario',
+        'colorAccento',
+        'colorExito',
+        'colorPeligro',
+        'colorAdvertencia',
+        'colorTexto',
+        'colorTextoSecundario',
+        'colorFondo',
+        'colorFondoSecundario'
+    ];
+
+    function clearThemeVars() {
+        const root = document.documentElement;
+        BASE_THEME_KEYS.forEach((key) => {
+            const cssVar = '--' + key.replace(/([A-Z])/g, '-$1').toLowerCase();
+            root.style.removeProperty(cssVar);
+            THEME_RGBA_SUFFIXES.forEach((suffix) => {
+                root.style.removeProperty(`${cssVar}${suffix}`);
+            });
+        });
+    }
+
+    function isCustomThemeEnabled() {
+        return window.rifaplusConfig?.tema?.personalizado === true;
+    }
 
     // Aplicar tema cuando config está listo
     function applyTheme() {
@@ -26,6 +54,12 @@
             } else {
                 console.error('[Theme] Config no se pudo cargar después de múltiples intentos');
             }
+            return;
+        }
+
+        if (!isCustomThemeEnabled()) {
+            clearThemeVars();
+            console.log('[Theme] Tema personalizado inactivo; se conservan colores base del sitio');
             return;
         }
 
@@ -90,6 +124,7 @@
             return;
         }
 
+        window.rifaplusConfig.tema.personalizado = true;
         const colores = window.rifaplusConfig.tema.colores;
         
         // Mezclar nuevos colores con los existentes

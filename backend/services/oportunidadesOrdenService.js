@@ -1,31 +1,12 @@
-/**
- * ============================================================
- * ARCHIVO: backend/services/oportunidadesOrdenService.js (NUEVO)
- * DESCRIPCIÓN: Servicio para gestionar oportunidades
- * ESTRATEGIA: Idéntico a BoletoService - sin complicaciones
- * ============================================================
- */
-
 const db = require('../db');
 
 class OportunidadesOrdenService {
     /**
-    /**
-     * REMOVED METHODS (Old dynamic opportunity assignment)
-     * 
-     * The following methods were removed as they are no longer needed
-     * with the new pre-assigned opportunities system in the database:
-     * 
-     * - guardarOportunidades() - Used to assign opportunities dynamically
-     * - generarYGuardarOportunidades() - Used to generate and assign opportunities
-     * 
-     * NEW FLOW:
-     * 1. Population phase: 750k pre-assigned opportunities (3 per boleto)
-     * 2. Order creation: FK CASCADE automatically updates orden_oportunidades
-     * 3. Retrieval: obtenerOportunidades() returns assigned opportunities
+     * El sistema actual usa oportunidades precargadas en BD:
+     * 1. Cada oportunidad existe antes de la compra y queda ligada a un numero_boleto.
+     * 2. La orden solo aparta o confirma esas filas ya preasignadas.
+     * 3. Este servicio consulta y libera ese estado persistido.
      */
-
-
     static async obtenerOportunidades(numeroOrden) {
         try {
             const opps = await db('orden_oportunidades')

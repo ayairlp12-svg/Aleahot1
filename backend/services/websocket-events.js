@@ -9,14 +9,19 @@
  * @param {Object} io - Instancia de socket.io
  * @returns {Object} Funciones públicas para emitir eventos
  */
-function inicializarEventosWebSocket(io) {
+function inicializarEventosWebSocket(io, options = {}) {
     console.log('🔌 [WebSocket] Inicializando eventos de tiempo real...');
+    const verifyAdminToken = typeof options.verifyAdminToken === 'function'
+        ? options.verifyAdminToken
+        : null;
 
     // Namespace /boletos para eventos relacionados con boletos
     const boletosNamespace = io.of('/boletos');
+    const adminOrdersNamespace = io.of('/admin-ordenes');
 
     // Rastrear clientes conectados (para debugging)
     let clientesConectados = 0;
+    let adminsConectados = 0;
 
     boletosNamespace.on('connection', (socket) => {
         clientesConectados++;
@@ -38,6 +43,24 @@ function inicializarEventosWebSocket(io) {
         // Manejar errores de conexión
         socket.on('error', (error) => {
             console.error(`❌ [WebSocket] Error en socket ${socket.id}:`, error);
+        });
+    });
+
+    if (verifyAdminToken) {
+        adminOrdersNamespace.use((socket, next) => verifyAdminToken(socket, next));
+    }
+
+    adminOrdersNamespace.on('connection', (socket) => {
+        adminsConectados++;
+        console.log(`✅ [WebSocket][Admin] Cliente admin conectado: ${socket.id} (Total: ${adminsConectados})`);
+
+        socket.on('disconnect', () => {
+            adminsConectados--;
+            console.log(`🔌 [WebSocket][Admin] Cliente admin desconectado: ${socket.id} (Total: ${adminsConectados})`);
+        });
+
+        socket.on('error', (error) => {
+            console.error(`❌ [WebSocket][Admin] Error en socket ${socket.id}:`, error);
         });
     });
 
@@ -72,20 +95,84 @@ function inicializarEventosWebSocket(io) {
      * @param {Object} metadatos - Info adicional (cantidad, cliente, etc)
      */
     function emitirNuevaOrden(numerosApartados = [], metadatos = {}) {
+        const boletos = Array.isArray(numerosApartados)
+            ? numerosApartados
+            : [];
+        const cantidad = Array.isArray(numerosApartados)
+            ? numerosApartados.length
+            : Number(numerosApartados) || 0;
         const evento = {
             timestamp: new Date().toISOString(),
             tipo: 'nuevaOrden',
-            boletos: numerosApartados,
-            cantidad: numerosApartados.length,
+            boletos,
+            cantidad,
             metadatos // { clienteNombre, whatsapp, etc }
         };
 
         console.log(`📤 [WebSocket] Emitiendo nueva orden:`, {
-            cantidad: numerosApartados.length,
+            cantidad,
             clientes: boletosNamespace.sockets.size
         });
 
         boletosNamespace.emit('ordenCreada', evento);
+    }
+
+    function emitirNuevaOrdenAdmin(orden = {}) {
+        const numeroOrden = orden.numero_orden || orden.ordenId || orden.id || null;
+        if (!numeroOrden) {
+            console.warn('⚠️ [WebSocket][Admin] Nueva orden sin numero_orden; evento omitido');
+            return;
+        }
+
+        const evento = {
+            timestamp: new Date().toISOString(),
+            tipo: 'adminOrdenCreada',
+            orden: {
+                numero_orden: numeroOrden,
+                nombre_cliente: orden.nombre_cliente || '',
+                telefono_cliente: orden.telefono_cliente || '',
+                estado: orden.estado || 'pendiente',
+                cantidad_boletos: Number(orden.cantidad_boletos || orden.cantidad || 0),
+                total: Number(orden.total || orden.totalFinal || 0),
+                comprobante_path: orden.comprobante_path || null,
+                created_at: orden.created_at || new Date().toISOString(),
+                updated_at: orden.updated_at || orden.created_at || new Date().toISOString()
+            }
+        };
+
+        console.log(`📤 [WebSocket][Admin] Emitiendo nueva orden admin:`, {
+            numero_orden: numeroOrden,
+            admins: adminOrdersNamespace.sockets.size
+        });
+
+        adminOrdersNamespace.emit('adminOrdenCreada', evento);
+    }
+
+    function emitirOrdenActualizadaAdmin(orden = {}) {
+        const numeroOrden = orden.numero_orden || orden.ordenId || orden.id || null;
+        if (!numeroOrden) {
+            console.warn('⚠️ [WebSocket][Admin] Orden actualizada sin numero_orden; evento omitido');
+            return;
+        }
+
+        const evento = {
+            timestamp: new Date().toISOString(),
+            tipo: 'adminOrdenActualizada',
+            orden: {
+                numero_orden: numeroOrden,
+                estado: orden.estado || null,
+                comprobante_path: orden.comprobante_path || null,
+                updated_at: orden.updated_at || new Date().toISOString()
+            }
+        };
+
+        console.log(`📤 [WebSocket][Admin] Emitiendo orden actualizada:`, {
+            numero_orden: numeroOrden,
+            estado: evento.orden.estado,
+            admins: adminOrdersNamespace.sockets.size
+        });
+
+        adminOrdersNamespace.emit('adminOrdenActualizada', evento);
     }
 
     /**
@@ -118,7 +205,9 @@ function inicializarEventosWebSocket(io) {
     function obtenerEstadisticas() {
         return {
             clientesConectados,
+            adminsConectados,
             sockets: boletosNamespace.sockets.size,
+            adminSockets: adminOrdersNamespace.sockets.size,
             timestamp: new Date().toISOString()
         };
     }
@@ -127,9 +216,12 @@ function inicializarEventosWebSocket(io) {
     return {
         emitirCambioBoletosDisponibles,
         emitirNuevaOrden,
+        emitirNuevaOrdenAdmin,
+        emitirOrdenActualizadaAdmin,
         emitirOrdenCancelada,
         obtenerEstadisticas,
-        boletosNamespace
+        boletosNamespace,
+        adminOrdersNamespace
     };
 }
 

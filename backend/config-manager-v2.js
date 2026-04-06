@@ -362,7 +362,7 @@ class ConfigManagerV2 {
         fechaPresorteo: null,
         oportunidades: {
           enabled: false,
-          multiplicador: 3
+          multiplicador: 1
         },
         descuentos: {
           enabled: false,

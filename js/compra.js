@@ -456,7 +456,7 @@ function startCargarBoletosPublicosConIntentos() {
     }
     
     // 🗑️  Removido: cargarOportunidadesDisponiblesDelBackend() - sistema antiguo reemplazado
-    // Ahora se usa asignación pre-determinada en backend (3 oportunidades por boleto)
+    // Ahora se usa asignación pre-determinada en backend según el multiplicador configurado
 }
 
 window.addEventListener('boletosListos', function() {

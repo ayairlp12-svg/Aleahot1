@@ -202,8 +202,8 @@ Object.assign(window.rifaplusConfig, {
         logo: rifaplusLogoInicial,
         imagenPrincipal: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 675'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop stop-color='%23eaf3fb'/%3E%3Cstop offset='1' stop-color='%23d5e6f5'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='1200' height='675' fill='url(%23g)'/%3E%3Ctext x='600' y='330' font-size='46' text-anchor='middle' fill='%231b2a38' font-family='Arial,sans-serif'%3EImagen principal del sorteo%3C/text%3E%3Ctext x='600' y='385' font-size='24' text-anchor='middle' fill='%235e7283' font-family='Arial,sans-serif'%3ECarga una imagen o pega una URL%3C/text%3E%3C/svg%3E",
         colorPrimario: "#1A1A1A",
-        colorSecundario: "#E63946",
-        colorAccento: "#FF3D3D",
+        colorSecundario: "#6d28d9",
+        colorAccento: "#6d28d9",
         colorExito: "#FF3D3D",
         colorPeligro: "#FF3D3D",
         colorAdvertencia: "#FF6B6B",
@@ -268,7 +268,7 @@ Object.assign(window.rifaplusConfig, {
                 {url: "images/placeholder-cover.svg", titulo: "Vista Lateral", descripcion: "Contenido visual sincronizándose"}
             ]
         },  // Se sincroniza desde config.json
-        oportunidades: {enabled: true, multiplicador: 3},  // Se sincroniza desde config.json
+        oportunidades: {enabled: false, multiplicador: 1},  // Se sincroniza desde config.json
         descuentos: {
             enabled: false,
             reglas: []
@@ -280,6 +280,7 @@ Object.assign(window.rifaplusConfig, {
         publicacion: {
             bonos: true,
             promociones: true,
+            confianza: true,
             testimonios: false,
             ruletazo: true,
             presorteo: true,
@@ -414,16 +415,16 @@ Object.assign(window.rifaplusConfig, {
     
     tema: {
         colores: {
-            colorPrimario: "#1A1A1A",
-            colorSecundario: "#E63946",
-            colorAccento: "#FF3D3D",
-            colorExito: "#FF3D3D",
-            colorPeligro: "#FF3D3D",
-            colorAdvertencia: "#FF6B6B",
-            colorTexto: "#1F2937",
-            colorTextoSecundario: "#6B7280",
-            colorFondo: "#FFFFFF",
-            colorFondoSecundario: "#F5F5F5"
+            colorPrimario: "#b25379",
+            colorSecundario: "#6d28d9",
+            colorAccento: "#6d28d9",
+            colorExito: "#6d8a76",
+            colorPeligro: "#c87c93",
+            colorAdvertencia: "#d9a4b8",
+            colorTexto: "#392733",
+            colorTextoSecundario: "#786470",
+            colorFondo: "#fdf7fa",
+            colorFondoSecundario: "#fffafd"
         }
     },
 
@@ -1188,47 +1189,41 @@ window.rifaplusConfig.calcularOportunidades = function(cantidadBoletos) {
         };
     }
 
-    // Tipo fijo
-    if (this.rifa.oportunidades.tipo === 'fijo' && this.rifa.oportunidades.oportunidades_fijas) {
+    const cantidadNormalizada = Number.parseInt(cantidadBoletos, 10);
+    if (!Number.isInteger(cantidadNormalizada) || cantidadNormalizada < 1) {
         return {
-            cantidad: this.rifa.oportunidades.oportunidades_fijas,
-            esValido: true,
-            tipo: 'fijo'
+            cantidad: 0,
+            esValido: false,
+            mensaje: 'Cantidad de boletos inválida'
         };
     }
 
-    // Tipo dinámico
-    if (this.rifa.oportunidades.tipo === 'dinamico' && this.rifa.oportunidades.condiciones_dinamicas) {
-        for (const condicion of this.rifa.oportunidades.condiciones_dinamicas) {
-            if (cantidadBoletos >= condicion.cantidad_boletos_minima && 
-                cantidadBoletos <= condicion.cantidad_boletos_maxima) {
-                
-                const cantidadOportunidades = cantidadBoletos * condicion.oportunidades_por_boleto;
-                
-                const rangoDisponible = (this.rifa.oportunidades.rango_oculto.fin - 
-                                        this.rifa.oportunidades.rango_oculto.inicio + 1);
-                
-                if (cantidadOportunidades > rangoDisponible) {
-                    return {
-                        cantidad: 0,
-                        esValido: false,
-                        mensaje: `No hay suficientes oportunidades disponibles`
-                    };
-                }
+    const multiplicador = Number.parseInt(this.rifa.oportunidades.multiplicador, 10);
+    if (!Number.isInteger(multiplicador) || multiplicador < 1) {
+        return {
+            cantidad: 0,
+            esValido: false,
+            mensaje: 'Multiplicador de oportunidades inválido'
+        };
+    }
 
-                return {
-                    cantidad: cantidadOportunidades,
-                    esValido: true,
-                    tipo: 'dinamico'
-                };
-            }
+    const cantidadOportunidades = cantidadNormalizada * multiplicador;
+    const rangoOculto = this.rifa.oportunidades.rango_oculto;
+    if (rangoOculto && Number.isInteger(Number(rangoOculto.inicio)) && Number.isInteger(Number(rangoOculto.fin))) {
+        const rangoDisponible = (Number(rangoOculto.fin) - Number(rangoOculto.inicio)) + 1;
+        if (cantidadOportunidades > rangoDisponible) {
+            return {
+                cantidad: 0,
+                esValido: false,
+                mensaje: 'No hay suficientes oportunidades configuradas para esta compra'
+            };
         }
     }
 
     return {
-        cantidad: 0,
+        cantidad: cantidadOportunidades,
         esValido: true,
-        mensaje: 'No hay oportunidades aplicables'
+        tipo: 'multiplicador'
     };
 };
 
@@ -1313,11 +1308,48 @@ window.rifaplusConfig.obtenerRangoMinimoBoletos = function() {
 };
 
 /**
+ * Obtiene el número máximo real a considerar para formateo
+ * Incluye universo visible y oculto cuando oportunidades está habilitada
+ */
+window.rifaplusConfig.obtenerNumeroMaximoFormateo = function() {
+    const candidatos = [];
+    const total = Number(this.obtenerTotalBoletos());
+
+    if (Number.isFinite(total) && total > 0) {
+        candidatos.push(total - 1);
+    }
+
+    const rangoVisible = this.rifa?.oportunidades?.rango_visible;
+    if (rangoVisible) {
+        const finVisible = Number(rangoVisible.fin);
+        if (Number.isFinite(finVisible) && finVisible >= 0) {
+            candidatos.push(finVisible);
+        }
+    }
+
+    const rangoOculto = this.rifa?.oportunidades?.rango_oculto;
+    if (this.rifa?.oportunidades?.enabled === true && rangoOculto) {
+        const finOculto = Number(rangoOculto.fin);
+        if (Number.isFinite(finOculto) && finOculto >= 0) {
+            candidatos.push(finOculto);
+        }
+    }
+
+    return candidatos.length > 0 ? Math.max(...candidatos) : 0;
+};
+
+/**
+ * Obtiene los dígitos dinámicos del universo real de numeración
+ */
+window.rifaplusConfig.obtenerDigitosNumeracion = function() {
+    return Math.max(1, String(this.obtenerNumeroMaximoFormateo()).length);
+};
+
+/**
  * Formatea número de boleto con dígitos dinámicos
  */
 window.rifaplusConfig.formatearNumeroBoleto = function(numero) {
-    const totalBoletos = this.obtenerTotalBoletos();
-    const digitos = String(totalBoletos - 1).length;
+    const digitos = this.obtenerDigitosNumeracion();
     const num = parseInt(numero, 10);
     
     if (isNaN(num) || num < 0) {
@@ -1541,6 +1573,19 @@ window.rifaplusConfig.actualizarNombreClienteEnUI = function() {
             }
         }
     });
+
+    // 6️⃣ HERO DE COMPRA - mantener sincronizado el nombre actual del organizador
+    const compraHeroTitle = document.getElementById('compraHeroTitle');
+    if (compraHeroTitle) {
+        const nuevoTitulo = nombreCliente
+            ? `¿Listo para ser el proximo ganador de ${nombreCliente}? Elige tus boletos y participa ahora`
+            : 'Elige tus boletos y participa ahora';
+
+        if (compraHeroTitle.textContent !== nuevoTitulo) {
+            compraHeroTitle.textContent = nuevoTitulo;
+            console.log('✅ [UI-Update] #compraHeroTitle actualizado');
+        }
+    }
 };
 
 // Event listener para ganadores

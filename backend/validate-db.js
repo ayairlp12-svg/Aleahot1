@@ -136,16 +136,34 @@ async function validateDatabase() {
                 reason: 'Lookup rápido por numero_orden'
             },
             {
-                name: 'idx_opp_estado_numero_orden',
+                name: 'idx_numero_opu_activo',
                 table: 'orden_oportunidades',
                 critical: true,
-                reason: 'Disponibilidad y asignación de oportunidades'
+                reason: 'Garantiza unicidad de oportunidades activas'
             },
             {
                 name: 'idx_opp_numero_oportunidad',
                 table: 'orden_oportunidades',
                 critical: true,
                 reason: 'Búsqueda directa por oportunidad'
+            },
+            {
+                name: 'idx_opp_numero_boleto_oportunidad',
+                table: 'orden_oportunidades',
+                critical: true,
+                reason: 'Lectura estable de oportunidades precargadas por boleto'
+            },
+            {
+                name: 'idx_opp_numero_boleto_disponibles',
+                table: 'orden_oportunidades',
+                critical: true,
+                reason: 'Asignación por boleto en compras nuevas'
+            },
+            {
+                name: 'idx_opp_numero_orden_oportunidad',
+                table: 'orden_oportunidades',
+                critical: true,
+                reason: 'Consulta y liberación por numero_orden'
             }
         ];
 
@@ -153,12 +171,7 @@ async function validateDatabase() {
             {
                 name: 'idx_opp_disponibles',
                 table: 'orden_oportunidades',
-                reason: 'Optimiza oportunidades disponibles'
-            },
-            {
-                name: 'idx_opp_numero_optimizado',
-                table: 'orden_oportunidades',
-                reason: 'Acelera joins por numero_orden'
+                reason: 'Optimiza rango oculto de oportunidades disponibles'
             },
             {
                 name: 'idx_boletos_vendidos_fecha',
@@ -194,9 +207,39 @@ async function validateDatabase() {
                 reason: 'Índice legacy para número'
             },
             {
+                name: 'idx_opp_estado_numero_orden',
+                table: 'orden_oportunidades',
+                reason: 'Índice heredado del flujo antiguo por estado/orden'
+            },
+            {
                 name: 'idx_opp_numero_orden_estado',
                 table: 'orden_oportunidades',
-                reason: 'Índice compuesto legacy aún válido'
+                reason: 'Índice heredado del flujo antiguo por orden/estado'
+            },
+            {
+                name: 'idx_opp_numero_orden',
+                table: 'orden_oportunidades',
+                reason: 'Índice simple heredado; hoy lo reemplaza numero_orden + numero_oportunidad'
+            },
+            {
+                name: 'idx_opp_numero_optimizado',
+                table: 'orden_oportunidades',
+                reason: 'Duplicado heredado de numero_orden'
+            },
+            {
+                name: 'idx_opp_numero_boleto',
+                table: 'orden_oportunidades',
+                reason: 'Índice simple heredado; hoy lo reemplaza numero_boleto + numero_oportunidad'
+            },
+            {
+                name: 'idx_opp_estado',
+                table: 'orden_oportunidades',
+                reason: 'Índice heredado de conteos por estado del flujo antiguo'
+            },
+            {
+                name: 'idx_opp_estado_numero',
+                table: 'orden_oportunidades',
+                reason: 'Índice heredado del esquema anterior'
             }
         ];
 

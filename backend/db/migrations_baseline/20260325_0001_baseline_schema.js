@@ -111,6 +111,19 @@ exports.up = async function up(knex) {
     });
   }
 
+  const hasSorteoConfiguracion = await knex.schema.hasTable('sorteo_configuracion');
+  if (!hasSorteoConfiguracion) {
+    await knex.schema.createTable('sorteo_configuracion', (table) => {
+      table.increments('id').primary();
+      table.string('clave', 100).notNullable().unique();
+      table.jsonb('valor').notNullable().defaultTo('{}');
+      table.string('actualizado_por', 255).nullable();
+      table.timestamps(true, true);
+      table.index('clave');
+      table.index('updated_at');
+    });
+  }
+
   await knex.raw(`
     ALTER TABLE boletos_estado
     DROP CONSTRAINT IF EXISTS boletos_estado_numero_orden_fk
@@ -151,6 +164,10 @@ exports.up = async function up(knex) {
   `);
 
   await knex.raw(`
+    CREATE INDEX IF NOT EXISTS idx_ordenes_numero_orden
+    ON ordenes(numero_orden)
+  `);
+  await knex.raw(`
     CREATE INDEX IF NOT EXISTS idx_ordenes_estado_created
     ON ordenes(estado, created_at DESC)
   `);
@@ -171,6 +188,10 @@ exports.up = async function up(knex) {
     ON admin_users(rol)
   `);
   await knex.raw(`
+    CREATE INDEX IF NOT EXISTS idx_boletos_estado
+    ON boletos_estado(estado)
+  `);
+  await knex.raw(`
     CREATE INDEX IF NOT EXISTS idx_boletos_estado_updated
     ON boletos_estado(estado, updated_at DESC)
   `);
@@ -179,24 +200,36 @@ exports.up = async function up(knex) {
     ON boletos_estado(numero_orden)
   `);
   await knex.raw(`
-    CREATE INDEX IF NOT EXISTS idx_opp_numero_boleto
+    CREATE INDEX IF NOT EXISTS idx_boletos_numero_orden_estado
+    ON boletos_estado(numero_orden, estado)
+  `);
+  await knex.raw(`
+    CREATE INDEX IF NOT EXISTS idx_boletos_disponibles_para_seleccion
+    ON boletos_estado(numero)
+    WHERE estado = 'disponible' AND numero_orden IS NULL
+  `);
+  await knex.raw(`
+    CREATE INDEX IF NOT EXISTS idx_boletos_vendidos_fecha
+    ON boletos_estado(estado, updated_at DESC)
+    WHERE estado = 'vendido'
+  `);
+  await knex.raw(`
+    CREATE INDEX IF NOT EXISTS idx_opp_numero_boleto_oportunidad
+    ON orden_oportunidades(numero_boleto, numero_oportunidad)
+  `);
+  await knex.raw(`
+    CREATE INDEX IF NOT EXISTS idx_opp_numero_boleto_disponibles
     ON orden_oportunidades(numero_boleto)
-  `);
-  await knex.raw(`
-    CREATE INDEX IF NOT EXISTS idx_opp_numero_orden
-    ON orden_oportunidades(numero_orden)
-  `);
-  await knex.raw(`
-    CREATE INDEX IF NOT EXISTS idx_opp_estado
-    ON orden_oportunidades(estado)
-  `);
-  await knex.raw(`
-    CREATE INDEX IF NOT EXISTS idx_opp_estado_numero
-    ON orden_oportunidades(estado, numero_oportunidad)
+    WHERE estado = 'disponible' AND numero_orden IS NULL
   `);
   await knex.raw(`
     CREATE INDEX IF NOT EXISTS idx_opp_numero_oportunidad
     ON orden_oportunidades(numero_oportunidad)
+  `);
+  await knex.raw(`
+    CREATE INDEX IF NOT EXISTS idx_opp_numero_orden_oportunidad
+    ON orden_oportunidades(numero_orden, numero_oportunidad)
+    WHERE numero_orden IS NOT NULL
   `);
   await knex.raw(`
     CREATE INDEX IF NOT EXISTS idx_opp_disponibles
@@ -207,6 +240,11 @@ exports.up = async function up(knex) {
     CREATE UNIQUE INDEX IF NOT EXISTS idx_numero_opu_activo
     ON orden_oportunidades(numero_oportunidad)
     WHERE estado IN ('apartado', 'vendido')
+  `);
+  await knex.raw(`
+    CREATE INDEX IF NOT EXISTS idx_ordenes_expiracion
+    ON ordenes(estado, created_at DESC)
+    WHERE estado = 'pendiente' AND comprobante_recibido = false
   `);
   await knex.raw(`
     CREATE INDEX IF NOT EXISTS idx_ganadores_numero_orden
@@ -260,6 +298,7 @@ exports.up = async function up(knex) {
 };
 
 exports.down = async function down(knex) {
+  await knex.schema.dropTableIfExists('sorteo_configuracion');
   await knex.schema.dropTableIfExists('ganadores');
   await knex.schema.dropTableIfExists('orden_oportunidades');
   await knex.schema.dropTableIfExists('boletos_estado');

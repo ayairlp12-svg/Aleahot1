@@ -114,7 +114,7 @@ document.addEventListener('DOMContentLoaded', function() {
     inicializarFlujoCompra();
     
     // 🗑️  REMOVED: cargarOportunidadesDisponiblesDelBackend() - obsoleto (sistema antiguo)
-    // Nuevo sistema: cargarOportunidadesDelCarrito() carga 3 oportunidades por boleto seleccionado
+    // Nuevo sistema: cargarOportunidadesDelCarrito() usa el multiplicador configurado por boleto
     
     // Verificar si debe iniciar el flujo de pago (redirigido desde otra página)
     setTimeout(function() {

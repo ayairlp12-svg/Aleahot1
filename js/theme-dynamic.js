@@ -141,6 +141,7 @@ function applyDynamicTheme() {
     if (temaPersonalizadoActivo) {
         updateCSSVariables(tema);
     } else {
+        limpiarCSSVariablesTemaPublico();
         console.log('🎨 [Theme-Dynamic] Tema personalizado inactivo; se conserva la apariencia pública base');
     }
 
@@ -281,9 +282,9 @@ function updateCSSVariables(tema) {
         }
     });
 
-    const primaryRgb = hexToRgbSeguro(tema.primary || '#27527e');
+    const primaryRgb = hexToRgbSeguro(tema.primary || '#b25379');
     root.style.setProperty('--primary-rgb', `${primaryRgb.r}, ${primaryRgb.g}, ${primaryRgb.b}`);
-    const secondaryRgb = hexToRgbSeguro(tema.secondary || '#e39a63');
+    const secondaryRgb = hexToRgbSeguro(tema.secondary || '#6d28d9');
     root.style.setProperty('--secondary-rgb', `${secondaryRgb.r}, ${secondaryRgb.g}, ${secondaryRgb.b}`);
     [5, 8, 10, 12, 15, 18, 20, 25, 30, 35, 40].forEach((nivel) => {
         root.style.setProperty(`--primary-${String(nivel).padStart(2, '0')}`, `rgba(${primaryRgb.r}, ${primaryRgb.g}, ${primaryRgb.b}, ${nivel / 100})`);
@@ -291,9 +292,9 @@ function updateCSSVariables(tema) {
 
     const bgWhite = normalizarHexColorSeguro(tema.bgWhite || '#ffffff');
     const bgLight = normalizarHexColorSeguro(tema.bgLight || '#f7fafc');
-    const primary = normalizarHexColorSeguro(tema.primary || '#12324b');
+    const primary = normalizarHexColorSeguro(tema.primary || '#b25379');
     const primaryDark = normalizarHexColorSeguro(tema.primaryDark || ajustarLuminosidadHex(primary, -0.22));
-    const secondary = normalizarHexColorSeguro(tema.secondary || '#24b8ff');
+    const secondary = normalizarHexColorSeguro(tema.secondary || '#6d28d9');
 
     root.style.setProperty('--surface-base', bgWhite);
     root.style.setProperty('--surface-soft', bgLight);
@@ -325,12 +326,12 @@ function updateCSSVariables(tema) {
     root.style.setProperty('--hero-tint-secondary', `rgba(${secondaryRgb.r}, ${secondaryRgb.g}, ${secondaryRgb.b}, 0.35)`);
     root.style.setProperty('--hero-cta-shadow', `0 12px 26px rgba(${primaryRgb.r}, ${primaryRgb.g}, ${primaryRgb.b}, 0.18)`);
     root.style.setProperty('--hero-cta-shadow-hover', `0 14px 30px rgba(${primaryRgb.r}, ${primaryRgb.g}, ${primaryRgb.b}, 0.22)`);
-    root.style.setProperty('--price-badge-bg', primaryDark);
+    root.style.setProperty('--price-badge-bg', '#161616');
     root.style.setProperty('--price-highlight-bg', mezclarColoresHex(secondary, bgWhite, 0.87));
-    root.style.setProperty('--price-card-bg', `linear-gradient(180deg, ${primary} 0%, ${primaryDark} 100%)`);
-    root.style.setProperty('--price-card-border', `rgba(${primaryRgb.r}, ${primaryRgb.g}, ${primaryRgb.b}, 0.22)`);
-    root.style.setProperty('--price-card-shadow', `0 18px 36px rgba(${primaryRgb.r}, ${primaryRgb.g}, ${primaryRgb.b}, 0.24)`);
-    root.style.setProperty('--price-card-shadow-hover', `0 24px 46px rgba(${primaryRgb.r}, ${primaryRgb.g}, ${primaryRgb.b}, 0.34)`);
+    root.style.setProperty('--price-card-bg', 'linear-gradient(180deg, #191919 0%, #050505 100%)');
+    root.style.setProperty('--price-card-border', 'rgba(255, 255, 255, 0.12)');
+    root.style.setProperty('--price-card-shadow', '0 18px 36px rgba(0, 0, 0, 0.28)');
+    root.style.setProperty('--price-card-shadow-hover', '0 24px 46px rgba(0, 0, 0, 0.38)');
 
     const priceMainColor = asegurarContrasteTexto('#ffffff', primaryDark, 4.5);
     const priceKickerBg = mezclarColoresHex(primary, bgWhite, 0.12);
@@ -348,11 +349,82 @@ function updateCSSVariables(tema) {
     root.style.setProperty('--price-offer-label-color', asegurarContrasteTexto('#f6fbff', priceOfferPanelBg, 4.0));
     root.style.setProperty('--price-offer-value-color', asegurarContrasteTexto('#ffffff', priceOfferPanelBg, 4.5));
     root.style.setProperty('--price-vigencia-bg', priceVigenciaBg);
-    root.style.setProperty('--price-vigencia-border', `rgba(${primaryRgb.r}, ${primaryRgb.g}, ${primaryRgb.b}, 0.14)`);
-    root.style.setProperty('--price-vigencia-text', priceVigenciaText);
+    root.style.setProperty('--price-vigencia-border', 'rgba(0, 0, 0, 0.12)');
+    root.style.setProperty('--price-vigencia-text', asegurarContrasteTexto('#1b1b1b', priceVigenciaBg, 4.5));
 }
 
-function normalizarHexColorSeguro(valor, fallback = '#27527e') {
+function limpiarCSSVariablesTemaPublico() {
+    const root = document.documentElement;
+    const variables = [
+        '--primary',
+        '--primary-dark',
+        '--primary-light',
+        '--secondary',
+        '--success',
+        '--danger',
+        '--text-dark',
+        '--text-light',
+        '--bg-light',
+        '--bg-white',
+        '--border-color',
+        '--primary-rgb',
+        '--secondary-rgb',
+        '--primary-05',
+        '--primary-08',
+        '--primary-10',
+        '--primary-12',
+        '--primary-15',
+        '--primary-18',
+        '--primary-20',
+        '--primary-25',
+        '--primary-30',
+        '--primary-35',
+        '--primary-40',
+        '--surface-base',
+        '--surface-soft',
+        '--surface-tint',
+        '--surface-accent',
+        '--surface-header',
+        '--card-bg',
+        '--card-bg-soft',
+        '--section-bg-primary',
+        '--section-bg-soft',
+        '--section-bg-warm',
+        '--header-bg',
+        '--header-border',
+        '--header-ink',
+        '--header-control-bg',
+        '--header-control-border',
+        '--header-hover-bg',
+        '--header-hover-ink',
+        '--hero-tint-primary',
+        '--hero-tint-secondary',
+        '--hero-cta-shadow',
+        '--hero-cta-shadow-hover',
+        '--price-badge-bg',
+        '--price-highlight-bg',
+        '--price-card-bg',
+        '--price-card-border',
+        '--price-card-shadow',
+        '--price-card-shadow-hover',
+        '--price-kicker-color',
+        '--price-title-color',
+        '--price-main-color',
+        '--price-caption-color',
+        '--price-old-color',
+        '--price-offer-panel-bg',
+        '--price-offer-panel-border',
+        '--price-offer-label-color',
+        '--price-offer-value-color',
+        '--price-vigencia-bg',
+        '--price-vigencia-border',
+        '--price-vigencia-text'
+    ];
+
+    variables.forEach((variable) => root.style.removeProperty(variable));
+}
+
+function normalizarHexColorSeguro(valor, fallback = '#b25379') {
     const limpio = String(valor || '').trim();
     const match = limpio.match(/^#?([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/);
     if (!match) return fallback;
@@ -429,15 +501,15 @@ function construirTemaNormalizado(temaRaw = {}) {
     const coloresRaw = temaRaw.colores || {};
     const colorPrimario = normalizarHexColorSeguro(
         temaRaw.colorPrimario || coloresRaw.colorPrimario || coloresRaw.primary,
-        '#27527e'
+        '#b25379'
     );
     const colorAcento = normalizarHexColorSeguro(
         temaRaw.colorAcento || coloresRaw.colorAccento || coloresRaw.colorSecundario || coloresRaw.secondary,
-        '#e39a63'
+        '#6d28d9'
     );
     const colorFondo = normalizarHexColorSeguro(
         temaRaw.colorFondo || coloresRaw.colorFondo || coloresRaw.bgLight,
-        '#f8f6f2'
+        '#fdf7fa'
     );
     const colorSuperficie = normalizarHexColorSeguro(
         temaRaw.colorSuperficie || coloresRaw.colorSuperficie || coloresRaw.bgWhite,
@@ -464,8 +536,8 @@ function construirTemaNormalizado(temaRaw = {}) {
         primaryDark: coloresRaw.primaryDark || ajustarLuminosidadHex(colorPrimario, -0.22),
         primaryLight: coloresRaw.primaryLight || mezclarColoresHex(colorPrimario, colorSuperficie, 0.82),
         secondary: coloresRaw.secondary || colorAcento,
-        success: coloresRaw.success || '#5f9270',
-        danger: coloresRaw.danger || '#c66f6f',
+        success: coloresRaw.success || '#6d8a76',
+        danger: coloresRaw.danger || '#c87c93',
         textDark: coloresRaw.textDark || colorTexto,
         textLight: coloresRaw.textLight || colorTextoSecundario,
         bgLight: coloresRaw.bgLight || colorFondo,

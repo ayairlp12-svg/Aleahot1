@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="rifaplus-api-base" content="https://demo1m-production.up.railway.app">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' http://127.0.0.1:* http://localhost:* http://localhost:5001; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://fonts.googleapis.com https://cdn.sheetjs.com https://cdn.jsdelivr.net https://demo1m-production.up.railway.app; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; connect-src 'self' http://127.0.0.1:* http://localhost:* https: http://localhost:5001 https://demo1m-production.up.railway.app; img-src 'self' data: https: http://127.0.0.1:* http://localhost:* http://localhost:5001; object-src 'none'; base-uri 'self'; form-action 'self';">
+    <meta name="rifaplus-api-base" content="">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' http://127.0.0.1:* http://localhost:* http://localhost:5001; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://fonts.googleapis.com https://cdn.sheetjs.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; connect-src 'self' http://127.0.0.1:* http://localhost:* https: http://localhost:5001; img-src 'self' data: https: http://127.0.0.1:* http://localhost:* http://localhost:5001; object-src 'none'; base-uri 'self'; form-action 'self';">
     <title>Órdenes - Panel Admin</title>
     <link rel="icon" href="images/placeholder-logo.svg" sizes="32x32">
     <link rel="preload" as="image" href="images/placeholder-logo.svg" fetchpriority="high">
@@ -1680,6 +1680,166 @@
             totalBoletos: 0,
             pendienteTotal: 0
         };
+        let adminOrdersSocket = null;
+        let adminSocketConnected = false;
+        let realtimeRefreshTimeoutId = null;
+        let realtimeRefreshPendiente = false;
+        let pollingOrdenesId = null;
+        let lastRealtimeToastAt = 0;
+
+        function haySesionAdminActiva() {
+            return Boolean(token);
+        }
+
+        async function cargarSocketIoAdmin() {
+            if (typeof window.io !== 'undefined') {
+                return true;
+            }
+
+            const scriptUrl = window.RIFAPLUS_ENV?.socketUrl
+                || window.rifaplusConfig?.obtenerSocketScriptUrl?.()
+                || 'https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.8.1/socket.io.min.js';
+
+            await new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = scriptUrl;
+                script.async = true;
+                script.onload = () => resolve(true);
+                script.onerror = () => reject(new Error('No se pudo cargar socket.io para admin-ordenes'));
+                document.head.appendChild(script);
+            });
+
+            return typeof window.io !== 'undefined';
+        }
+
+        function detenerPollingOrdenesTiempoReal() {
+            if (pollingOrdenesId) {
+                clearInterval(pollingOrdenesId);
+                pollingOrdenesId = null;
+            }
+        }
+
+        function iniciarPollingOrdenesTiempoReal() {
+            detenerPollingOrdenesTiempoReal();
+            pollingOrdenesId = setInterval(() => {
+                if (!haySesionAdminActiva() || document.hidden || adminSocketConnected) {
+                    return;
+                }
+                programarRefreshOrdenesTiempoReal('polling');
+            }, 30000);
+        }
+
+        async function refrescarOrdenesTiempoReal(reason = 'actualizacion') {
+            if (!haySesionAdminActiva()) return;
+            if (document.hidden) {
+                realtimeRefreshPendiente = true;
+                return;
+            }
+
+            realtimeRefreshPendiente = false;
+
+            try {
+                await loadOrdenes({ preservePage: true, silent: true });
+
+                const ahora = Date.now();
+                if (reason === 'nuevaOrden' && (ahora - lastRealtimeToastAt) > 8000) {
+                    lastRealtimeToastAt = ahora;
+                    showNotification('Nueva orden recibida. Lista actualizada automáticamente.', 'info');
+                }
+            } catch (error) {
+                console.warn('[AdminOrdenesRealtime] No se pudo refrescar en tiempo real:', error.message);
+            }
+        }
+
+        function programarRefreshOrdenesTiempoReal(reason = 'actualizacion') {
+            if (!haySesionAdminActiva()) return;
+            if (realtimeRefreshTimeoutId) {
+                clearTimeout(realtimeRefreshTimeoutId);
+            }
+
+            realtimeRefreshTimeoutId = setTimeout(() => {
+                realtimeRefreshTimeoutId = null;
+                refrescarOrdenesTiempoReal(reason);
+            }, 450);
+        }
+
+        function desconectarTiempoRealOrdenes() {
+            if (realtimeRefreshTimeoutId) {
+                clearTimeout(realtimeRefreshTimeoutId);
+                realtimeRefreshTimeoutId = null;
+            }
+
+            if (adminOrdersSocket) {
+                adminOrdersSocket.disconnect();
+                adminOrdersSocket = null;
+            }
+
+            adminSocketConnected = false;
+            detenerPollingOrdenesTiempoReal();
+        }
+
+        async function iniciarTiempoRealOrdenes() {
+            if (!haySesionAdminActiva()) return;
+
+            try {
+                await cargarSocketIoAdmin();
+            } catch (error) {
+                console.warn('[AdminOrdenesRealtime] Socket.io no disponible, usando polling:', error.message);
+                iniciarPollingOrdenesTiempoReal();
+                return;
+            }
+
+            if (typeof window.io === 'undefined') {
+                iniciarPollingOrdenesTiempoReal();
+                return;
+            }
+
+            if (adminOrdersSocket) {
+                adminOrdersSocket.disconnect();
+            }
+
+            const apiBase = (window.RIFAPLUS_ENV?.apiBase)
+                || (window.rifaplusConfig?.backend?.apiBase)
+                || (window.rifaplusConfig?.obtenerApiBase?.())
+                || window.location.origin;
+
+            adminOrdersSocket = window.io(`${apiBase}/admin-ordenes`, {
+                auth: { token },
+                reconnection: true,
+                reconnectionAttempts: 10,
+                reconnectionDelay: 2000,
+                reconnectionDelayMax: 15000,
+                transports: ['websocket', 'polling'],
+                autoConnect: true
+            });
+
+            adminOrdersSocket.on('connect', () => {
+                adminSocketConnected = true;
+                console.log('✅ [AdminOrdenesRealtime] Conectado al canal en tiempo real');
+            });
+
+            adminOrdersSocket.on('disconnect', (reason) => {
+                adminSocketConnected = false;
+                console.warn('🔌 [AdminOrdenesRealtime] Socket desconectado:', reason);
+            });
+
+            adminOrdersSocket.on('connect_error', (error) => {
+                adminSocketConnected = false;
+                console.warn('⚠️ [AdminOrdenesRealtime] Error conectando socket admin:', error.message);
+            });
+
+            adminOrdersSocket.on('adminOrdenCreada', (evento) => {
+                console.log('📥 [AdminOrdenesRealtime] Nueva orden:', evento?.orden?.numero_orden || '(sin folio)');
+                programarRefreshOrdenesTiempoReal('nuevaOrden');
+            });
+
+            adminOrdersSocket.on('adminOrdenActualizada', (evento) => {
+                console.log('📥 [AdminOrdenesRealtime] Orden actualizada:', evento?.orden?.numero_orden || '(sin folio)');
+                programarRefreshOrdenesTiempoReal('actualizacion');
+            });
+
+            iniciarPollingOrdenesTiempoReal();
+        }
 
         // ===== INITIALIZE CONFIG =====
         function initializeConfig() {
@@ -1895,6 +2055,7 @@
                 localStorage.setItem('rifaplus_admin_token', token);
                 document.getElementById('loginScreen').style.display = 'none';
                 document.getElementById('page').classList.add('active');
+                await iniciarTiempoRealOrdenes();
                 
                 // Si hay un redirect pendiente, ir a esa página
                 const redirectAfterLogin = localStorage.getItem('redirectAfterLogin');
@@ -1914,6 +2075,7 @@
 
         // ===== LOGOUT =====
         document.getElementById('logoutBtn').addEventListener('click', () => {
+            desconectarTiempoRealOrdenes();
             token = null;
             localStorage.removeItem('rifaplus_token');
             localStorage.removeItem('rifaplus_admin_token');
@@ -1923,14 +2085,14 @@
         });
 
         // ===== LOAD ORDENES =====
-        async function loadOrdenes({ preservePage = false } = {}) {
+        async function loadOrdenes({ preservePage = false, silent = false } = {}) {
             try {
                 const runId = ++latestLoadRun;
                 isBackgroundLoading = true;
                 if (!preservePage) currentPage = 1;
                 restaurarFiltrosGuardados();
                 persistirFiltros();
-                actualizarInfoCarga('Cargando órdenes...', true);
+                actualizarInfoCarga(silent ? 'Actualizando órdenes...' : 'Cargando órdenes...', true);
 
                 const data = await fetchOrdenesPage(currentPage, ITEMS_PER_PAGE);
                 if (runId !== latestLoadRun) return;
@@ -1948,13 +2110,20 @@
                 renderOrdenes();
             } catch (error) {
                 console.error('Error cargando órdenes:', error);
-                allOrdenes = [];
-                filteredOrdenes = [];
-                totalOrdenesServidor = 0;
-                totalPaginasServidor = 1;
                 isBackgroundLoading = false;
-                actualizarInfoCarga('No se pudieron cargar las órdenes', false);
-                showError('Error al cargar órdenes');
+                if (!silent) {
+                    allOrdenes = [];
+                    filteredOrdenes = [];
+                    totalOrdenesServidor = 0;
+                    totalPaginasServidor = 1;
+                    actualizarInfoCarga('No se pudieron cargar las órdenes', false);
+                    showError('Error al cargar órdenes');
+                } else {
+                    const totalPages = Math.max(1, totalPaginasServidor);
+                    const filtrosActivos = describirFiltrosActivos();
+                    const sufijoFiltros = filtrosActivos.length ? ` · filtros: ${filtrosActivos.join(' · ')}` : '';
+                    actualizarInfoCarga(`${totalOrdenesServidor.toLocaleString()} resultado(s) · página ${Math.min(currentPage, totalPages)} de ${totalPages}${sufijoFiltros}`, false);
+                }
             }
         }
 
@@ -2196,6 +2365,17 @@
                     }
                 });
             }
+        });
+
+        document.addEventListener('visibilitychange', () => {
+            if (!haySesionAdminActiva()) return;
+            if (!document.hidden && realtimeRefreshPendiente) {
+                programarRefreshOrdenesTiempoReal('actualizacion');
+            }
+        });
+
+        window.addEventListener('beforeunload', () => {
+            desconectarTiempoRealOrdenes();
         });
 
         // ===== ACTIONS =====
@@ -3255,6 +3435,7 @@ ${window.location.origin}/mis-boletos.html
                 localStorage.setItem('rifaplus_admin_token', token);
                 document.getElementById('loginScreen').style.display = 'none';
                 document.getElementById('page').classList.add('active');
+                await iniciarTiempoRealOrdenes();
                 loadOrdenes();
             } else {
                 document.getElementById('loginScreen').style.display = 'flex';

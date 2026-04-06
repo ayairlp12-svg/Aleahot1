@@ -108,17 +108,15 @@ function compactRanges(arr) {
 
 function crearFormateadorNumerosOrdenFormal(...colecciones) {
     const valoresCrudos = colecciones.flat().filter((valor) => valor !== null && valor !== undefined && valor !== '');
-    const totalBoletosConfig = Number(window.rifaplusConfig?.rifa?.totalBoletos);
-    const rangoVisibleFin = Number(window.rifaplusConfig?.rifa?.oportunidades?.rango_visible?.fin);
+    const digitosConfig = typeof window.rifaplusConfig?.obtenerDigitosNumeracion === 'function'
+        ? Number(window.rifaplusConfig.obtenerDigitosNumeracion())
+        : 0;
 
     let digitos = 0;
 
-    // Priorizar la configuración sincronizada real de la rifa.
-    // El valor 250000 es el fallback de arranque de config.js y no debe imponerse aquí.
-    if (Number.isFinite(totalBoletosConfig) && totalBoletosConfig > 0 && totalBoletosConfig !== 250000) {
-        digitos = String(Math.max(totalBoletosConfig - 1, 0)).length;
-    } else if (Number.isFinite(rangoVisibleFin) && rangoVisibleFin > 0) {
-        digitos = String(rangoVisibleFin).length;
+    // Priorizar la configuración sincronizada real del universo visible + oculto.
+    if (Number.isFinite(digitosConfig) && digitosConfig > 0) {
+        digitos = digitosConfig;
     } else {
         const digitosCrudos = valoresCrudos
             .map((valor) => String(valor).replace(/[^0-9]/g, ''))
@@ -261,13 +259,17 @@ function abrirOrdenFormal(cuenta) {
     
     // Ordenar para consistencia
     oportunidadesAlCarrito.sort((a, b) => a - b);
+
+    const multiplicadorOportunidades = Number(window.rifaplusConfig?.rifa?.oportunidades?.multiplicador) > 0
+        ? Number(window.rifaplusConfig.rifa.oportunidades.multiplicador)
+        : 0;
     
     // Almacenar las oportunidades en la orden (será incluida en payload)
     ordenActual.boletosOcultos = oportunidadesAlCarrito;
     console.log('[Orden-Formal] 📌 Guardadas oportunidades validadas en ordenActual:', {
         cantidad: oportunidadesAlCarrito.length,
         boletosEnOrden: boletos.length,
-        esperadas: boletos.length * 3,  // ✅ Referencia: 3 opps por boleto
+        esperadas: boletos.length * multiplicadorOportunidades,
         oportunidades: oportunidadesAlCarrito.slice(0, 5)
     });
     
@@ -1179,6 +1181,7 @@ async function guardarOrden() {
                     boletos: payload.boletos,
                     boletosOcultos: payload.boletosOcultos,
                     cantidad_boletos: payload.cantidad_boletos,
+                    cantidad_oportunidades: Number(respuestaExitosa?.data?.cantidad_oportunidades ?? payload.boletosOcultos?.length ?? 0),
                     totales: payload.totales,
                     cliente: payload.cliente,
                     fecha: new Date().toISOString()
@@ -1192,10 +1195,11 @@ async function guardarOrden() {
                 // ⭐ MOSTRAR MODAL Y AUTO-REDIRIGIR A MIS BOLETOS
                 console.log('🚀 Mostrando modal de orden confirmada');
                 if (typeof mostrarModalOrdenConfirmada === 'function') {
-                    // ✅ Calcular oportunidades correctamente (suma total, no array length)
-                    const totalOportunidades = Array.isArray(datosFinalesOrden.boletosOcultos)
-                        ? datosFinalesOrden.boletosOcultos.length
-                        : 0;
+                    const totalOportunidades = Number.isFinite(Number(datosFinalesOrden.cantidad_oportunidades))
+                        ? Number(datosFinalesOrden.cantidad_oportunidades)
+                        : (Array.isArray(datosFinalesOrden.boletosOcultos)
+                            ? datosFinalesOrden.boletosOcultos.length
+                            : 0);
                     
                     mostrarModalOrdenConfirmada({
                         ordenId: datosFinalesOrden.ordenId,
