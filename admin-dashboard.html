@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="rifaplus-api-base" content="">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' http://127.0.0.1:* http://localhost:*; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://fonts.googleapis.com https://cdn.sheetjs.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; connect-src 'self' http://127.0.0.1:* http://localhost:* https: http://localhost:5001; img-src 'self' data: https:; object-src 'none'; base-uri 'self'; form-action 'self';">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' http://127.0.0.1:* http://localhost:*; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://fonts.googleapis.com https://cdn.sheetjs.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; connect-src 'self' http://127.0.0.1:* http://localhost:* https: http://localhost:5001 http://127.0.0.1:5001 ws: wss: ws://localhost:5001 wss://localhost:5001 ws://127.0.0.1:5001 wss://127.0.0.1:5001; img-src 'self' data: https:; object-src 'none'; base-uri 'self'; form-action 'self';">
     <title>Panel Admin - SORTEOS YEPE</title>
     <link rel="icon" href="images/placeholder-logo.svg" sizes="32x32">
     <link rel="preload" as="image" href="images/placeholder-logo.svg" fetchpriority="high">
@@ -44,17 +44,32 @@
                 }
             });
             
-            // Forzar recarga de config invalidando caché
-            console.log('✅ localStorage limpiado completamente');
         })();
     </script>
     <script src="js/deploy-config.js"></script>
     <script src="js/config.js?v=20251228.15"></script>
     <script src="js/config-sync.js"></script>
     <script src="js/theme-dynamic.js"></script>
-    <script src="js/admin-layout.js?v=20251228.15"></script>
-    <script src="js/admin-header-user.js"></script>
+    <script src="js/admin-layout.js?v=20260406.1"></script>
+    <script src="js/admin-header-user.js?v=20260406.1"></script>
     <script src="js/modal-scroll-lock.js"></script>
+    <script>
+        function debugAdminDashboard() {
+            let enabled = window.RIFAPLUS_DEBUG_ADMIN === true;
+
+            if (!enabled) {
+                try {
+                    enabled = localStorage.getItem('rifaplus_debug_admin') === 'true';
+                } catch (error) {
+                    enabled = false;
+                }
+            }
+
+            if (enabled && typeof console !== 'undefined' && typeof console.debug === 'function') {
+                console.debug('[AdminDashboard]', ...arguments);
+            }
+        }
+    </script>
     <script>
         // Aplicar estado de visibilidad de ingresos ANTES de renderizar el DOM
         // Esto evita el "flash" donde se muestra la cantidad antes de ocultarse
@@ -2948,7 +2963,7 @@
                     barraLleno.style.width = porcentajeProyectado + '%';
                 }
                 
-                console.log('📊 [Pronóstico] Calculado:', { boletosVendidos, velocidad, diasRestantes, proyeccionFinal, porcentajeProyectado });
+                debugAdminDashboard('Pronostico calculado', { boletosVendidos, velocidad, diasRestantes, proyeccionFinal, porcentajeProyectado });
                 
             } catch (error) {
                 console.error('❌ [Pronóstico] Error:', error);
@@ -2994,7 +3009,7 @@
                 return;
             }
 
-            console.log('✓ [AdminCountdown] Fecha validada:', window.rifaplusConfig.obtenerFechaSorteoFormato());
+            debugAdminDashboard('Fecha del countdown validada', window.rifaplusConfig.obtenerFechaSorteoFormato());
 
             /**
              * Actualizar cada segundo la cuenta regresiva
@@ -3074,7 +3089,7 @@
 
             actualizarCuentaRegresiva();
             intervaloConteoRegresivo = setInterval(actualizarCuentaRegresiva, 1000);
-            console.log('✓ [AdminCountdown] Cuenta regresiva inicializada - referencia: config.js rifa.fechaSorteo');
+            debugAdminDashboard('Cuenta regresiva inicializada');
         }
 
         /* ============================================================ */
@@ -3088,18 +3103,18 @@
         async function cargarEstadisticas() {
             try {
                 const token = obtenerTokenActual();
-                console.log('📊 [cargarEstadisticas] Token obtenido:', !!token, token?.substring(0, 20) + '...');
+                debugAdminDashboard('cargarEstadisticas token disponible', !!token);
                 if (!token) {
                     console.error('⚠️ [cargarEstadisticas] No hay token disponible');
                     return;
                 }
-                console.log('📡 [cargarEstadisticas] Enviando petición a:', `${URL_API}/api/admin/stats`);
+                debugAdminDashboard('cargarEstadisticas request', `${URL_API}/api/admin/stats`);
                 const respuestaEstadisticas = await fetch(`${URL_API}/api/admin/stats`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
-                console.log('📥 [cargarEstadisticas] Status:', respuestaEstadisticas.status);
+                debugAdminDashboard('cargarEstadisticas status', respuestaEstadisticas.status);
                 const datosEstadisticas = await respuestaEstadisticas.json();
-                console.log('📥 [cargarEstadisticas] Response:', datosEstadisticas);
+                debugAdminDashboard('cargarEstadisticas response', datosEstadisticas);
                 if (!datosEstadisticas.success) throw new Error(datosEstadisticas.message);
 
                 const estadisticas = datosEstadisticas.data;
@@ -3168,15 +3183,15 @@
 
                 // ✨ CARGAR ESTADÍSTICAS DE OPORTUNIDADES si están habilitadas
                 const oportunidadesHabilitadas = config.rifa?.oportunidades?.enabled === true;
-                console.log('🔍 [cargarEstadisticas] Debug - config.rifa:', config.rifa);
-                console.log('🔍 [cargarEstadisticas] oportunidadesHabilitadas:', oportunidadesHabilitadas);
+                debugAdminDashboard('cargarEstadisticas config rifa', config.rifa);
+                debugAdminDashboard('cargarEstadisticas oportunidades habilitadas', oportunidadesHabilitadas);
                 
                 // ✅ SOLO mostrar si están habilitadas en config
                 if (oportunidadesHabilitadas) {
-                    console.log('✅ [cargarEstadisticas] Cargando oportunidades...');
+                    debugAdminDashboard('cargarEstadisticas cargando oportunidades');
                     await cargarEstadisticasOportunidades();
                 } else {
-                    console.log('⏭️ [cargarEstadisticas] Oportunidades deshabilitadas en config');
+                    debugAdminDashboard('cargarEstadisticas oportunidades deshabilitadas');
                     // Ocultar tarjetas si están deshabilitadas
                     document.getElementById('oportunidadesCard').style.display = 'none';
                     document.getElementById('oportunidadesAsignadasCard').style.display = 'none';
@@ -3205,9 +3220,7 @@
          */
         async function cargarEstadisticasOportunidades() {
             try {
-                console.log('═══════════════════════════════════════════════════════════');
-                console.log('🚀 [cargarEstadisticasOportunidades] INICIANDO CARGA');
-                console.log('═══════════════════════════════════════════════════════════');
+                debugAdminDashboard('cargarEstadisticasOportunidades iniciando');
 
                 const token = obtenerTokenActual();
                 if (!token) {
@@ -3215,7 +3228,7 @@
                     return;
                 }
 
-                console.log('📊 [cargarEstadisticasOportunidades] Token obtenido: ✅');
+                debugAdminDashboard('cargarEstadisticasOportunidades token disponible');
 
                 // Mostrar las 3 tarjetas
                 const cardDisp = document.getElementById('oportunidadesCard');
@@ -3226,10 +3239,10 @@
                 if (cardAsig) cardAsig.style.display = 'block';
                 if (cardApar) cardApar.style.display = 'block';
 
-                console.log('👁️ [cargarEstadisticasOportunidades] Tarjetas visibles: ✅');
+                debugAdminDashboard('cargarEstadisticasOportunidades tarjetas visibles');
 
                 // Consultar datos REALES desde BD
-                console.log('🔍 [cargarEstadisticasOportunidades] GET /api/admin/oportunidades-stats...');
+                debugAdminDashboard('cargarEstadisticasOportunidades request', '/api/admin/oportunidades-stats');
                 
                 const respuesta = await fetch(`${URL_API}/api/admin/oportunidades-stats`, {
                     method: 'GET',
@@ -3261,10 +3274,7 @@
                 if (elemAssigned) elemAssigned.textContent = Number(stats.asignadas || 0).toLocaleString();
                 if (elemReserved) elemReserved.textContent = Number(stats.apartadas || 0).toLocaleString();
 
-                console.log(`   - Disponibles: ${stats.disponibles}`);
-                console.log(`   - Asignadas: ${stats.asignadas}`);
-                console.log(`   - Apartadas: ${stats.apartadas}`);
-                console.log('═══════════════════════════════════════════════════════════');
+                debugAdminDashboard('cargarEstadisticasOportunidades stats', stats);
 
             } catch (error) {
                 console.error('❌ [cargarEstadisticasOportunidades] Error:', error.message);
@@ -3277,7 +3287,7 @@
                 if (elemAssigned) elemAssigned.textContent = 'Error';
                 if (elemReserved) elemReserved.textContent = 'Error';
                 
-                console.log('═══════════════════════════════════════════════════════════');
+                debugAdminDashboard('cargarEstadisticasOportunidades finalizo con error');
             }
         }
 
@@ -3285,7 +3295,7 @@
          * FUNCIÓN DEBUGGING: Mostrar tarjetas oportunidades manualmente desde consola
          */
         window.mostrarOportunidadesTest = function() {
-            console.log('🟢 [mostrarOportunidadesTest] Mostrando tarjetas manualmente...');
+            debugAdminDashboard('Mostrando tarjetas de oportunidades manualmente');
             document.getElementById('oportunidadesCard').style.display = 'block';
             document.getElementById('oportunidadesAsignadasCard').style.display = 'block';
             document.getElementById('oportunidadesApartadasCard').style.display = 'block';
@@ -3338,7 +3348,7 @@
                         vendidos = Number(datosBoletosStats.data?.vendidos || 0);
                         apartados = Number(datosBoletosStats.data?.apartados || 0);
                         disponibles = Math.max(0, totalBoletosDisponibles - (vendidos + apartados));
-                        console.log('Boletos cargados:', { vendidos, disponibles, apartados });
+                        debugAdminDashboard('Boletos cargados para grafica de distribucion', { vendidos, disponibles, apartados });
                     }
                 } catch (error) {
                     console.warn('Error cargando boletos:', error);
@@ -3380,17 +3390,11 @@
                                        String(hoy.getMonth() + 1).padStart(2, '0') + '-' + 
                                        String(hoy.getDate()).padStart(2, '0');
                         
-                        datosGrafica.forEach((item, indice) => {
-                            const esHoy = item.fecha === fechaHoy ? '(HOY)' : '';
-                            console.log(`  [${indice}] ${item.fecha} ${esHoy}: ${item.boletos} boletos`);
+                        debugAdminDashboard('Datos de tendencia cargados desde backend', {
+                            fechaHoy,
+                            total: datosGrafica.reduce((suma, d) => suma + (d.boletos || 0), 0),
+                            items: datosGrafica
                         });
-                        
-                        console.log('✅ Datos de tendencia cargados desde backend:');
-                        datosGrafica.forEach((item, indice) => {
-                            const esHoy = item.fecha === fechaHoy ? '(HOY)' : '';
-                            console.log(`  [${indice}] ${item.fecha} ${esHoy}: ${item.boletos} boletos`);
-                        });
-                        console.log(`📊 Total: ${datosGrafica.reduce((suma, d) => suma + (d.boletos || 0), 0)} boletos`);
                     } else {
                         console.warn('No hay datos válidos del backend');
                         throw new Error('No hay datos de tendencia');
@@ -3411,7 +3415,7 @@
                             boletos: boletosSimulados
                         });
                     }
-                    console.log('📊 Usando datos vacíos (sin órdenes confirmadas)');
+                    debugAdminDashboard('Usando datos vacios para tendencia');
                 }
 
                 const trendMeta = document.getElementById('trendMeta');
@@ -3547,7 +3551,7 @@
                         }
                     }
                 });
-                console.log('Gráfica de distribución creada exitosamente');
+                debugAdminDashboard('Grafica de distribucion creada');
             } catch (error) {
                 console.error('Error creando gráfica de distribución:', error);
             }
@@ -3572,9 +3576,7 @@
                     return cantidad;
                 }) : [0];
 
-                console.log('📈 Datos para gráfica de tendencia:');
-                console.log('  - Etiquetas:', etiquetas);
-                console.log('  - Boletos:', boletos);
+                debugAdminDashboard('Datos para grafica de tendencia', { etiquetas, boletos });
 
                 const canvasTendencia = document.getElementById('trendChart');
                 if (!canvasTendencia) {
@@ -3675,7 +3677,7 @@
                         }
                     }
                 });
-                console.log('✅ Gráfica de tendencia creada exitosamente');
+                debugAdminDashboard('Grafica de tendencia creada');
             } catch (error) {
                 console.error('❌ Error creando gráfica de tendencia:', error);
             }
@@ -3692,9 +3694,8 @@
         async function cargarOrdenesPendientes() {
             try {
                 const token = obtenerTokenActual();
-                console.log('🔐 [cargarOrdenesPendientes] Token disponible:', !!token);
-                console.log('🔐 [cargarOrdenesPendientes] Longitud del token:', token?.length || 0);
-                console.log('📡 [cargarOrdenesPendientes] URL:', `${URL_API}/api/ordenes?limit=1000`);
+                debugAdminDashboard('cargarOrdenesPendientes token disponible', !!token);
+                debugAdminDashboard('cargarOrdenesPendientes request', `${URL_API}/api/ordenes?limit=1000`);
                 
                 if (!token) {
                     console.error('⚠️ [cargarOrdenesPendientes] No hay token disponible');
@@ -3705,9 +3706,9 @@
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 
-                console.log('📊 [cargarOrdenesPendientes] Status:', respuesta.status);
+                debugAdminDashboard('cargarOrdenesPendientes status', respuesta.status);
                 const datos = await respuesta.json();
-                console.log('📥 [cargarOrdenesPendientes] Respuesta:', datos);
+                debugAdminDashboard('cargarOrdenesPendientes response', datos);
                 
                 if (!datos.success) throw new Error(datos.message);
 
@@ -3861,7 +3862,7 @@
          */
         async function inicializarDashboard() {
             try {
-                console.log('Dashboard inicializándose...');
+                debugAdminDashboard('Dashboard inicializandose');
                 
                 // Ocultar opciones del sidebar según el rol del usuario
                 restringirAccesoConfiguracion();
@@ -3870,13 +3871,13 @@
                 iniciarCuentaRegresiva();
                 
                 // ⭐ IMPORTANTE: Hacer requests SECUENCIALMENTE para respetar límite de conexiones de Supabase
-                console.log('Cargando estadísticas...');
+                debugAdminDashboard('Cargando estadisticas iniciales');
                 await cargarEstadisticas();
                 // Esperar antes del siguiente request (evitar saturar conexiones)
                 await new Promise(resolve => setTimeout(resolve, 300));
                 
                 calcularPronosticoVentas(); // 🎯 Calcular pronóstico después de cargar stats
-                console.log('Estadísticas cargadas, ahora cargando gráficas...');
+                debugAdminDashboard('Estadisticas cargadas; cargando graficas');
                 
                 // Esperar antes de cargar gráficas
                 await new Promise(resolve => setTimeout(resolve, 500));
@@ -3886,7 +3887,7 @@
                 await new Promise(resolve => setTimeout(resolve, 300));
                 await cargarOrdenesPendientes();
                 
-                console.log('Dashboard inicializado completamente');
+                debugAdminDashboard('Dashboard inicializado completamente');
                 
                 // Intervalos con espaciado para no saturar
                 intervaloEstadisticas = setInterval(() => {
@@ -3959,7 +3960,7 @@
                 });
             }
             const tokenGuardado = await ADMIN_LAYOUT.esperarAutenticacion();
-            console.log('🔐 [PageLoad] Token verificado:', !!tokenGuardado);
+            debugAdminDashboard('Token verificado al cargar la pagina', !!tokenGuardado);
 
             if (tokenGuardado) {
                 tokenAutenticacion = tokenGuardado;

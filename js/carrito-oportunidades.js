@@ -6,6 +6,54 @@
  * ============================================================
  */
 
+const CARRITO_OPPS_DEBUG_KEY = 'rifaplus_debug_carrito_oportunidades';
+
+function debugCarritoOportunidades() {
+    let enabled = window.RIFAPLUS_DEBUG_CARRITO_OPPS === true;
+
+    if (!enabled) {
+        try {
+            enabled = localStorage.getItem(CARRITO_OPPS_DEBUG_KEY) === 'true';
+        } catch (error) {
+            enabled = false;
+        }
+    }
+
+    if (enabled && typeof console !== 'undefined' && typeof console.debug === 'function') {
+        console.debug('[CARRITO-OPPS]', ...arguments);
+    }
+}
+
+function asegurarCacheOportunidadesCarrito() {
+    if (!window.rifaplusOportunidadesCarrito) {
+        window.rifaplusOportunidadesCarrito = {};
+    }
+
+    return window.rifaplusOportunidadesCarrito;
+}
+
+function normalizarOportunidadesCarrito(oportunidades) {
+    if (!Array.isArray(oportunidades) || oportunidades.length === 0) {
+        return [];
+    }
+
+    return [...new Set(
+        oportunidades
+            .map(o => Number(o))
+            .filter(o => !Number.isNaN(o) && Number.isFinite(o) && o > 0)
+    )].sort((a, b) => a - b);
+}
+
+function obtenerBoletosSeleccionadosCarritoOportunidades() {
+    if (typeof obtenerBoletosSelecionados === 'function') {
+        return obtenerBoletosSelecionados();
+    }
+
+    return Array.isArray(window.rifaplusSelectedNumbers)
+        ? window.rifaplusSelectedNumbers
+        : [];
+}
+
 /**
  * 🎯 FUNCIÓN PRINCIPAL: Actualizar oportunidades EN CARRITO Y EN DOM
  * ✅ COMPLETA: Guarda datos + ACTUALIZA UI
@@ -16,14 +64,9 @@ function actualizarOportunidadesEnCarrito(numerosOrdenados) {
         console.warn('[CARRITO-OPPS] ⚠️ OportunidadesManager no disponible');
         return;
     }
-    
-    console.log('[CARRITO-OPPS] 🔄 Actualizando oportunidades en carrito...');
-    
-    // Inicializar estructura global si no existe
-    if (!window.rifaplusOportunidadesCarrito) {
-        window.rifaplusOportunidadesCarrito = {};
-        console.log('[CARRITO-OPPS] ✅ Inicializado window.rifaplusOportunidadesCarrito');
-    }
+
+    const cacheOportunidades = asegurarCacheOportunidadesCarrito();
+    debugCarritoOportunidades('Actualizando oportunidades en carrito');
     
     // Obtener oportunidades del manager en batch
     const oportunidadesPorBoleto = window.oportunidadesManager.obtenerMultiples(numerosOrdenados);
@@ -36,17 +79,11 @@ function actualizarOportunidadesEnCarrito(numerosOrdenados) {
             const opps = oportunidadesPorBoleto[numero];
             
             // ✅ PASO 1: GUARDAR EN ESTRUCTURA GLOBAL (para orden-formal.js y otros módulos)
-            if (Array.isArray(opps) && opps.length > 0) {
-                // Deduplicar y validar
-                const oppsUnicos = [...new Set(
-                    opps.map(o => Number(o))
-                        .filter(o => !isNaN(o) && Number.isFinite(o) && o > 0)
-                )].sort((a, b) => a - b);
-                
-                if (oppsUnicos.length > 0) {
-                    window.rifaplusOportunidadesCarrito[String(numero)] = oppsUnicos;
-                    actualizadosGlobales++;
-                }
+            const oppsUnicos = normalizarOportunidadesCarrito(opps);
+
+            if (oppsUnicos.length > 0) {
+                cacheOportunidades[String(numero)] = oppsUnicos;
+                actualizadosGlobales++;
             }
             
             // ✅ PASO 2: ACTUALIZAR DOM (mostrar en pantalla)
@@ -55,8 +92,8 @@ function actualizarOportunidadesEnCarrito(numerosOrdenados) {
             }
         }
     }
-    
-    console.log(`[CARRITO-OPPS] ✅ Completado: ${actualizadosGlobales} en memoria, ${actualizadosUI} en DOM`);
+
+    debugCarritoOportunidades(`Actualizacion completada: ${actualizadosGlobales} en memoria, ${actualizadosUI} en DOM`);
 }
 
 /**
@@ -68,7 +105,7 @@ function _actualizarDOMOportunidad(numero) {
     const opps = window.rifaplusOportunidadesCarrito?.[String(numero)];
     
     if (!opps || !Array.isArray(opps) || opps.length === 0) {
-        console.debug(`[CARRITO-OPPS] ℹ️  Boleto #${numero}: sin oportunidades`);
+        debugCarritoOportunidades(`Boleto #${numero}: sin oportunidades`);
         return false;
     }
     
@@ -76,7 +113,7 @@ function _actualizarDOMOportunidad(numero) {
     const boletoPrincipal = document.querySelector(`.carrito-item[data-numero="${numero}"]`);
     if (!boletoPrincipal) {
         // El boleto fue borrado del carrito - no intentar más
-        console.debug(`[CARRITO-OPPS] ℹ️  Boleto #${numero}: disponible pero no en carrito actual (fue removido)`);
+        debugCarritoOportunidades(`Boleto #${numero}: ya no esta en el carrito`);
         return false;
     }
     
@@ -97,8 +134,8 @@ function _actualizarDOMOportunidad(numero) {
         container.innerHTML = `<div class="carrito-item-numero carrito-item-numero--full"><span class="carrito-item-oportunidades-text"><i class="fas fa-check-circle carrito-item-oportunidades-check"></i><strong>Oportunidades:</strong> ${oppStr}</span></div>`;
         container.style.opacity = '1';
         container.setAttribute('data-oportunidades', 'loaded');
-        
-        console.log(`[CARRITO-OPPS] ✅ Boleto #${numero}: ${opps.length} opps mostradas`);
+
+        debugCarritoOportunidades(`Boleto #${numero}: ${opps.length} oportunidades mostradas`);
         return true;
     } catch (error) {
         console.error(`[CARRITO-OPPS] ❌ Error actualizando boleto #${numero}:`, error);
@@ -116,18 +153,12 @@ function sincronizarOportunidadesAlCarrito() {
         console.warn('[CARRITO-OPPS] ⚠️ OportunidadesManager no disponible para sincronizar');
         return;
     }
-    
-    if (!window.rifaplusOportunidadesCarrito) {
-        window.rifaplusOportunidadesCarrito = {};
-    }
-    
-    // Obtener los boletos seleccionados del carrito
-    const boletosSelecionados = typeof obtenerBoletosSelecionados === 'function' 
-        ? obtenerBoletosSelecionados() 
-        : window.rifaplusSelectedNumbers || [];
+
+    const cacheOportunidades = asegurarCacheOportunidadesCarrito();
+    const boletosSelecionados = obtenerBoletosSeleccionadosCarritoOportunidades();
     
     if (!Array.isArray(boletosSelecionados) || boletosSelecionados.length === 0) {
-        console.log('[CARRITO-OPPS] 📭 No hay boletos para sincronizar');
+        debugCarritoOportunidades('No hay boletos para sincronizar');
         return;
     }
     
@@ -138,26 +169,20 @@ function sincronizarOportunidadesAlCarrito() {
         for (const numero of boletosSelecionados) {
             const numStr = String(numero);
             if (Number(numero) in allOpps && Array.isArray(allOpps[Number(numero)])) {
-                // Validar y deduplicar
-                const oppsRaw = allOpps[Number(numero)];
-                const oppsLimpias = [...new Set(
-                    oppsRaw
-                        .map(o => Number(o))
-                        .filter(o => !isNaN(o) && Number.isFinite(o) && o > 0)
-                )].sort((a, b) => a - b);
+                const oppsLimpias = normalizarOportunidadesCarrito(allOpps[Number(numero)]);
                 
                 if (oppsLimpias.length > 0) {
-                    window.rifaplusOportunidadesCarrito[numStr] = oppsLimpias;
+                    cacheOportunidades[numStr] = oppsLimpias;
                     sincronizados++;
                 }
             }
         }
         
-        const totalOppsGlobal = Object.values(window.rifaplusOportunidadesCarrito)
+        const totalOppsGlobal = Object.values(cacheOportunidades)
             .reduce((sum, arr) => sum + (Array.isArray(arr) ? arr.length : 0), 0);
-        
-        console.log(`[CARRITO-OPPS] ✅ Sincronizadas ${sincronizados}/${boletosSelecionados.length} boletos (${totalOppsGlobal} opps totales)`);
-        return window.rifaplusOportunidadesCarrito;
+
+        debugCarritoOportunidades(`Sincronizadas ${sincronizados}/${boletosSelecionados.length} boletos (${totalOppsGlobal} oportunidades)`);
+        return cacheOportunidades;
     } catch (error) {
         console.error('[CARRITO-OPPS] ❌ Error sincronizando:', error);
         return null;
@@ -178,7 +203,7 @@ function obtenerEstadisticasOportunidades() {
 function limpiarCacheOportunidades() {
     if (window.oportunidadesManager) {
         window.oportunidadesManager.limpiar();
-        console.log('[CARRITO-OPPS] 🧹 Cache limpiado');
+        debugCarritoOportunidades('Cache limpiado');
     }
 }
 
@@ -189,5 +214,3 @@ window.actualizarOportunidadesEnCarrito = actualizarOportunidadesEnCarrito;
 window.sincronizarOportunidadesAlCarrito = sincronizarOportunidadesAlCarrito;
 window.obtenerEstadisticasOportunidades = obtenerEstadisticasOportunidades;
 window.limpiarCacheOportunidades = limpiarCacheOportunidades;
-
-console.log('✅ carrito-oportunidades.js cargado - Sistema unificado de oportunidades activo');

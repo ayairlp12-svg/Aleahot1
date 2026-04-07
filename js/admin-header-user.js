@@ -6,6 +6,22 @@
 
 (function() {
     'use strict';
+
+    function debugAdminHeader() {
+        let enabled = window.RIFAPLUS_DEBUG_ADMIN === true;
+
+        if (!enabled) {
+            try {
+                enabled = localStorage.getItem('rifaplus_debug_admin') === 'true';
+            } catch (error) {
+                enabled = false;
+            }
+        }
+
+        if (enabled && typeof console !== 'undefined' && typeof console.debug === 'function') {
+            console.debug('[AdminHeader]', ...arguments);
+        }
+    }
     
     /**
      * Decodificar JWT (busca en múltiples claves posibles)
@@ -33,7 +49,7 @@
             // Decodificar payload (parte 2)
             const payload = partes[1];
             const decoded = JSON.parse(atob(payload));
-            console.log('[AdminHeader] Token decodificado:', decoded);
+            debugAdminHeader('Token decodificado', decoded);
             return decoded;
         } catch (error) {
             console.error('[AdminHeader] Error decodificando JWT:', error);
@@ -107,8 +123,6 @@
                 return;
             }
 
-            console.log('[AdminHeader] Llenando usuario:', usuario.username, usuario.rol);
-
             if (nombreDisplay) {
                 nombreDisplay.textContent = usuario.username || 'Usuario';
             }
@@ -129,11 +143,8 @@
      * Inicializar: Inyectar y llenar
      */
     function inicializar() {
-        console.log('[AdminHeader] Inicializando...');
-        
         // Esperar a que el DOM esté listo
         const ejecutar = () => {
-            console.log('[AdminHeader] DOM listo, inyectando...');
             inyectarUserInfo();
             llenarUsuarioEnHeader();
         };
@@ -152,7 +163,7 @@
      */
     window.AdminHeaderManager = {
         reload: function() {
-            console.log('[AdminHeader] Recargando info de usuario...');
+            debugAdminHeader('Recargando informacion de usuario');
             llenarUsuarioEnHeader();
         }
     };
@@ -163,7 +174,7 @@
     // Escuchar cambios en el token (para sincronizar entre pestañas)
     window.addEventListener('storage', (evento) => {
         if (evento.key?.includes('token')) {
-            console.log('[AdminHeader] Token cambió, actualizando usuario...');
+            debugAdminHeader('Token cambio en storage; actualizando usuario');
             llenarUsuarioEnHeader();
         }
     });

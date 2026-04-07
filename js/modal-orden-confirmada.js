@@ -7,6 +7,33 @@
  * ============================================================
  */
 
+function normalizarTextoModalOrden(valor, fallback = '-') {
+    if (valor === null || valor === undefined || typeof valor === 'object') {
+        return fallback;
+    }
+
+    return String(valor).trim() || fallback;
+}
+
+function construirUrlMisBoletosOrdenConfirmada(ordenId, whatsapp) {
+    const query = [`ordenId=${encodeURIComponent(ordenId)}`, 'autoOpen=true'];
+
+    if (whatsapp && whatsapp !== '-') {
+        query.push(`whatsapp=${encodeURIComponent(whatsapp)}`);
+    }
+
+    return `mis-boletos.html?${query.join('&')}`;
+}
+
+function notificarErrorModalOrdenConfirmada() {
+    if (window.rifaplusUtils?.showFeedback) {
+        window.rifaplusUtils.showFeedback('Error al procesar la orden. Por favor intenta de nuevo.', 'error');
+        return;
+    }
+
+    alert('Error al procesar la orden. Por favor intenta de nuevo.');
+}
+
 /**
  * mostrarModalOrdenConfirmada - Abre modal con datos de orden
  * @param {Object} datosOrden - Datos de la orden
@@ -24,18 +51,12 @@ function mostrarModalOrdenConfirmada(datosOrden) {
             return;
         }
 
-        // Helper para valores seguros
-        const safe = (val, fallback = '-') => {
-            if (val === null || val === undefined || typeof val === 'object') return fallback;
-            return String(val).trim() || fallback;
-        };
-
         // Datos validados
-        const ordenId = safe(datosOrden.ordenId);
-        const sorteo = safe(datosOrden.sorteo, 'Sorteo');
-        const nombre = safe(datosOrden.cliente?.nombre) + ' ' + safe(datosOrden.cliente?.apellidos);
-        const whatsapp = safe(datosOrden.cliente?.whatsapp);
-        const boletos = safe(datosOrden.cantidad_boletos, '0');
+        const ordenId = normalizarTextoModalOrden(datosOrden.ordenId);
+        const sorteo = normalizarTextoModalOrden(datosOrden.sorteo, 'Sorteo');
+        const nombre = `${normalizarTextoModalOrden(datosOrden.cliente?.nombre, '')} ${normalizarTextoModalOrden(datosOrden.cliente?.apellidos, '')}`;
+        const whatsapp = normalizarTextoModalOrden(datosOrden.cliente?.whatsapp);
+        const boletos = normalizarTextoModalOrden(datosOrden.cantidad_boletos, '0');
         const oportunidadesHabilitadas = window.rifaplusConfig?.rifa?.oportunidades?.enabled === true;
         const multiplicador = Number(window.rifaplusConfig?.rifa?.oportunidades?.multiplicador || 0);
         const oportunidadesNumericas = Number(datosOrden.oportunidades ?? 0);
@@ -68,8 +89,6 @@ function mostrarModalOrdenConfirmada(datosOrden) {
             ? `${tiempoApartadoHoras} hora${tiempoApartadoHoras === 1 ? '' : 's'}`
             : '';
         const nombreVisible = nombre.trim() || 'Participante';
-
-        console.log('✓ [Modal] Datos validados: orden=' + ordenId + ', whatsapp=' + whatsapp);
 
         // ✅ 2. CREAR O REUTILIZAR MODAL
         let modal = document.getElementById('modalOrdenConfirmada');
@@ -176,24 +195,15 @@ function mostrarModalOrdenConfirmada(datosOrden) {
 
             // Redirigir después de 300ms para UX fluida
             setTimeout(() => {
-                const url = whatsapp && whatsapp !== '-'
-                    ? `mis-boletos.html?ordenId=${encodeURIComponent(ordenId)}&whatsapp=${encodeURIComponent(whatsapp)}&autoOpen=true`
-                    : `mis-boletos.html?ordenId=${encodeURIComponent(ordenId)}&autoOpen=true`;
-                console.log('✓ [Modal] Redirigiendo a: mis-boletos.html');
-                window.location.href = url;
+                window.location.href = construirUrlMisBoletosOrdenConfirmada(ordenId, whatsapp);
             }, 300);
         };
 
-        // Remover listeners previos para evitar memory leak
-        btnPagar.removeEventListener('click', handleClick);
-        btnPagar.addEventListener('click', handleClick, false);
-
-        console.log('✅ [Modal] Mostrado correctamente');
+        btnPagar.addEventListener('click', handleClick, { once: true });
 
     } catch (error) {
         console.error('❌ [Modal] Error fatal:', error);
-        // Fallback: mostrar alerta
-        alert('Error al procesar la orden. Por favor intenta de nuevo.');
+        notificarErrorModalOrdenConfirmada();
     }
 }
 

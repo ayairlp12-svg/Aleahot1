@@ -8,6 +8,22 @@
 
 document.documentElement.classList.add('admin-auth-checking');
 
+function debugAdminLayout() {
+    let enabled = window.RIFAPLUS_DEBUG_ADMIN === true;
+
+    if (!enabled) {
+        try {
+            enabled = localStorage.getItem('rifaplus_debug_admin') === 'true';
+        } catch (error) {
+            enabled = false;
+        }
+    }
+
+    if (enabled && typeof console !== 'undefined' && typeof console.debug === 'function') {
+        console.debug('[AdminLayout]', ...arguments);
+    }
+}
+
 const ADMIN_LAYOUT = {
     tokenKey: 'rifaplus_admin_token',
     get apiUrl() {
@@ -31,8 +47,6 @@ const ADMIN_LAYOUT = {
      * Debe llamarse en el evento load de cada página
      */
     init() {
-        console.log('🔧 [AdminLayout] Inicializando...');
-        
         // Verificar token
         this.authPromise = this.verificarAutenticacion();
         
@@ -50,8 +64,6 @@ const ADMIN_LAYOUT = {
         
         // ✅ ESCUCHAR cambios de configuración para actualizar header dinámicamente
         this.escucharCambiosConfig();
-        
-        console.log('✅ [AdminLayout] Inicializado correctamente');
     },
     
     /**
@@ -61,14 +73,14 @@ const ADMIN_LAYOUT = {
     escucharCambiosConfig() {
         // Escuchar evento de config actualizada
         window.addEventListener('configuracionActualizada', () => {
-            console.log('🔄 [AdminLayout] configuracionActualizada detectado - re-actualizando header');
+            debugAdminLayout('configuracionActualizada detectado; reconfigurando header');
             this.configurarLogo();
         });
         
         // También escuchar a través del sistema de listeners de rifaplusConfig
         if (window.rifaplusConfig && typeof window.rifaplusConfig.escucharEvento === 'function') {
             window.rifaplusConfig.escucharEvento('configuracionActualizada', () => {
-                console.log('🔄 [AdminLayout] configuracionActualizada (interno) detectado - re-actualizando');
+                debugAdminLayout('configuracionActualizada interno detectado; reconfigurando header');
                 this.configurarLogo();
             });
         }
@@ -159,19 +171,14 @@ const ADMIN_LAYOUT = {
         const nombreCliente = config.cliente?.nombre || 'SORTEO';
         const logoCliente = config.cliente?.logo || config.cliente?.logotipo || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 96'%3E%3Crect width='240' height='96' rx='20' fill='%230b2235'/%3E%3Ctext x='120' y='58' font-size='34' text-anchor='middle' fill='%23ffffff' font-family='Arial,sans-serif'%3ESaDev%3C/text%3E%3C/svg%3E";
         
-        // 🔍 LOGGING DETALLADO para debugging
-        const nombreSorteo = config.rifa?.nombreSorteo || '(vacío)';
-        const clienteCompleto = JSON.stringify({
-            nombre: config.cliente?.nombre,
-            eslogan: config.cliente?.eslogan,
-            id: config.cliente?.id
-        });
-        
-        console.log('🎨 [AdminLayout.configurarLogo] Actualizando header', {
+        debugAdminLayout('Actualizando header admin', {
             nombreClienteAUsar: nombreCliente,
-            nombreSorteoEnConfig: nombreSorteo,
-            clienteCompleto: clienteCompleto,
-            timestamp: new Date().toISOString()
+            nombreSorteoEnConfig: config.rifa?.nombreSorteo || '(vacio)',
+            cliente: {
+                nombre: config.cliente?.nombre,
+                eslogan: config.cliente?.eslogan,
+                id: config.cliente?.id
+            }
         });
         
         // Buscar elementos del header
@@ -180,15 +187,10 @@ const ADMIN_LAYOUT = {
         
         if (logoImg) {
             logoImg.src = logoCliente;
-            console.log('✅ Logo actualizado:', logoCliente);
         }
         
         if (titleSub) {
-            const anterior = titleSub.textContent;
             titleSub.textContent = nombreCliente;
-            if (anterior !== nombreCliente) {
-                console.log(`✅ Header title actualizado: "${anterior}" → "${nombreCliente}"`);
-            }
         }
     },
     
@@ -406,7 +408,7 @@ const ADMIN_LAYOUT = {
         
         // Si recibimos 401, significa que el token expiró
         if (response.status === 401) {
-            console.error('❌ Token expirado');
+            console.warn('[AdminLayout] Token expirado; cerrando sesion');
             this.logout();
             return;
         }

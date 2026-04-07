@@ -54,6 +54,80 @@ function getItemSafeOrden(key) {
 
 var ordenActual = null;
 
+function debugOrdenFormalHabilitado() {
+    const debugGlobal = window.RIFAPLUS_DEBUG || window.rifaplusDebug;
+    return debugGlobal === true || Boolean(debugGlobal?.ordenFormal);
+}
+
+function logOrdenFormalDebug(...args) {
+    if (debugOrdenFormalHabilitado()) {
+        console.log(...args);
+    }
+}
+
+function obtenerOportunidadesValidadasOrdenActual(boletos) {
+    const oportunidadesAlCarrito = [];
+    const oportunidadesVistas = new Set();
+    const boletosEnOrden = new Set(boletos.map((boleto) => String(Number(boleto))));
+
+    if (!window.rifaplusOportunidadesCarrito || typeof window.rifaplusOportunidadesCarrito !== 'object') {
+        return oportunidadesAlCarrito;
+    }
+
+    for (const boletoKey in window.rifaplusOportunidadesCarrito) {
+        if (!boletosEnOrden.has(String(Number(boletoKey)))) {
+            console.warn(`[Orden-Formal] ⚠️  Boleto #${boletoKey} ya no está en la orden, omitiendo sus oportunidades`);
+            continue;
+        }
+
+        const oportunidadesPorBoleto = window.rifaplusOportunidadesCarrito[boletoKey];
+        if (!Array.isArray(oportunidadesPorBoleto)) {
+            continue;
+        }
+
+        for (const opp of oportunidadesPorBoleto) {
+            const oppNum = Number(opp);
+            if (!Number.isFinite(oppNum) || oppNum <= 0 || oportunidadesVistas.has(oppNum)) {
+                continue;
+            }
+
+            oportunidadesAlCarrito.push(oppNum);
+            oportunidadesVistas.add(oppNum);
+        }
+    }
+
+    oportunidadesAlCarrito.sort((a, b) => a - b);
+    return oportunidadesAlCarrito;
+}
+
+function obtenerOportunidadesDisponiblesRenderOrden(boletosArray) {
+    const oportunidades = [];
+
+    if (window.rifaplusOportunidadesCarrito && typeof window.rifaplusOportunidadesCarrito === 'object') {
+        for (const boleto of boletosArray) {
+            const boletoKey = String(boleto);
+            const oportunidadesBoleto = window.rifaplusOportunidadesCarrito[boletoKey];
+            if (Array.isArray(oportunidadesBoleto)) {
+                oportunidades.push(...oportunidadesBoleto);
+            }
+        }
+    }
+
+    if (oportunidades.length > 0 || !window.oportunidadesManager) {
+        return oportunidades;
+    }
+
+    const oportunidadesPorBoleto = window.oportunidadesManager.obtenerMultiples(boletosArray);
+    for (const boleto of boletosArray) {
+        const oportunidadesBoleto = oportunidadesPorBoleto[Number(boleto)];
+        if (Array.isArray(oportunidadesBoleto)) {
+            oportunidades.push(...oportunidadesBoleto);
+        }
+    }
+
+    return oportunidades;
+}
+
 function obtenerLogoActualOrdenFormal() {
     const logoConfig = String(
         window.rifaplusConfig?.cliente?.logo ||
@@ -227,38 +301,10 @@ function abrirOrdenFormal(cuenta) {
     // Esto asegura que window.rifaplusOportunidadesCarrito esté poblado
     if (typeof window.sincronizarOportunidadesAlCarrito === 'function') {
         window.sincronizarOportunidadesAlCarrito();
-        console.log('[Orden-Formal] ✅ Oportunidades sincronizadas antes de renderizar');
+        logOrdenFormalDebug('[Orden-Formal] Oportunidades sincronizadas antes de renderizar');
     }
-    
-    // ✅ GUARDAR OPORTUNIDADES EN LA ORDEN - VALIDADO CONTRA BOLETOS ACTUALES
-    // Obtener todas las oportunidades del carrito actual, SOLO de boletos que siguen en la orden
-    const oportunidadesAlCarrito = [];
-    const oportunidadesVistos = new Set();
-    const boletosEnOrden = new Set(boletos.map(b => String(Number(b))));  // Convertir a string consistentemente
-    
-    if (window.rifaplusOportunidadesCarrito && typeof window.rifaplusOportunidadesCarrito === 'object') {
-        for (const boletoKey in window.rifaplusOportunidadesCarrito) {
-            // ✅ VALIDACIÓN CRÍTICA: Solo incluir oportunidades de boletos que siguen en la orden
-            if (!boletosEnOrden.has(String(Number(boletoKey)))) {
-                console.warn(`[Orden-Formal] ⚠️  Boleto #${boletoKey} ya no está en la orden, omitiendo sus oportunidades`);
-                continue;  // Saltar este boleto eliminado
-            }
-            
-            if (Array.isArray(window.rifaplusOportunidadesCarrito[boletoKey])) {
-                for (const opp of window.rifaplusOportunidadesCarrito[boletoKey]) {
-                    const oppNum = Number(opp);
-                    // ✅ Validar: número válido y no duplicado
-                    if (!isNaN(oppNum) && Number.isFinite(oppNum) && oppNum > 0 && !oportunidadesVistos.has(oppNum)) {
-                        oportunidadesAlCarrito.push(oppNum);
-                        oportunidadesVistos.add(oppNum);
-                    }
-                }
-            }
-        }
-    }
-    
-    // Ordenar para consistencia
-    oportunidadesAlCarrito.sort((a, b) => a - b);
+
+    const oportunidadesAlCarrito = obtenerOportunidadesValidadasOrdenActual(boletos);
 
     const multiplicadorOportunidades = Number(window.rifaplusConfig?.rifa?.oportunidades?.multiplicador) > 0
         ? Number(window.rifaplusConfig.rifa.oportunidades.multiplicador)
@@ -266,7 +312,7 @@ function abrirOrdenFormal(cuenta) {
     
     // Almacenar las oportunidades en la orden (será incluida en payload)
     ordenActual.boletosOcultos = oportunidadesAlCarrito;
-    console.log('[Orden-Formal] 📌 Guardadas oportunidades validadas en ordenActual:', {
+    logOrdenFormalDebug('[Orden-Formal] Oportunidades validadas en ordenActual:', {
         cantidad: oportunidadesAlCarrito.length,
         boletosEnOrden: boletos.length,
         esperadas: boletos.length * multiplicadorOportunidades,
@@ -322,14 +368,7 @@ function renderizarOrdenFormal(orden) {
 
     // CRÍTICO: RECONSTRUIR EL ID CON EL PREFIJO DINÁMICO ACTUAL
     // Esto garantiza que el modal SIEMPRE muestre el prefijo correcto
-    console.log('🔍 renderizarOrdenFormal - START');
-    console.log('  - Orden recibida:', orden.ordenId);
-    console.log('  - Cliente actual:', window.rifaplusConfig?.cliente?.nombre);
-    console.log('  - Prefijo actual:', window.rifaplusConfig?.cliente?.prefijoOrden);
-    
     const ordenIdReconstruido = window.rifaplusConfig?.reconstruirIdOrdenConPrefijoActual?.(orden.ordenId) || orden.ordenId;
-    console.log('  - Orden RECONSTRUIDA:', ordenIdReconstruido);
-    
     orden.ordenId = ordenIdReconstruido; // Actualizar en el objeto orden también
 
     const fecha = new Date(orden.fecha);
@@ -358,39 +397,11 @@ function renderizarOrdenFormal(orden) {
     const oportunidadesHabilitadas = window.rifaplusConfig?.rifa?.oportunidades?.enabled === true;
     
     if (oportunidadesHabilitadas) {
-        const oppsDisponibles = [];
-        
-        console.log(`[Orden-Formal] 🔍 Buscando oportunidades para ${boletosArray.length} boletos...`);
-        console.log('[Orden-Formal] 📊 rifaplusOportunidadesCarrito:', window.rifaplusOportunidadesCarrito);
-        
-        // Intentar obtener del carrito global primero
-        if (window.rifaplusOportunidadesCarrito && typeof window.rifaplusOportunidadesCarrito === 'object') {
-            for (const boleto of boletosArray) {
-                const boletStr = String(boleto);
-                if (window.rifaplusOportunidadesCarrito[boletStr]) {
-                    oppsDisponibles.push(...window.rifaplusOportunidadesCarrito[boletStr]);
-                    console.log(`[Orden-Formal] ✅ Boleto #${boleto}: ${window.rifaplusOportunidadesCarrito[boletStr].length} opps`);
-                } else {
-                    console.log(`[Orden-Formal] ⚠️ Boleto #${boleto}: Sin oportunidades en carrito global`);
-                }
-            }
-        }
-        
-        // Si no hay datos en carrito global, intentar del manager (fallback)
-        if (oppsDisponibles.length === 0 && window.oportunidadesManager) {
-            console.log('[Orden-Formal] 🔄 Fallback: Intentando obtener del OportunidadesManager...');
-            const oppsPorBoleto = window.oportunidadesManager.obtenerMultiples(boletosArray);
-            for (const boleto of boletosArray) {
-                if (Number(boleto) in oppsPorBoleto && Array.isArray(oppsPorBoleto[Number(boleto)])) {
-                    oppsDisponibles.push(...oppsPorBoleto[Number(boleto)]);
-                    console.log(`[Orden-Formal] ✅ Del Manager - Boleto #${boleto}: ${oppsPorBoleto[Number(boleto)].length} opps`);
-                }
-            }
-        }
+        const oppsDisponibles = obtenerOportunidadesDisponiblesRenderOrden(boletosArray);
         
         // Renderizar HTML si hay oportunidades
         if (oppsDisponibles.length > 0) {
-            console.log(`[Orden-Formal] ✅ MOSTRANDO ${oppsDisponibles.length} oportunidades`);
+            logOrdenFormalDebug('[Orden-Formal] Mostrando oportunidades en la orden:', oppsDisponibles.length);
             const oppsFormato = oppsDisponibles.map(formatear).join(', ');
             
             boletosOcultosHtml = `
@@ -399,8 +410,6 @@ function renderizarOrdenFormal(orden) {
                     <div class="orden-boletos-list">${oppsFormato}</div>
                 </div>
             `;
-        } else {
-            console.log('[Orden-Formal] ⚠️ Sin oportunidades disponibles para mostrar');
         }
     }
     
@@ -661,8 +670,6 @@ function imprimirOrden() {
  * @returns {void}
  */
 function limpiarCarritoCompletamente() {
-    console.log('🧹 Limpiando carrito completamente...');
-    
     try {
         // Limpiar localStorage - Todos los keys del carrito
         const keysALimpiar = [
@@ -690,7 +697,6 @@ function limpiarCarritoCompletamente() {
         if (typeof selectedNumbersGlobal !== 'undefined' && selectedNumbersGlobal?.clear) {
             try {
                 selectedNumbersGlobal.clear();
-                console.log('✅ selectedNumbersGlobal limpiado');
             } catch (e) {
                 console.warn('⚠️  Error limpiando selectedNumbersGlobal:', e?.message);
             }
@@ -700,7 +706,6 @@ function limpiarCarritoCompletamente() {
         if (typeof actualizarVistaCarritoGlobal === 'function') {
             try { 
                 actualizarVistaCarritoGlobal();
-                console.log('✅ Vista carrito actualizada');
             } catch (e) { 
                 console.warn('⚠️  Error actualizando vista:', e); 
             }
@@ -708,13 +713,10 @@ function limpiarCarritoCompletamente() {
         if (typeof actualizarContadorCarritoGlobal === 'function') {
             try { 
                 actualizarContadorCarritoGlobal();
-                console.log('✅ Contador carrito actualizado');
             } catch (e) { 
                 console.warn('⚠️  Error actualizando contador:', e); 
             }
         }
-        
-        console.log('✅ Carrito limpiado completamente');
     } catch (e) {
         console.error('❌ Error crítico limpiando carrito:', e);
     }
@@ -802,7 +804,7 @@ async function guardarOrden() {
         // ✅ OPTIMIZACIÓN: Verificación de disponibilidad DELEGADA AL SERVIDOR
         // El servidor ya valida y maneja race conditions con transacciones
         // Omitimos el check en cliente para ahorrar roundtrip y transferencia de datos
-        console.log('✅ Verificación delegada al servidor (transacción atómica)');
+        logOrdenFormalDebug('[Orden-Formal] Verificación delegada al servidor');
 
         // VALIDACIÓN 4: Datos del cliente
         const nombre = (ordenActual.cliente.nombre || '').trim();
@@ -862,7 +864,7 @@ async function guardarOrden() {
             boletosOcultos: Array.isArray(ordenActual.boletosOcultos) ? ordenActual.boletosOcultos : []
         };
         
-        console.log('[Orden-Formal] 📦 Payload construido con boletosOcultos:', {
+        logOrdenFormalDebug('[Orden-Formal] Payload construido con boletosOcultos:', {
             cantidad: payload.boletosOcultos.length,
             oportunidades: payload.boletosOcultos
         });
@@ -898,12 +900,11 @@ async function guardarOrden() {
         const baseTimeout = 8000;  // 8 segundos base (conexión normal)
         const msPerBoleto = 15;    // 15ms por boleto (conservador)
         const timeoutMs = Math.max(8000, Math.min(120000, baseTimeout + (cantidadBoletos * msPerBoleto)));
-        console.log(`⏱️  Timeout dinámico: ${timeoutMs}ms (${(timeoutMs/1000).toFixed(1)}s) para ${cantidadBoletos} boletos`);
-        console.log(`   Fórmula: base=${baseTimeout}ms + boletos=${cantidadBoletos}×${msPerBoleto}ms = ${baseTimeout + (cantidadBoletos * msPerBoleto)}ms (capped at 120s)`);
+        logOrdenFormalDebug(`[Orden-Formal] Timeout dinámico: ${timeoutMs}ms para ${cantidadBoletos} boletos`);
 
         for (let intento = 1; intento <= maxReintentos; intento++) {
             try {
-                console.log(`📡 Intento ${intento}/${maxReintentos} de guardar orden...`);
+                logOrdenFormalDebug(`[Orden-Formal] Intento ${intento}/${maxReintentos} de guardar orden`);
 
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), timeoutMs);  // Timeout dinámico
@@ -939,7 +940,7 @@ async function guardarOrden() {
                         // Backoff exponencial mejorado: 2s, 4s, 8s (en lugar de 2s, 4s, 6s)
                         const delayMs = 1000 * Math.pow(2, intento - 1);
                         ultimoError = `Error servidor (${response.status}). Reintentando en ${(delayMs/1000).toFixed(1)}s...`;
-                        console.log(`⏳ ${ultimoError}`);
+                        logOrdenFormalDebug(`[Orden-Formal] ${ultimoError}`);
                         await new Promise(resolve => setTimeout(resolve, delayMs));
                         continue;
                     }
@@ -947,27 +948,24 @@ async function guardarOrden() {
                     // Errores que NO se reintentan
                     if (response.status === 409) {
                         // Error 409 = Conflicto de boletos
-                        console.log('⚠️  Error 409 - Conflicto detectado');
+                        logOrdenFormalDebug('[Orden-Formal] Conflicto 409 detectado');
 
                         // ✅ Manejo elegante de conflictos - ÚNICA verificación
                         if (errorData.code === 'BOLETOS_CONFLICTO' && typeof window.ModalConflictoBoletos !== 'undefined') {
-                            console.log('🔴 Mostrando modal de conflicto de boletos...');
+                            logOrdenFormalDebug('[Orden-Formal] Mostrando modal de conflicto de boletos');
                             
                             // Mostrar modal al usuario
                             const opcionUsuario = await window.ModalConflictoBoletos.manejarConflicto(errorData);
                             
                             if (opcionUsuario.opcion === 'elegir_otros') {
                                 // Usuario quiere elegir otros boletos
-                                console.log('ℹ️  Usuario decidió elegir otros boletos');
-                                
+                                logOrdenFormalDebug('[Orden-Formal] Usuario decidió elegir otros boletos');
+
                                 // Eliminar boletos conflictivos del carrito
-                                console.log('🗑️  Eliminando boletos conflictivos del carrito...');
                                 if (typeof window.removerBoletoSeleccionado === 'function') {
                                     errorData.boletosConflicto.forEach(boleto => {
-                                        console.log(`  - Removiendo boleto #${boleto}`);
                                         window.removerBoletoSeleccionado(boleto);
                                     });
-                                    console.log('✅ Boletos conflictivos removidos del carrito');
                                 } else {
                                     console.warn('⚠️  removerBoletoSeleccionado no disponible, removiendo manualmente...');
                                     // Fallback manual si la función no está disponible
@@ -983,7 +981,7 @@ async function guardarOrden() {
                                 return;
                             } else if (opcionUsuario.opcion === 'continuar_sin_conflicto') {
                                 // Usuario quiere continuar sin los boletos conflictivos
-                                console.log('✅ Usuario decidió continuar con boletos disponibles:', opcionUsuario.boletosSeleccionados);
+                                logOrdenFormalDebug('[Orden-Formal] Usuario continúa sin los boletos conflictivos:', opcionUsuario.boletosSeleccionados);
                                 
                                 // Actualizar payload con boletos disponibles
                                 payload.boletos = opcionUsuario.boletosSeleccionados;
@@ -994,7 +992,6 @@ async function guardarOrden() {
                                 
                                 // ✅ CRÍTICO: Recalcular oportunidades removiendo las de boletos conflictivos
                                 // Usar el array original de oportunidades que ya tenemos en memoria
-                                console.log('🗑️  Removiendo oportunidades de boletos conflictivos...');
                                 let oportunidadesFinales = [];
                                 
                                 try {
@@ -1016,7 +1013,7 @@ async function guardarOrden() {
                                             });
                                         }
                                         
-                                        console.log('✅ Oportunidades recalculadas:', {
+                                        logOrdenFormalDebug('[Orden-Formal] Oportunidades recalculadas:', {
                                             boletos: boletosArray.length,
                                             oportunidades: oportunidadesFinales.length,
                                             porBoleto: Math.round(oportunidadesFinales.length / boletosArray.length)
@@ -1026,13 +1023,11 @@ async function guardarOrden() {
                                         if (datosOpp.oportunidadesPorBoleto) {
                                             errorData.boletosConflicto.forEach(boletoCon => {
                                                 delete datosOpp.oportunidadesPorBoleto[boletoCon];
-                                                console.log(`  - Removida opps de boleto #${boletoCon}`);
                                             });
                                         }
                                         
                                         // Guardar caché actualizado
                                         localStorage.setItem('rifaplus_oportunidades', JSON.stringify(datosOpp));
-                                        console.log('✅ Oportunidades de conflictivos removidas del caché');
                                     } else {
                                         // ✅ FALLBACK DINÁMICO: Calcular opps por boleto desde array original
                                         if (Array.isArray(ordenActual.boletosOcultos)) {
@@ -1070,7 +1065,7 @@ async function guardarOrden() {
                                 payload.boletosOcultos = oportunidadesFinales;
                                 ordenActual.boletosOcultos = oportunidadesFinales;
                                 
-                                console.log('📌 Payload actualizado después de conflicto:', {
+                                logOrdenFormalDebug('[Orden-Formal] Payload actualizado después de conflicto:', {
                                     boletos: boletosArray.length,
                                     oportunidades: oportunidadesFinales.length
                                 });
@@ -1100,7 +1095,7 @@ async function guardarOrden() {
                                     throw new Error('PAYLOAD_INTEGRITY_CHECK_FAILED');
                                 }
                                 
-                                console.log('🔄 Reintentando con boletos filtrados...');
+                                logOrdenFormalDebug('[Orden-Formal] Reintentando con boletos filtrados');
                                 continue;
                             }
                         }
@@ -1128,9 +1123,9 @@ async function guardarOrden() {
                     // Detectar si fue una orden duplicada (idempotencia)
                     const esIdempotente = response.status === 200 && respuestaExitosa.message?.includes('idempotencia');
                     if (esIdempotente) {
-                        console.log('ℹ️  Orden duplicada detectada (idempotencia) - Orden ya existe:', respuestaExitosa.ordenId);
+                        logOrdenFormalDebug('[Orden-Formal] Orden duplicada detectada por idempotencia:', respuestaExitosa.ordenId);
                     } else {
-                        console.log('✅ Orden guardada en BD:', respuestaExitosa);
+                        logOrdenFormalDebug('[Orden-Formal] Orden guardada en BD:', respuestaExitosa);
                     }
                 } else {
                     console.error('❌ Respuesta no exitosa:', respuestaExitosa);
@@ -1147,7 +1142,7 @@ async function guardarOrden() {
                         precioUnitario: Number(totalesOficiales.precioUnitario || payload.precioUnitario || 0)
                     };
                     payload.precioUnitario = Number(totalesOficiales.precioUnitario || payload.precioUnitario || 0);
-                    console.log('✅ Totales oficiales del servidor aplicados al cliente:', payload.totales);
+                    logOrdenFormalDebug('[Orden-Formal] Totales oficiales aplicados al cliente:', payload.totales);
                 }
 
                 // ⭐ OCULTAR LOADING INMEDIATAMENTE (cuando se crea exitosamente la orden)
@@ -1166,7 +1161,6 @@ async function guardarOrden() {
                 if (typeof cargarBoletosPublicos === 'function') {
                     try {
                         await cargarBoletosPublicos();
-                        console.log('✅ Disponibilidad de boletos actualizada');
                     } catch (e) {
                         console.warn('⚠️  No se pudo actualizar disponibilidad:', e?.message);
                     }
@@ -1190,10 +1184,10 @@ async function guardarOrden() {
                 setItemSafeOrden('rifaplus_orden_final', JSON.stringify(datosFinalesOrden));
                 setItemSafeOrden('rifaplus_orden_confirmada', 'true');
                 setItemSafeOrden('rifaplus_orden_url', respuestaExitosa.url || '');
-                console.log('📦 Orden guardada para confirmación:', datosFinalesOrden);
+                logOrdenFormalDebug('[Orden-Formal] Orden guardada para confirmación:', datosFinalesOrden);
                 
                 // ⭐ MOSTRAR MODAL Y AUTO-REDIRIGIR A MIS BOLETOS
-                console.log('🚀 Mostrando modal de orden confirmada');
+                logOrdenFormalDebug('[Orden-Formal] Mostrando modal de orden confirmada');
                 if (typeof mostrarModalOrdenConfirmada === 'function') {
                     const totalOportunidades = Number.isFinite(Number(datosFinalesOrden.cantidad_oportunidades))
                         ? Number(datosFinalesOrden.cantidad_oportunidades)
@@ -1226,7 +1220,7 @@ async function guardarOrden() {
                     
                     // Si fue timeout, verificar si la orden se guardó en el servidor
                     if (intento === maxReintentos) {
-                        console.log(`🔍 Último intento con timeout - verificando si la orden existe en el servidor...`);
+                        logOrdenFormalDebug('[Orden-Formal] Verificando si la orden existe en el servidor tras timeout final');
                         try {
                             // Usar un timeout más corto para el polling
                             const pollController = new AbortController();
@@ -1255,9 +1249,7 @@ async function guardarOrden() {
                                     const ordenReciente = ordenes[0]; // Primera (más reciente)
                                     
                                     if (ordenReciente.cantidad_boletos === cantidadBoletos) {
-                                        console.log('✅ La orden SÍ se guardó en el servidor (encontrada después de timeout)');
-                                        console.log('📋 Orden encontrada:', ordenReciente.numero_orden);
-                                        console.log('🚀 Redirigiendo a mis-boletos.html');
+                                        logOrdenFormalDebug('[Orden-Formal] La orden se encontró en el servidor después del timeout:', ordenReciente.numero_orden);
                                         window.location.href = `mis-boletos.html?ordenId=${encodeURIComponent(ordenReciente.numero_orden)}&autoOpen=true`;
                                         return;
                                     }
@@ -1267,8 +1259,7 @@ async function guardarOrden() {
                             console.warn('No se pudo verificar si la orden existe (polling falló):', checkError.message);
                             // Si el polling falla, asumir que la orden SÍ se guardó
                             // porque llegó al último reintento con timeout
-                            console.log('⚠️  Asumiendo que la orden se guardó porque llegó al timeout final');
-                            console.log('🚀 Redirigiendo a mis-boletos.html');
+                            logOrdenFormalDebug('[Orden-Formal] Asumiendo guardado tras timeout final y redirigiendo');
                             // Usar última orden conocida para la redirección
                             const ordenId = datosFinalesOrden?.numero_orden || payload?.cliente?.ordenId || 'unknown';
                             window.location.href = `mis-boletos.html?ordenId=${encodeURIComponent(ordenId)}&autoOpen=true`;
@@ -1288,7 +1279,7 @@ async function guardarOrden() {
                     const baseDelay = 1000 * Math.pow(2, intento - 1);
                     const jitter = Math.random() * 1000; // 0-1s jitter
                     const delayMs = baseDelay + jitter;
-                    console.log(`⏳ Reintentando (${intento + 1}/${maxReintentos})... esperando ${(delayMs/1000).toFixed(1)}s`);
+                    logOrdenFormalDebug(`[Orden-Formal] Reintentando (${intento + 1}/${maxReintentos}) en ${(delayMs/1000).toFixed(1)}s`);
                     await new Promise(resolve => setTimeout(resolve, delayMs));
                     continue;
                 }
@@ -1354,24 +1345,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (btnCancelarOrdenFormal) {
         btnCancelarOrdenFormal.addEventListener('click', cerrarOrdenFormal);
-        console.log('✅ Event listener agregado a btnCancelarOrdenFormal');
     }
     if (btnContinuarOrdenFormal) {
         btnContinuarOrdenFormal.addEventListener('click', function(e) {
-            console.log('🖱️ Click en btnContinuarOrdenFormal detectado');
             e.preventDefault();
             e.stopPropagation();
-            console.log('🎯 Llamando a guardarOrden()');
             guardarOrden();
         });
-        console.log('✅ Event listener agregado a btnContinuarOrdenFormal');
     } else {
         console.warn('⚠️ btnContinuarOrdenFormal NO ENCONTRADO');
     }
 
     if (btnDescargarOrdenFormal) {
         btnDescargarOrdenFormal.addEventListener('click', function() {
-            console.log('🖱️ Click en btnDescargarOrdenFormal detectado');
             imprimirOrden();
         });
     }
@@ -1393,50 +1379,3 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
-/* ============================================================ */
-/* DEBUG HELPERS - Helpers para debugging                       */
-/* ============================================================ */
-
-// Función para testear desde la consola
-window.debugOrdenFormal = {
-    // Verificar estado actual
-    status: function() {
-        console.log('=== DEBUG ORDEN FORMAL STATUS ===');
-        console.log('ordenActual:', ordenActual);
-        console.log('Botón btnContinuarOrdenFormal:', document.getElementById('btnContinuarOrdenFormal'));
-        console.log('Modal visible:', document.getElementById('modalOrdenFormal')?.style.display);
-        return {
-            ordenActual,
-            botonExiste: !!document.getElementById('btnContinuarOrdenFormal'),
-            modalVisible: document.getElementById('modalOrdenFormal')?.style.display !== 'none'
-        };
-    },
-    
-    // Simular click en botón Apartar
-    simularClick: function() {
-        console.log('🧪 Simulando click en btnContinuarOrdenFormal...');
-        const btn = document.getElementById('btnContinuarOrdenFormal');
-        if (btn) {
-            btn.click();
-        } else {
-            console.error('❌ Botón no encontrado');
-        }
-    },
-    
-    // Llamar directamente a la función
-    ejecutarDirecto: function() {
-        console.log('🧪 Ejecutando guardarOrden() directamente...');
-        guardarOrden();
-    },
-    
-    // Ver localStorage
-    verLocalStorage: function() {
-        console.log('=== localStorage ===');
-        console.log('rifaplus_orden_actual:', JSON.parse(localStorage.getItem('rifaplus_orden_actual') || 'null'));
-        console.log('rifaplus_cliente:', JSON.parse(localStorage.getItem('rifaplus_cliente') || 'null'));
-        console.log('rifaplusSelectedNumbers:', JSON.parse(localStorage.getItem('rifaplusSelectedNumbers') || 'null'));
-        console.log('rifaplus_total:', localStorage.getItem('rifaplus_total'));
-    }
-};
-
-console.log('✅ DEBUG HELPERS disponibles: window.debugOrdenFormal.status(), .simularClick(), .ejecutarDirecto(), .verLocalStorage()');

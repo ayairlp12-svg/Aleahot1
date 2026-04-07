@@ -65,15 +65,28 @@ function setItemSafeCarrito(key, value) {
 // al módulo centralizado calculo-precios.js
 // obtenerPrecioDinamico() y calcularDescuentoGlobal() se usan desde allí
 
-// ⚡ DEBOUNCE para actualizaciones del carrito (evita múltiples renders)
-let debounceTimer = null;
-const DEBOUNCE_DELAY = 50; // ms
-
 // ⚡ CACHÉ del estado renderizado (evita re-renderizar si no cambió)
 let cachedBoletosHash = null;
 let cachedResumenHash = null;
 let isCarritoModalOpen = false;
 let carritoItemsDelegationBound = false;
+const CARRITO_DEBUG_KEY = 'rifaplus_debug_carrito';
+
+function debugCarrito() {
+    let enabled = window.RIFAPLUS_DEBUG_CARRITO === true;
+
+    if (!enabled) {
+        try {
+            enabled = localStorage.getItem(CARRITO_DEBUG_KEY) === 'true';
+        } catch (error) {
+            enabled = false;
+        }
+    }
+
+    if (enabled && typeof console !== 'undefined' && typeof console.debug === 'function') {
+        console.debug('[CARRITO]', ...arguments);
+    }
+}
 
 function obtenerBoletosOrdenadosCarrito() {
     return obtenerBoletosSelecionados().slice().sort((a, b) => a - b);
@@ -110,6 +123,30 @@ function obtenerRefsResumenCarrito() {
         btnProcederCarrito: document.getElementById('btnProcederCarrito'),
         carritoFooter: document.getElementById('carritoFooter')
     };
+}
+
+function leerBoletosGuardadosCarrito() {
+    try {
+        const stored = getItemSafeCarrito('rifaplusSelectedNumbers');
+        const parsed = stored ? JSON.parse(stored) : [];
+
+        return Array.isArray(parsed)
+            ? parsed.map(n => parseInt(n, 10)).filter(n => !Number.isNaN(n))
+            : [];
+    } catch (error) {
+        return [];
+    }
+}
+
+function restablecerEstadoVisualBoleto(numero) {
+    const botonNumero = document.querySelector(`.numero-btn[data-numero="${numero}"]`);
+    if (!botonNumero) {
+        return;
+    }
+
+    botonNumero.classList.remove('selected', 'is-pending', 'is-processing');
+    botonNumero.disabled = false;
+    botonNumero.style.transform = 'scale(1)';
 }
 
 function configurarDelegacionItemsCarrito() {
@@ -228,14 +265,14 @@ function actualizarResumenCarritoDOM(refs, calcTotal) {
 function asegurarOportunidadesManagerCargado() {
     // Si ya está cargado, no hacer nada
     if (window.oportunidadesManager) {
-        console.debug('[CARRITO] 🟢 OportunidadesManager ya está cargado');
+        debugCarrito('OportunidadesManager ya estaba cargado');
         return true;
     }
     
     // Verificar si oportunidades están habilitadas en config
     const oportunidadesEnabled = window.rifaplusConfig?.rifa?.oportunidades?.enabled;
     if (!oportunidadesEnabled) {
-        console.debug('[CARRITO] ℹ️  Oportunidades deshabilitadas, no hay necesidad de cargar manager');
+        debugCarrito('Oportunidades deshabilitadas; no hace falta cargar el manager');
         return true; // No necesario, pero no es error
     }
     
@@ -248,24 +285,12 @@ function asegurarOportunidadesManagerCargado() {
     // Crear instancia bajo demanda
     try {
         window.oportunidadesManager = new OportunidadesManager();
-        console.log('[CARRITO] ✅ OportunidadesManager inicializado bajo demanda');
+        debugCarrito('OportunidadesManager inicializado bajo demanda');
         return true;
     } catch (error) {
         console.error('[CARRITO] ❌ Error inicializando OportunidadesManager:', error);
         return false;
     }
-}
-
-function debounceActualizarVista() {
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => {
-        actualizarVistaCarritoGlobal();
-    }, DEBOUNCE_DELAY);
-}
-
-// Alias para que compra.js use el mismo nombre
-function debounceActualizarVistaCarrito() {
-    debounceActualizarVista();
 }
 
 function enlazarListenersOportunidadesCarrito(numerosOrdenados) {
@@ -284,7 +309,7 @@ function enlazarListenersOportunidadesCarrito(numerosOrdenados) {
     }
 
     window.__rifaplusCarritoOppHandlers.onComplete = () => {
-        console.log('[CARRITO] ✅ Oportunidades completas, actualizando UI...');
+        debugCarrito('Oportunidades listas; actualizando UI del carrito');
 
         if (typeof actualizarOportunidadesEnCarrito === 'function') {
             actualizarOportunidadesEnCarrito(numerosOrdenados);
@@ -297,7 +322,7 @@ function enlazarListenersOportunidadesCarrito(numerosOrdenados) {
         if (typeof window.sincronizarOportunidadesAlCarrito === 'function') {
             setTimeout(() => {
                 window.sincronizarOportunidadesAlCarrito();
-                console.log('[CARRITO] ✅ Sincronizadas oportunidades globales para uso en otros módulos');
+                debugCarrito('Oportunidades globales sincronizadas para otros modulos');
             }, 100);
         }
     };
@@ -309,32 +334,6 @@ function enlazarListenersOportunidadesCarrito(numerosOrdenados) {
     window.oportunidadesManager.on('onComplete', window.__rifaplusCarritoOppHandlers.onComplete);
     window.oportunidadesManager.on('onError', window.__rifaplusCarritoOppHandlers.onError);
 }
-
-/* ============================================================ */
-/* EVENT LISTENERS: ESPERAR DATOS DE main.js                  */
-/* ============================================================ */
-
-/**
- * ⚡ CRÍTICO: Escuchar a main.js cuando carga las oportunidades
- * Esto previene race conditions donde carrito-global.js intenta acceder
- * a datos antes de que main.js los haya cargado
- */
-window.addEventListener('oportunidadesListas', function(event) {
-    console.log('✅ [CARRITO] Evento recibido: oportunidades cargadas', event.detail);
-    // El fetch ya completó, ahora podemos usar los datos seguros
-});
-
-/**
- * 🆕 ESCUCHAR CUANDO LAS OPORTUNIDADES DEL BACKEND SE ACTUALIZAN
- * Esto se dispara cada vez que se cargan datos frescos del backend
- */
-window.addEventListener('oportunidadesDisponiblesActualizadas', function(event) {
-    console.log('✅ [CARRITO] Evento: oportunidades FRESCAS del backend actualizado', {
-        cantidad: event.detail.cantidad,
-        momento: event.detail.momento
-    });
-    // Los datos frescos están en window.rifaplusOportunidadesDisponiblesReal
-});
 
 /**
  * Inicializa el carrito cuando el DOM está listo
@@ -422,6 +421,16 @@ function inicializarCarritoGlobal() {
     }
 
     carritoModal.addEventListener('click', function(e) {
+        const actionButton = e.target.closest('#btnLimpiarCarrito, #btnProcederCarrito');
+        if (actionButton) {
+            if (actionButton.id === 'btnLimpiarCarrito') {
+                handleLimpiarCarrito();
+            } else {
+                handleProcederAlPago();
+            }
+            return;
+        }
+
         if (e.target === carritoModal) {
             cerrarCarritoGlobal();
         }
@@ -431,24 +440,6 @@ function inicializarCarritoGlobal() {
     const btnSeguirComprando = document.getElementById('btnSeguirComprando');
     if (btnSeguirComprando) {
         btnSeguirComprando.addEventListener('click', cerrarCarritoGlobal);
-    }
-
-    // Botón "Limpiar carrito" - usando event delegation para que funcione en todas partes
-    if (carritoModal) {
-        carritoModal.addEventListener('click', function(e) {
-            if (e.target && e.target.id === 'btnLimpiarCarrito') {
-                handleLimpiarCarrito();
-            }
-        });
-    }
-
-    // Botón "Proceder al pago" - usando event delegation
-    if (carritoModal) {
-        carritoModal.addEventListener('click', function(e) {
-            if (e.target && e.target.id === 'btnProcederCarrito') {
-                handleProcederAlPago();
-            }
-        });
     }
 
     // Tecla Escape para cerrar
@@ -620,13 +611,6 @@ function actualizarVistaCarritoGlobal() {
  */
 
 
-function agregarEventListenersCarrito() {
-    configurarDelegacionItemsCarrito();
-}
-
-/**
- * Invalida el caché cuando cambien los boletos
- */
 function invalidarCacheCarrito() {
     cachedBoletosHash = null;
     cachedResumenHash = null;
@@ -639,18 +623,8 @@ function obtenerBoletosSelecionados() {
     if (typeof selectedNumbersGlobal !== 'undefined') {
         return Array.from(selectedNumbersGlobal).map(n => parseInt(n, 10));
     }
-    
-    // En otras páginas, obtener del localStorage
-    let result = [];
-    try {
-        const stored = getItemSafeCarrito('rifaplusSelectedNumbers');
-        result = stored ? JSON.parse(stored) : [];
-    } catch (error) {
-        result = [];
-    }
-    
-    // ⭐ IMPORTANTE: Convertir a números para garantizar tipo consistente
-    return result.map(n => parseInt(n, 10));
+
+    return leerBoletosGuardadosCarrito();
 }
 
 // Creates the footer DOM and attaches required event listeners
@@ -737,15 +711,10 @@ function handleLimpiarCarrito() {
         // Desmarcar todos los botones en la boletera (solo si existen)
         // Este código solo se ejecutará en compra.html donde existen los botones .numero-btn
         numerosAEliminar.forEach(numero => {
-            const botonNumero = document.querySelector(`.numero-btn[data-numero="${numero}"]`);
             if (typeof window.cancelarValidacionSeleccionPendienteCompra === 'function') {
                 window.cancelarValidacionSeleccionPendienteCompra(numero);
             }
-            if (botonNumero) {
-                botonNumero.classList.remove('selected', 'is-pending', 'is-processing');
-                botonNumero.disabled = false;
-                botonNumero.style.transform = 'scale(1)';
-            }
+            restablecerEstadoVisualBoleto(numero);
         });
         
         // Actualizar todas las vistas
@@ -796,16 +765,10 @@ function removerBoletoSeleccionado(numero) {
     }
     
     // 2. Desmarcar en la boletera - INMEDIATO
-    const botonNumero = document.querySelector(`.numero-btn[data-numero="${numero}"]`);
-    if (botonNumero) {
-        botonNumero.classList.remove('selected', 'is-pending', 'is-processing');
-        botonNumero.disabled = false;
-        botonNumero.style.transform = 'scale(1)';
-    }
+    restablecerEstadoVisualBoleto(numero);
     
     // 3. Actualizar localStorage INMEDIATO (es rápido)
-    let stored = getItemSafeCarrito('rifaplusSelectedNumbers');
-    let numbers = stored ? JSON.parse(stored).map(n => parseInt(n, 10)) : [];
+    let numbers = leerBoletosGuardadosCarrito();
     numbers = numbers.filter(n => n !== numero);
     setItemSafeCarrito('rifaplusSelectedNumbers', JSON.stringify(numbers));
     
@@ -975,7 +938,7 @@ function sincronizarCarritoAlLocalStorage() {
                 const numbers = Array.from(selectedNumbersGlobal);
                 setItemSafeCarrito('rifaplusSelectedNumbers', JSON.stringify(numbers));
             } catch (e) {
-                console.warn('Error sincronizando a localStorage:', e.message);
+                console.warn('[CARRITO] Error sincronizando a localStorage:', e.message);
             }
         }
         sincronizarTimeout = null;
@@ -991,9 +954,7 @@ function actualizarContadorCarritoGlobal() {
     if (typeof selectedNumbersGlobal !== 'undefined') {
         cantidad = selectedNumbersGlobal.size;
     } else {
-        // Fallback: leer de localStorage
-        const stored = localStorage.getItem('rifaplusSelectedNumbers');
-        cantidad = stored ? JSON.parse(stored).length : 0;
+        cantidad = leerBoletosGuardadosCarrito().length;
     }
     
     // ⚡ Solo actualizar DOM si el número cambió
@@ -1050,13 +1011,9 @@ function actualizarCarritoConDebounceAgresivo() {
 window.actualizarCarritoConDebounceAgresivo = actualizarCarritoConDebounceAgresivo;
 window.actualizarContadorCarritoGlobal = actualizarContadorCarritoGlobal;
 window.actualizarVistaCarritoGlobal = actualizarVistaCarritoGlobal;
-
 window.obtenerBoletosSelecionados = obtenerBoletosSelecionados;
 window.agregarBoletoSelecionado = agregarBoletoSelecionado;
 window.removerBoletoSeleccionado = removerBoletoSeleccionado;
-window.actualizarVistaCarritoGlobal = actualizarVistaCarritoGlobal;
-window.actualizarContadorCarritoGlobal = actualizarContadorCarritoGlobal;
-window.actualizarCarritoConDebounceAgresivo = actualizarCarritoConDebounceAgresivo;
 
 /**
  * ⚙️ FUNCIONES REMOVIDAS (Sistema antiguo de asignación dinámica)

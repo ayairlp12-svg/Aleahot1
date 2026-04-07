@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="rifaplus-api-base" content="">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' http://127.0.0.1:* http://localhost:* http://localhost:5001; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://fonts.googleapis.com https://cdn.sheetjs.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; connect-src 'self' http://127.0.0.1:* http://localhost:* https: http://localhost:5001; img-src 'self' data: https: http://127.0.0.1:* http://localhost:* http://localhost:5001; object-src 'none'; base-uri 'self'; form-action 'self';">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' http://127.0.0.1:* http://localhost:* http://localhost:5001; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://fonts.googleapis.com https://cdn.sheetjs.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; connect-src 'self' http://127.0.0.1:* http://localhost:* https: http://localhost:5001 http://127.0.0.1:5001 ws: wss: ws://localhost:5001 wss://localhost:5001 ws://127.0.0.1:5001 wss://127.0.0.1:5001; img-src 'self' data: https: http://127.0.0.1:* http://localhost:* http://localhost:5001; object-src 'none'; base-uri 'self'; form-action 'self';">
     <title>Órdenes - Panel Admin</title>
     <link rel="icon" href="images/placeholder-logo.svg" sizes="32x32">
     <link rel="preload" as="image" href="images/placeholder-logo.svg" fetchpriority="high">
@@ -21,7 +21,7 @@
     <script src="js/config.js?v=20251228.15"></script>
     <script src="js/config-sync.js"></script>
     <script src="js/theme-dynamic.js"></script>
-    <script src="js/admin-layout.js?v=20251228.15"></script>
+    <script src="js/admin-layout.js?v=20260406.1"></script>
     <script src="js/modal-scroll-lock.js"></script>
     <style>
         :root {
@@ -1686,6 +1686,23 @@
         let realtimeRefreshPendiente = false;
         let pollingOrdenesId = null;
         let lastRealtimeToastAt = 0;
+        let adminSocketConnectWarned = false;
+
+        function debugAdminOrdenesRealtime() {
+            let enabled = window.RIFAPLUS_DEBUG_ADMIN === true;
+
+            if (!enabled) {
+                try {
+                    enabled = localStorage.getItem('rifaplus_debug_admin') === 'true';
+                } catch (error) {
+                    enabled = false;
+                }
+            }
+
+            if (enabled && typeof console !== 'undefined' && typeof console.debug === 'function') {
+                console.debug('[AdminOrdenesRealtime]', ...arguments);
+            }
+        }
 
         function haySesionAdminActiva() {
             return Boolean(token);
@@ -1815,26 +1832,32 @@
 
             adminOrdersSocket.on('connect', () => {
                 adminSocketConnected = true;
-                console.log('✅ [AdminOrdenesRealtime] Conectado al canal en tiempo real');
+                adminSocketConnectWarned = false;
+                debugAdminOrdenesRealtime('Conectado al canal en tiempo real');
             });
 
             adminOrdersSocket.on('disconnect', (reason) => {
                 adminSocketConnected = false;
-                console.warn('🔌 [AdminOrdenesRealtime] Socket desconectado:', reason);
+                debugAdminOrdenesRealtime('Socket desconectado', reason);
             });
 
             adminOrdersSocket.on('connect_error', (error) => {
                 adminSocketConnected = false;
-                console.warn('⚠️ [AdminOrdenesRealtime] Error conectando socket admin:', error.message);
+                if (!adminSocketConnectWarned) {
+                    adminSocketConnectWarned = true;
+                    console.warn('⚠️ [AdminOrdenesRealtime] Error conectando socket admin:', error.message);
+                } else {
+                    debugAdminOrdenesRealtime('Reintento fallido de socket admin', error.message);
+                }
             });
 
             adminOrdersSocket.on('adminOrdenCreada', (evento) => {
-                console.log('📥 [AdminOrdenesRealtime] Nueva orden:', evento?.orden?.numero_orden || '(sin folio)');
+                debugAdminOrdenesRealtime('Nueva orden recibida', evento?.orden?.numero_orden || '(sin folio)');
                 programarRefreshOrdenesTiempoReal('nuevaOrden');
             });
 
             adminOrdersSocket.on('adminOrdenActualizada', (evento) => {
-                console.log('📥 [AdminOrdenesRealtime] Orden actualizada:', evento?.orden?.numero_orden || '(sin folio)');
+                debugAdminOrdenesRealtime('Orden actualizada', evento?.orden?.numero_orden || '(sin folio)');
                 programarRefreshOrdenesTiempoReal('actualizacion');
             });
 
@@ -3459,6 +3482,6 @@ ${window.location.origin}/mis-boletos.html
     </script>
 
     <!-- ✅ Admin Header User Info - Mostrar usuario en header -->
-    <script src="js/admin-header-user.js"></script>
+    <script src="js/admin-header-user.js?v=20260406.1"></script>
 </body>
 </html>

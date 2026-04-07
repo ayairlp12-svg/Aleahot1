@@ -113,11 +113,144 @@ function limpiarFormularioContacto() {
     const form = document.getElementById('formularioContacto');
     if (form) {
         form.reset();
-        // Limpiar mensajes de error
-        document.querySelectorAll('.form-error').forEach(error => {
-            error.textContent = '';
-        });
+        limpiarErroresFormularioContacto();
     }
+}
+
+function limpiarErroresFormularioContacto() {
+    document.querySelectorAll('.form-error').forEach(error => {
+        error.textContent = '';
+    });
+}
+
+function obtenerDatosFormularioContacto() {
+    const estadoEl = document.getElementById('clienteEstado');
+    const ciudadEl = document.getElementById('clienteCiudad');
+
+    return {
+        nombre: (document.getElementById('clienteNombre')?.value || '').trim(),
+        apellidos: (document.getElementById('clienteApellidos')?.value || '').trim(),
+        whatsapp: (document.getElementById('clienteWhatsapp')?.value || '').trim(),
+        estado: estadoEl ? (estadoEl.value || '').trim() : '',
+        ciudad: ciudadEl ? ciudadEl.value.trim() : ''
+    };
+}
+
+function normalizarWhatsappContacto(valor) {
+    return String(valor || '').replace(/\D/g, '').slice(0, 10);
+}
+
+function validarDatosFormularioContacto(datos) {
+    const errores = {};
+    const whatsappDigits = normalizarWhatsappContacto(datos.whatsapp);
+
+    if (!datos.nombre || datos.nombre.length < 2) {
+        errores.nombre = 'El nombre debe tener al menos 2 caracteres';
+    }
+
+    if (!datos.apellidos || datos.apellidos.length < 2) {
+        errores.apellidos = 'Los apellidos deben tener al menos 2 caracteres';
+    }
+
+    if (!whatsappDigits || whatsappDigits.length !== 10) {
+        errores.whatsapp = 'Ingresa exactamente 10 dígitos para WhatsApp';
+    }
+
+    if (!datos.estado) {
+        errores.estado = 'Selecciona tu estado';
+    }
+
+    if (!datos.ciudad || datos.ciudad.length < 2) {
+        errores.ciudad = 'Por favor indica tu ciudad o localidad';
+    }
+
+    return errores;
+}
+
+function aplicarErroresFormularioContacto(errores) {
+    const campos = {
+        nombre: 'errorNombre',
+        apellidos: 'errorApellidos',
+        whatsapp: 'errorWhatsapp',
+        estado: 'errorEstado',
+        ciudad: 'errorCiudad'
+    };
+
+    Object.entries(campos).forEach(([campo, errorId]) => {
+        const errorEl = document.getElementById(errorId);
+        if (errorEl) {
+            errorEl.textContent = errores[campo] || '';
+        }
+    });
+}
+
+function enlazarCampoMayusculas(field) {
+    if (!field) {
+        return;
+    }
+
+    function normalizar() {
+        this.value = this.value.toUpperCase();
+    }
+
+    field.addEventListener('input', normalizar);
+    field.addEventListener('change', normalizar);
+}
+
+function enlazarInputWhatsapp(field) {
+    if (!field) {
+        return;
+    }
+
+    field.addEventListener('input', function() {
+        this.value = normalizarWhatsappContacto(this.value);
+    });
+
+    field.addEventListener('keypress', function(e) {
+        if (!/[0-9]/.test(e.key)) {
+            e.preventDefault();
+        }
+    });
+}
+
+async function procesarConfirmacionContacto() {
+    const datos = obtenerDatosFormularioContacto();
+    const errores = validarDatosFormularioContacto(datos);
+
+    aplicarErroresFormularioContacto(errores);
+
+    if (Object.keys(errores).length > 0) {
+        rifaplusUtils.showFeedback('⚠️ Por favor completa correctamente el formulario', 'warning');
+        return;
+    }
+
+    try {
+        await guardarClienteEnStorage(
+            datos.nombre,
+            datos.apellidos,
+            datos.whatsapp,
+            datos.estado,
+            datos.ciudad
+        );
+    } catch (error) {
+        console.error('❌ [Modal-Contacto] No se pudo generar un numero de orden oficial:', error);
+        rifaplusUtils.showFeedback('❌ No se pudo obtener un numero de orden oficial. Intenta de nuevo.', 'error');
+        return;
+    }
+
+    guardarBoletoSeleccionadosEnStorage();
+
+    if (window.rifaplusFlujoPago && typeof window.onContactoConfirmado === 'function') {
+        try {
+            window.onContactoConfirmado();
+            return;
+        } catch (err) {
+            window.location.href = 'compra.html';
+            return;
+        }
+    }
+
+    window.location.href = 'compra.html';
 }
 
 /* ============================================================ */
@@ -129,58 +262,9 @@ function limpiarFormularioContacto() {
  * @returns {boolean} Verdadero si el formulario es válido
  */
 function validarFormularioContacto() {
-    const nombre = document.getElementById('clienteNombre').value.trim();
-    const apellidos = document.getElementById('clienteApellidos').value.trim();
-    const whatsapp = document.getElementById('clienteWhatsapp').value.trim();
-    const estadoEl = document.getElementById('clienteEstado');
-    const estado = estadoEl ? (estadoEl.value || '').trim() : '';
-    const ciudadEl = document.getElementById('clienteCiudad');
-    const ciudad = ciudadEl ? ciudadEl.value.trim() : '';
-    
-    let valido = true;
-    
-    // Validar nombre
-    if (!nombre || nombre.length < 2) {
-        document.getElementById('errorNombre').textContent = 'El nombre debe tener al menos 2 caracteres';
-        valido = false;
-    } else {
-        document.getElementById('errorNombre').textContent = '';
-    }
-    
-    // Validar apellidos
-    if (!apellidos || apellidos.length < 2) {
-        document.getElementById('errorApellidos').textContent = 'Los apellidos deben tener al menos 2 caracteres';
-        valido = false;
-    } else {
-        document.getElementById('errorApellidos').textContent = '';
-    }
-    
-    // Validar WhatsApp: exigir exactamente 10 dígitos (solo números)
-    const whatsappDigits = whatsapp.replace(/\D/g, '');
-    if (!whatsappDigits || whatsappDigits.length !== 10) {
-        document.getElementById('errorWhatsapp').textContent = 'Ingresa exactamente 10 dígitos para WhatsApp';
-        valido = false;
-    } else {
-        document.getElementById('errorWhatsapp').textContent = '';
-    }
-
-    // Validar estado (obligatorio)
-    if (!estado) {
-        document.getElementById('errorEstado').textContent = 'Selecciona tu estado';
-        valido = false;
-    } else {
-        document.getElementById('errorEstado').textContent = '';
-    }
-
-    // Validar ciudad/localidad (obligatorio)
-    if (!ciudad || ciudad.length < 2) {
-        document.getElementById('errorCiudad').textContent = 'Por favor indica tu ciudad o localidad';
-        valido = false;
-    } else {
-        document.getElementById('errorCiudad').textContent = '';
-    }
-    
-    return valido;
+    const errores = validarDatosFormularioContacto(obtenerDatosFormularioContacto());
+    aplicarErroresFormularioContacto(errores);
+    return Object.keys(errores).length === 0;
 }
 
 /* ============================================================ */
@@ -231,9 +315,9 @@ async function generarIdOrden() {
 
     guardarIdEnLocalStorage(ordenIdFinal);
 
-    const cliente = JSON.parse(localStorage.getItem('rifaplus_cliente') || '{}');
+    const cliente = JSON.parse(getItemSafeModal('rifaplus_cliente') || '{}');
     cliente.ordenId = ordenIdFinal;
-    localStorage.setItem('rifaplus_cliente', JSON.stringify(cliente));
+    setItemSafeModal('rifaplus_cliente', JSON.stringify(cliente));
 
     return ordenIdFinal;
 }
@@ -335,13 +419,17 @@ async function guardarClienteEnStorage(nombre, apellidos, whatsapp, estado, ciud
  * @returns {Object|null} Objeto con datos del cliente o null
  */
 function obtenerClienteDelStorage() {
-    const data = localStorage.getItem('rifaplus_cliente');
-    return data ? JSON.parse(data) : null;
+    try {
+        const data = getItemSafeModal('rifaplus_cliente');
+        return data ? JSON.parse(data) : null;
+    } catch (error) {
+        return null;
+    }
 }
 
 function limpiarOrdenIdObsoletoDelStorage() {
     try {
-        const raw = localStorage.getItem('rifaplus_cliente');
+        const raw = getItemSafeModal('rifaplus_cliente');
         if (!raw) return;
 
         const cliente = JSON.parse(raw);
@@ -354,8 +442,7 @@ function limpiarOrdenIdObsoletoDelStorage() {
 
         if (!config.esOrdenIdOficial(ordenId) || !config.ordenIdTienePrefijoActual(ordenId)) {
             delete cliente.ordenId;
-            localStorage.setItem('rifaplus_cliente', JSON.stringify(cliente));
-            console.log('🧹 [Modal-Contacto] Orden ID obsoleto eliminado del storage:', ordenId);
+            setItemSafeModal('rifaplus_cliente', JSON.stringify(cliente));
         }
     } catch (error) {
         console.warn('⚠️ [Modal-Contacto] No se pudo limpiar ordenId obsoleto:', error?.message || error);
@@ -373,15 +460,11 @@ function guardarBoletoSeleccionadosEnStorage() {
         
         // ✅ VALIDACIÓN CORRECTA: Validar retorno para saber si está persistido
         const saveResult = setItemSafeModal('rifaplus_boletos', JSON.stringify(boletos));
-        
-        if (saveResult === true) {
-            console.log(`✅ [MODAL] Boletos guardados en localStorage (${boletos.length} items)`);
-        } else if (saveResult === false) {
+
+        if (saveResult === false) {
             console.warn(`⚠️  [MODAL] Boletos guardados en MEMORIA (no persistente)`);
         } else if (saveResult && saveResult.persisted !== undefined) {
-            if (saveResult.persisted) {
-                console.log(`✅ [MODAL] Boletos guardados en ${saveResult.location}`);
-            } else {
+            if (!saveResult.persisted) {
                 console.warn(`⚠️  [MODAL] Boletos guardados en MEMORIA (se pierde en reload)`);
             }
         }
@@ -415,36 +498,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const inputCiudad = document.getElementById('clienteCiudad');
     
     // 🔤 CONVERTIR A MAYÚSCULAS AUTOMÁTICAMENTE en campos de texto
-    const fieldsToUppercase = [inputNombre, inputApellidos, inputCiudad];
-    fieldsToUppercase.forEach(field => {
-        if (field) {
-            field.addEventListener('input', function() {
-                this.value = this.value.toUpperCase();
-            });
-            field.addEventListener('change', function() {
-                this.value = this.value.toUpperCase();
-            });
-        }
-    });
+    [inputNombre, inputApellidos, inputCiudad].forEach(enlazarCampoMayusculas);
     
     // Validación en tiempo real para WhatsApp: solo números
-    if (inputWhatsapp) {
-        inputWhatsapp.addEventListener('input', function(e) {
-            // Remover cualquier carácter que no sea número
-            this.value = this.value.replace(/[^0-9]/g, '');
-            // Limitar a 10 dígitos
-            if (this.value.length > 10) {
-                this.value = this.value.slice(0, 10);
-            }
-        });
-        
-        inputWhatsapp.addEventListener('keypress', function(e) {
-            // Permitir solo números
-            if (!/[0-9]/.test(e.key)) {
-                e.preventDefault();
-            }
-        });
-    }
+    enlazarInputWhatsapp(inputWhatsapp);
     
     // Cerrar modal
     if (btnCancelarContacto) {
@@ -469,39 +526,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (btnContinuarContacto) {
         btnContinuarContacto.addEventListener('click', async function(e) {
             e.preventDefault();
-            
-            if (validarFormularioContacto()) {
-                const nombre = document.getElementById('clienteNombre').value.trim();
-                const apellidos = document.getElementById('clienteApellidos').value.trim();
-                const whatsapp = document.getElementById('clienteWhatsapp').value.trim();
-                const estado = document.getElementById('clienteEstado') ? document.getElementById('clienteEstado').value : '';
-                const ciudad = document.getElementById('clienteCiudad') ? document.getElementById('clienteCiudad').value.trim() : '';
-
-                // Guardar en storage (ahora es async)
-                try {
-                    await guardarClienteEnStorage(nombre, apellidos, whatsapp, estado, ciudad);
-                } catch (error) {
-                    console.error('❌ [Modal-Contacto] No se pudo generar un numero de orden oficial:', error);
-                    rifaplusUtils.showFeedback('❌ No se pudo obtener un numero de orden oficial. Intenta de nuevo.', 'error');
-                    return;
-                }
-                guardarBoletoSeleccionadosEnStorage();
-                
-                // Si estamos en flujo de pago en compra.html, llamar al callback
-                if (window.rifaplusFlujoPago && typeof window.onContactoConfirmado === 'function') {
-                    try {
-                        window.onContactoConfirmado();
-                    } catch (err) {
-                        // Fallback: volver a la página de compra donde está el flujo integrado
-                        window.location.href = 'compra.html';
-                    }
-                } else {
-                    // Fallback global: redirigir a `compra.html`
-                    window.location.href = 'compra.html';
-                }
-            } else {
-                rifaplusUtils.showFeedback('⚠️ Por favor completa correctamente el formulario', 'warning');
-            }
+            await procesarConfirmacionContacto();
         });
     }
     

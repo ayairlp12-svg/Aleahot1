@@ -12,6 +12,17 @@
 /* SECCIÓN 1: CONFIGURACIÓN GLOBAL Y VARIABLES DE ESTADO         */
 /* ============================================================ */
 
+function debugCompraHabilitado() {
+    const debugGlobal = window.RIFAPLUS_DEBUG || window.rifaplusDebug;
+    return debugGlobal === true || Boolean(debugGlobal?.compra);
+}
+
+function logCompraDebug(...args) {
+    if (debugCompraHabilitado()) {
+        console.log(...args);
+    }
+}
+
 // Función para obtener precio dinámico desde config (robusta)
 // ✅ ACTUALIZADO: Verifica promoción por tiempo
 function obtenerPrecioDinamico() {
@@ -32,7 +43,7 @@ function obtenerPrecioDinamico() {
         if (estaActiva(promo.fechaInicio, promo.fechaFin, ahora)) {
             const precioProvisional = Number(promo.precioProvisional);
             if (!Number.isNaN(precioProvisional) && isFinite(precioProvisional) && precioProvisional >= 0) {
-                console.log(`💰 [Promoción Activa] Usando precio provisional: $${precioProvisional.toFixed(2)}`);
+                logCompraDebug(`[compra] Promocion activa con precio provisional: $${precioProvisional.toFixed(2)}`);
                 return precioProvisional;
             }
         }
@@ -630,7 +641,7 @@ async function cargarEstadoRangoVisibleEnBackground(endpoint, inicio, fin, opcio
     rifaplusEstadoRangoActual.cargado = false;
 
     try {
-        console.debug(`🔄 Refrescando rango ${rangoInicio}-${rangoFin} (${reason})`);
+        logCompraDebug(`[compra] Refrescando rango ${rangoInicio}-${rangoFin} (${reason})`);
 
         const respuesta = await fetch(
             `${endpoint}/api/public/boletos?inicio=${encodeURIComponent(rangoInicio)}&fin=${encodeURIComponent(rangoFin)}`,
@@ -679,8 +690,7 @@ if (!window.rifaplusUtils) {
          * @param {string} tipo - Tipo de feedback (info, success, warning, error)
          */
         showFeedback: function(mensaje, tipo = 'info') {
-            // mínimo feedback no intrusivo
-            console.log('[rifaplusUtils.showFeedback]', tipo, mensaje);
+            logCompraDebug('[rifaplusUtils.showFeedback]', tipo, mensaje);
         },
         /**
          * Calcula el total con descuentos sincronizados
@@ -837,7 +847,7 @@ async function inicializarSistemaCompra() {
  */
 function startCargarBoletosPublicosConIntentos() {
     try {
-        console.debug('📊 Iniciando carga de boletos...');
+        logCompraDebug('[compra] Iniciando carga de boletos');
         cargarBoletosPublicos().catch(e => {
             console.warn('❌ Error crítico en carga inicial de boletos:', e.message);
         });
@@ -902,8 +912,6 @@ async function cargarBoletosPublicos() {
     try {
         const endpoint = obtenerApiBaseCompra();
         
-        console.debug('📊 Cargando stats de disponibilidad...');
-        
         // ⚡ STAGE 1: Timing para medir velocidad
         const stageStartTime = performance.now();
         
@@ -922,7 +930,7 @@ async function cargarBoletosPublicos() {
             if (statsResponse.ok) {
                 const statsJson = await statsResponse.json();
                 const data = statsJson.data || statsJson;
-                console.debug(`✅ /stats respondió en ${stageElapsed}ms`);
+                logCompraDebug(`[compra] /stats respondio en ${stageElapsed}ms`);
                 
                 if (data) {
                     // Actualizar estado global primero para que el botón use datos frescos
@@ -1003,7 +1011,7 @@ async function cargarDatosCompletosEnBackground(endpoint, rango = null, opciones
     try {
         const rangoObjetivo = rango || infiniteScrollState.rangoActual || obtenerRangoVisibleInicial();
         const { force = false, reason = 'background' } = opciones;
-        console.debug(`📦 Iniciando carga en background del rango ${rangoObjetivo.inicio}-${rangoObjetivo.fin} (${reason})...`);
+        logCompraDebug(`[compra] Cargando rango en background ${rangoObjetivo.inicio}-${rangoObjetivo.fin} (${reason})`);
 
         const exito = await cargarEstadoRangoVisibleEnBackground(
             endpoint,
@@ -1035,7 +1043,7 @@ async function cargarDatosCompletosEnBackground(endpoint, rango = null, opciones
             }
 
             const { sold, reserved } = obtenerEstadoLocalBoletos();
-            console.debug(`✅ Estado de rango cargado: ${sold.length} vendidos, ${reserved.length} reservados`);
+            logCompraDebug(`[compra] Estado de rango cargado: ${sold.length} vendidos, ${reserved.length} apartados`);
 
             // ⭐ OPTIMIZACIÓN: En lugar de re-renderizar TODO el grid (que reinicia scroll),
             // solo actualizar los botones visibles con su nuevo estado
@@ -1134,18 +1142,12 @@ function actualizarEstadoBoletosVisibles() {
 }
 
 function inicializarMaquinaSuerteMejorada() {
-    
     const btnGenerar = document.getElementById('btnGenerarNumeros');
     const btnDisminuir = document.getElementById('disminuirCantidad');
     const btnAumentar = document.getElementById('aumentarCantidad');
     const inputCantidad = document.getElementById('cantidadNumeros');
     const btnRepetir = document.getElementById('btnRepetir');
     const btnAgregarSuerte = document.getElementById('btnAgregarSuerte');
-    
-    console.log('🎰 Inicializando máquina de suerte...');
-    console.log('   ✓ btnGenerar:', !!btnGenerar);
-    console.log('   ✓ inputCantidad:', !!inputCantidad);
-    console.log('   ✓ rifaplusBoletosLoaded:', window.rifaplusBoletosLoaded);
 
     actualizarLimiteMaquinaSuerteUI();
     
@@ -1226,7 +1228,6 @@ function inicializarMaquinaSuerteMejorada() {
             }
             actualizarTotalMaquina();
             actualizarEstadoBotonGenerar();
-            console.log(`⌨️ Entrada de cantidad: ${parsed}`);
         });
         
         // Limpiar el 0 cuando el usuario hace focus en el input
@@ -1270,7 +1271,6 @@ function inicializarMaquinaSuerteMejorada() {
     // Inicializar total y estado del botón
     actualizarTotalMaquina();
     actualizarEstadoBotonGenerar();
-    console.log('✅ Máquina de suerte inicializada correctamente');
     // Actualizar nota de disponibilidad inicialmente
     if (typeof actualizarNotaDisponibilidad === 'function') actualizarNotaDisponibilidad();
 
@@ -1378,7 +1378,7 @@ function actualizarEstadoBotonGenerar() {
     
     // ⭐ SIMPLE: Si hay datos cargados y suficientes → HABILITAR
     btnGenerar.disabled = !loaded || !hay_suficientes;
-    console.debug(`🎰 Estado botón generar: ${btnGenerar.disabled ? '❌ DESHABILITADO' : '✅ HABILITADO'} (cantidad=${val}, disponibles=${boletosDisponibles}, loaded=${loaded})`);
+    logCompraDebug(`[compra] Boton generar ${btnGenerar.disabled ? 'deshabilitado' : 'habilitado'} (cantidad=${val}, disponibles=${boletosDisponibles}, loaded=${loaded})`);
 }
 
 // Mostrar nota de disponibilidad bajo el botón Generar
@@ -1474,7 +1474,7 @@ async function generarNumerosAleatoriosMejorado() {
         resultado.style.visibility = 'visible';
         resultado.style.opacity = '1';
         resultado.style.transition = 'opacity 300ms ease-out, visibility 300ms ease-out';
-        console.log('✅ Números generados:', numerosGenerados);
+        logCompraDebug('[compra] Numeros generados por maquina:', numerosGenerados);
         
         // Scroll suave hacia la sección de resultados (corto)
         setTimeout(() => {
@@ -1544,7 +1544,7 @@ function obtenerNumerosDisponibles() {
     // Si arrays están vacíos, significa que Stage 2 aun no terminó o falló
     // NO generar números sin validation real del servidor
     if (sold.length === 0 && reserved.length === 0 && !rifaplusEstadoRangoActual.cargado) {
-        console.debug('🔄 [obtenerNumerosDisponibles] Esperando datos del servidor...');
+        logCompraDebug('[compra] Esperando datos del servidor para numeros disponibles');
         return []; // Retornar vacío hasta tener datos reales
     }
     
@@ -2053,7 +2053,7 @@ function generarBotonesRango() {
     }
 
     if (!mostrarSelectorRangos) {
-        console.log('ℹ️ Solo hay un rango configurado; se oculta el selector de rangos');
+        logCompraDebug('[compra] Solo hay un rango configurado; se oculta el selector');
         return true;
     }
     
@@ -2076,7 +2076,7 @@ function generarBotonesRango() {
         rangoBoxes.appendChild(btn);
     }
     
-    console.log(`✅ Botones de rango generados: ${rangos.length} rangos`);
+    logCompraDebug(`[compra] Botones de rango generados: ${rangos.length}`);
     return true;  // Éxito
 }
 
@@ -3385,7 +3385,7 @@ function aplicarFiltroDisponibles(activo) {
         }
     });
     
-    console.log('🔍 Filtro aplicado:', activo ? 'Solo disponibles' : 'Todos los boletos');
+    logCompraDebug('[compra] Filtro aplicado:', activo ? 'Solo disponibles' : 'Todos los boletos');
 }
 
 /* ============================================================ */
@@ -3993,35 +3993,3 @@ function procesarBoletosEnBackground(sold, reserved) {
 window.cargarBoletosPublicos = cargarBoletosPublicos;
 window.actualizarResumenCompra = actualizarResumenCompra;
 window.controlarEstadoBotonesLoQuiero = controlarEstadoBotonesLoQuiero;
-
-/**
- * 🔍 DEBUG MODE: Escribe "debug()" en consola para ver estado
- */
-function debug() {
-    const debugPanel = document.getElementById('debugPanel');
-    const debugInfo = document.getElementById('debugInfo');
-    
-    if (!debugPanel || !debugInfo) return;
-    
-    debugPanel.style.display = 'block';
-    
-    const info = `
-<div style="font-family: monospace; white-space: pre-wrap; word-break: break-all;">
-Sold count: ${window.rifaplusSoldNumbers?.length || 0}
-Reserved count: ${window.rifaplusReservedNumbers?.length || 0}
-Loaded: ${window.rifaplusBoletosLoaded}
-Browser: ${/Safari/.test(navigator.userAgent) && !/Chrome|Edge|Firefox/.test(navigator.userAgent) ? '🍎 Safari' : 'Other'}
-Config estado: ${JSON.stringify(window.rifaplusConfig?.estado || {}, null, 2)}
-    </div>
-    `;
-    
-    debugInfo.innerHTML = info;
-    console.log('DEBUG INFO:', {
-        sold: window.rifaplusSoldNumbers,
-        reserved: window.rifaplusReservedNumbers,
-        loaded: window.rifaplusBoletosLoaded,
-        config: window.rifaplusConfig?.estado
-    });
-}
-
-window.debug = debug;
