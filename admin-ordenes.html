@@ -1688,6 +1688,8 @@
         let lastRealtimeToastAt = 0;
         let adminSocketConnectWarned = false;
         let lastOrdenesSyncAt = 0;
+        const ORDENES_RECONCILIACION_MS = 10000;
+        const ORDENES_POLLING_FALLBACK_MS = 30000;
 
         function debugAdminOrdenesRealtime() {
             let enabled = window.RIFAPLUS_DEBUG_ADMIN === true;
@@ -1745,13 +1747,13 @@
                 }
 
                 const ahora = Date.now();
-                const intervaloMinimoMs = adminSocketConnected ? 5000 : 30000;
+                const intervaloMinimoMs = adminSocketConnected ? ORDENES_RECONCILIACION_MS : ORDENES_POLLING_FALLBACK_MS;
                 if ((ahora - lastOrdenesSyncAt) < intervaloMinimoMs) {
                     return;
                 }
 
                 programarRefreshOrdenesTiempoReal(adminSocketConnected ? 'reconciliacion' : 'polling');
-            }, 5000);
+            }, ORDENES_RECONCILIACION_MS);
         }
 
         async function refrescarOrdenesTiempoReal(reason = 'actualizacion') {
