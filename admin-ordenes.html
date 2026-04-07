@@ -1852,12 +1852,24 @@
             });
 
             adminOrdersSocket.on('adminOrdenCreada', (evento) => {
-                debugAdminOrdenesRealtime('Nueva orden recibida', evento?.orden?.numero_orden || '(sin folio)');
+                const numeroOrden = evento?.orden?.numero_orden || '(sin folio)';
+                const insertadaLocalmente = estaEnVistaPrincipalReciente()
+                    ? Boolean(insertarOrdenTiempoRealEnVista(evento?.orden))
+                    : false;
+
+                debugAdminOrdenesRealtime('Nueva orden recibida', numeroOrden, {
+                    insertadaLocalmente
+                });
                 programarRefreshOrdenesTiempoReal('nuevaOrden');
             });
 
             adminOrdersSocket.on('adminOrdenActualizada', (evento) => {
-                debugAdminOrdenesRealtime('Orden actualizada', evento?.orden?.numero_orden || '(sin folio)');
+                const numeroOrden = evento?.orden?.numero_orden || '(sin folio)';
+                const actualizadaLocalmente = Boolean(actualizarOrdenTiempoRealEnVista(evento?.orden));
+
+                debugAdminOrdenesRealtime('Orden actualizada', numeroOrden, {
+                    actualizadaLocalmente
+                });
                 programarRefreshOrdenesTiempoReal('actualizacion');
             });
 
@@ -2006,15 +2018,133 @@
             return activos;
         }
 
+        function tieneComprobanteOrden(orden = {}) {
+            return Boolean(orden?.comprobante_path);
+        }
+
+        function estaEnVistaPrincipalReciente() {
+            const filtros = obtenerFiltrosActuales();
+            return currentPage === 1
+                && !filtros.searchId
+                && !filtros.searchNombre
+                && !filtros.searchWhatsapp
+                && !filtros.estado
+                && !filtros.fechaDesde
+                && !filtros.fechaHasta
+                && (filtros.sortBy || 'fecha-desc') === 'fecha-desc';
+        }
+
+        function normalizarOrdenTiempoReal(orden = {}) {
+            const numeroOrden = String(orden.numero_orden || orden.ordenId || orden.id || '').trim();
+            if (!numeroOrden) return null;
+
+            const createdAt = orden.created_at || orden.updated_at || new Date().toISOString();
+            const updatedAt = orden.updated_at || createdAt;
+            const cantidadBoletos = Number(orden.cantidad_boletos || orden.cantidad || 0) || 0;
+            const total = Number(orden.total || orden.totalFinal || 0) || 0;
+
+            return {
+                ...orden,
+                numero_orden: numeroOrden,
+                nombre_cliente: orden.nombre_cliente || '',
+                telefono_cliente: orden.telefono_cliente || '',
+                estado: orden.estado || 'pendiente',
+                cantidad_boletos: cantidadBoletos,
+                total,
+                comprobante_path: orden.comprobante_path || null,
+                created_at: createdAt,
+                updated_at: updatedAt
+            };
+        }
+
+        function obtenerResumenOrden(orden = {}) {
+            const estado = String(orden?.estado || '').trim().toLowerCase();
+            return {
+                pendiente: estado === 'pendiente' ? 1 : 0,
+                comprobante_recibido: tieneComprobanteOrden(orden) ? 1 : 0,
+                confirmada: estado === 'confirmada' ? 1 : 0,
+                cancelada: estado === 'cancelada' ? 1 : 0,
+                totalBoletos: Number(orden?.cantidad_boletos || 0) || 0
+            };
+        }
+
+        function ajustarResumenOrdenLocal(ordenAnterior = null, ordenSiguiente = null) {
+            const resumenAnterior = obtenerResumenOrden(ordenAnterior);
+            const resumenSiguiente = obtenerResumenOrden(ordenSiguiente);
+            const resumenBase = resumenOrdenesActual || {};
+
+            resumenOrdenesActual = {
+                ...resumenBase,
+                pendiente: Math.max(0, (Number(resumenBase.pendiente) || 0) + resumenSiguiente.pendiente - resumenAnterior.pendiente),
+                comprobante_recibido: Math.max(0, (Number(resumenBase.comprobante_recibido) || 0) + resumenSiguiente.comprobante_recibido - resumenAnterior.comprobante_recibido),
+                confirmada: Math.max(0, (Number(resumenBase.confirmada) || 0) + resumenSiguiente.confirmada - resumenAnterior.confirmada),
+                cancelada: Math.max(0, (Number(resumenBase.cancelada) || 0) + resumenSiguiente.cancelada - resumenAnterior.cancelada),
+                totalBoletos: Math.max(0, (Number(resumenBase.totalBoletos) || 0) + resumenSiguiente.totalBoletos - resumenAnterior.totalBoletos)
+            };
+
+            resumenOrdenesActual.pendienteTotal = (Number(resumenOrdenesActual.pendiente) || 0) + (Number(resumenOrdenesActual.comprobante_recibido) || 0);
+
+            if (!ordenAnterior && ordenSiguiente) {
+                totalOrdenesServidor += 1;
+                totalPaginasServidor = Math.max(1, Math.ceil(totalOrdenesServidor / ITEMS_PER_PAGE));
+            }
+        }
+
         function actualizarOrdenLocal(numeroOrden, cambios = {}) {
             const index = allOrdenes.findIndex(o => o.numero_orden === numeroOrden);
-            if (index === -1) return;
+            if (index === -1) return null;
 
-            allOrdenes[index] = {
-                ...allOrdenes[index],
+            const ordenAnterior = allOrdenes[index];
+            const ordenSiguiente = {
+                ...ordenAnterior,
                 ...cambios,
                 updated_at: cambios.updated_at || new Date().toISOString()
             };
+
+            allOrdenes[index] = ordenSiguiente;
+            ajustarResumenOrdenLocal(ordenAnterior, ordenSiguiente);
+            return ordenSiguiente;
+        }
+
+        function sincronizarColeccionOrdenesLocal() {
+            const sortBy = obtenerFiltrosActuales().sortBy || 'fecha-desc';
+            allOrdenes = ordenarOrdenes(allOrdenes, sortBy);
+
+            if (estaEnVistaPrincipalReciente() && allOrdenes.length > ITEMS_PER_PAGE) {
+                allOrdenes = allOrdenes.slice(0, ITEMS_PER_PAGE);
+            }
+
+            filteredOrdenes = allOrdenes;
+        }
+
+        function insertarOrdenTiempoRealEnVista(orden = {}) {
+            const ordenNormalizada = normalizarOrdenTiempoReal(orden);
+            if (!ordenNormalizada) return null;
+
+            const existente = allOrdenes.find(o => o.numero_orden === ordenNormalizada.numero_orden);
+            if (existente) {
+                return actualizarOrdenTiempoRealEnVista(ordenNormalizada);
+            }
+
+            allOrdenes = [ordenNormalizada, ...allOrdenes];
+            ajustarResumenOrdenLocal(null, ordenNormalizada);
+            sincronizarColeccionOrdenesLocal();
+            renderOrdenes();
+            refrescarModalOrdenSiEstaAbierto(ordenNormalizada.numero_orden);
+            return ordenNormalizada;
+        }
+
+        function actualizarOrdenTiempoRealEnVista(orden = {}) {
+            const ordenNormalizada = normalizarOrdenTiempoReal(orden);
+            if (!ordenNormalizada) return null;
+
+            const ordenActualizada = actualizarOrdenLocal(ordenNormalizada.numero_orden, ordenNormalizada);
+            if (!ordenActualizada) return null;
+
+            sincronizarColeccionOrdenesLocal();
+            renderOrdenes();
+            refrescarModalOrdenSiEstaAbierto(ordenActualizada.numero_orden);
+            return ordenActualizada;
         }
 
         function construirQueryOrdenes({ page = currentPage, limit = ITEMS_PER_PAGE, includePage = true } = {}) {
@@ -2040,7 +2170,12 @@
         async function fetchOrdenesPage(page = currentPage, limit = ITEMS_PER_PAGE) {
             const params = construirQueryOrdenes({ page, limit, includePage: true });
             const response = await fetch(`${API_BASE}/api/ordenes?${params.toString()}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
+                cache: 'no-store',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Cache-Control': 'no-cache, no-store, max-age=0',
+                    'Pragma': 'no-cache'
+                }
             });
             const data = await response.json();
             if (!data.success) throw new Error(data.message || 'Error cargando órdenes');
