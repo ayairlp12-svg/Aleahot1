@@ -2169,13 +2169,10 @@
 
         async function fetchOrdenesPage(page = currentPage, limit = ITEMS_PER_PAGE) {
             const params = construirQueryOrdenes({ page, limit, includePage: true });
+            params.set('_rt', String(Date.now()));
             const response = await fetch(`${API_BASE}/api/ordenes?${params.toString()}`, {
                 cache: 'no-store',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Cache-Control': 'no-cache, no-store, max-age=0',
-                    'Pragma': 'no-cache'
-                }
+                headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await response.json();
             if (!data.success) throw new Error(data.message || 'Error cargando órdenes');
