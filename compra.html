@@ -19,51 +19,72 @@
     <meta name="twitter:description" content="Selecciona tus boletos y participa en el sorteo activo." />
     <meta name="twitter:image" content="images/placeholder-cover.svg" />
     <link rel="stylesheet" href="css/styles.css?v=20260401.3">
+    <script src="js/image-delivery.js"></script>
     <script>
         (function() {
+            const imageDelivery = window.RifaPlusImageDelivery;
             const fallbackLogo = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 96'%3E%3Crect width='240' height='96' rx='20' fill='%230b2235'/%3E%3Ctext x='120' y='58' font-size='28' text-anchor='middle' fill='%23ffffff' font-family='Arial,sans-serif'%3ERifaPlus%3C/text%3E%3C/svg%3E";
-            const cachedLogo = localStorage.getItem('rifaplus_cached_logo') || fallbackLogo;
-            window.__RIFAPLUS_CACHED_LOGO__ = cachedLogo;
+            let configLocal = {};
+
+            try {
+                configLocal = JSON.parse(localStorage.getItem('rifaplus_config_actual_v2') || '{}');
+            } catch (error) {
+                configLocal = {};
+            }
+
+            const rawLogo = localStorage.getItem('rifaplus_cached_logo')
+                || configLocal?.cliente?.logo
+                || configLocal?.cliente?.logotipo
+                || fallbackLogo;
+            const cachedLogo = imageDelivery?.resolverUrlImagen(rawLogo, 'logoPreload') || rawLogo;
+            const heroUtils = window.__RIFAPLUS_COMPRA_HERO_UTILS__ || {
+                normalizarOrganizador(valor) {
+                    return String(valor || '').replace(/\s+/g, ' ').trim();
+                },
+                esOrganizadorGenerico(valor) {
+                    const nombre = this.normalizarOrganizador(valor).toLowerCase();
+                    if (!nombre) {
+                        return true;
+                    }
+
+                    return /^(sorteo|sorteos|sorteo actual|sorteo en vivo|sorteo demo|organizador|cliente|rifaplus)$/i.test(nombre);
+                },
+                resolverOrganizador() {
+                    for (let i = 0; i < arguments.length; i += 1) {
+                        const nombre = this.normalizarOrganizador(arguments[i]);
+                        if (!this.esOrganizadorGenerico(nombre)) {
+                            return nombre;
+                        }
+                    }
+
+                    return '';
+                },
+                construirTitulo(organizador) {
+                    const nombre = this.resolverOrganizador(organizador);
+                    return nombre
+                        ? `¿Listo para ser el proximo ganador de ${nombre}? Elige tus boletos y participa ahora`
+                        : 'Elige tus boletos y participa ahora';
+                }
+            };
+            window.__RIFAPLUS_COMPRA_HERO_UTILS__ = heroUtils;
+            window.__RIFAPLUS_CACHED_LOGO__ = imageDelivery?.resolverUrlImagen(rawLogo, 'logo') || rawLogo;
             window.__RIFAPLUS_COMPRA_HERO__ = (function() {
                 const subtitulo = 'Selecciona los boletos que quieras o deja que la máquina de la suerte elija por ti. ¡Mucha Suerte!';
-                let organizador = '';
-
-                if (!organizador) {
-                    try {
-                        organizador = String(window.rifaplusConfig?.cliente?.nombre || '').trim();
-                    } catch (error) {
-                        organizador = '';
-                    }
-                }
-
-                if (!organizador) {
-                    try {
-                        const configLocal = JSON.parse(localStorage.getItem('rifaplus_config_actual_v2') || '{}');
-                        organizador = String(configLocal?.cliente?.nombre || '').trim();
-                    } catch (error) {
-                        organizador = '';
-                    }
-                }
-
-                if (!organizador) {
-                    try {
-                        organizador = String(localStorage.getItem('rifaplus_compra_hero_organizador') || '').trim();
-                    } catch (error) {
-                        organizador = '';
-                    }
-                }
+                const organizador = heroUtils.resolverOrganizador(
+                    window.rifaplusConfig?.cliente?.nombre,
+                    configLocal?.cliente?.nombre,
+                    localStorage.getItem('rifaplus_compra_hero_organizador')
+                );
 
                 return {
                     organizador,
-                    titulo: organizador
-                        ? `¿Listo para ser el proximo ganador de ${organizador}? Elige tus boletos y participa ahora`
-                        : 'Elige tus boletos y participa ahora',
+                    titulo: heroUtils.construirTitulo(organizador),
                     subtitulo
                 };
             })();
             document.write('<link rel="preload" as="image" href="' + cachedLogo + '" fetchpriority="high">');
-            document.write('<link rel="icon" href="' + cachedLogo + '" sizes="32x32">');
-            document.write('<link rel="apple-touch-icon" href="' + cachedLogo + '">');
+            document.write('<link rel="icon" href="' + (imageDelivery?.resolverUrlImagen(rawLogo, 'logoIcon') || rawLogo) + '" sizes="32x32">');
+            document.write('<link rel="apple-touch-icon" href="' + (imageDelivery?.resolverUrlImagen(rawLogo, 'logoIcon') || rawLogo) + '">');
         })();
     </script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -101,7 +122,7 @@
     <script src="js/modal-sorteo-finalizado.js?v=20260219"></script>
     <!-- ✅ CRÍTICO: storage-manager + carrito (debe estar antes que compra.js) -->
     <script defer src="js/storage-manager-v2.js"></script>
-    <script defer src="js/main.js?v=20260219"></script>
+    <script defer src="js/main.js?v=20260406.2"></script>
     <script defer src="js/calculo-precios.js?v=20260219"></script>
     <script defer src="js/oportunidades-manager.js"></script>
     <script defer src="js/carrito-global.js?v=20260219"></script>

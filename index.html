@@ -20,10 +20,39 @@
     <meta name="twitter:description" content="Participa en nuestro sorteo." />
     <meta name="twitter:image" content="images/placeholder-cover.svg" />
     <link rel="stylesheet" href="css/styles.css?v=20251228.15">
+    <script src="js/image-delivery.js"></script>
     <script>
         (function() {
-            const cachedLogo = localStorage.getItem('rifaplus_cached_logo') || 'images/placeholder-logo.svg';
-            window.__RIFAPLUS_CACHED_LOGO__ = cachedLogo;
+            const imageDelivery = window.RifaPlusImageDelivery;
+            let configLocal = {};
+            let cachedLogo = 'images/placeholder-logo.svg';
+            let cachedGallery = [];
+
+            try {
+                configLocal = JSON.parse(localStorage.getItem('rifaplus_config_actual_v2') || '{}');
+            } catch (error) {
+                configLocal = {};
+            }
+
+            try {
+                cachedGallery = JSON.parse(localStorage.getItem('rifaplus_cached_gallery_v1') || '[]');
+            } catch (error) {
+                cachedGallery = [];
+            }
+
+            const rawLogo = localStorage.getItem('rifaplus_cached_logo')
+                || configLocal?.cliente?.logo
+                || configLocal?.cliente?.logotipo
+                || 'images/placeholder-logo.svg';
+            cachedLogo = imageDelivery?.resolverUrlImagen(rawLogo, 'logoPreload') || rawLogo;
+
+            const primeraImagenGaleriaRaw = Array.isArray(cachedGallery) && cachedGallery.length > 0
+                ? String(cachedGallery[0]?.url || '').trim()
+                : '';
+            const primeraImagenGaleria = imageDelivery?.resolverUrlImagen(primeraImagenGaleriaRaw, 'carouselPreload') || primeraImagenGaleriaRaw;
+
+            window.__RIFAPLUS_CACHED_LOGO__ = imageDelivery?.resolverUrlImagen(rawLogo, 'logo') || rawLogo;
+            window.__RIFAPLUS_CACHED_GALERIA__ = Array.isArray(cachedGallery) ? cachedGallery : [];
             window.__RIFAPLUS_INDEX_HERO__ = (function() {
                 let edicion = '';
                 let nombre = '';
@@ -58,8 +87,11 @@
                 };
             })();
             document.write('<link rel="preload" as="image" href="' + cachedLogo + '" fetchpriority="high">');
-            document.write('<link rel="icon" href="' + cachedLogo + '" sizes="32x32">');
-            document.write('<link rel="apple-touch-icon" href="' + cachedLogo + '">');
+            if (primeraImagenGaleria) {
+                document.write('<link rel="preload" as="image" href="' + primeraImagenGaleria + '" fetchpriority="high">');
+            }
+            document.write('<link rel="icon" href="' + (imageDelivery?.resolverUrlImagen(rawLogo, 'logoIcon') || rawLogo) + '" sizes="32x32">');
+            document.write('<link rel="apple-touch-icon" href="' + (imageDelivery?.resolverUrlImagen(rawLogo, 'logoIcon') || rawLogo) + '">');
         })();
     </script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -75,7 +107,7 @@
     <!-- ⚙️ Detectar entorno -->
     <script src="js/environment-config.js"></script>
     <!-- 🔄 SINCRONIZACIÓN EN VIVO: Cambios desde panel admin → Frontend -->
-    <script src="js/sorteo-sync.js"></script>
+    <script src="js/sorteo-sync.js?v=20260406.2"></script>
     <!-- ✅ Carga inteligente de boletos para 1M boletos -->
     <script src="js/boletos-loader.js"></script>
     <script src="js/modal-scroll-lock.js"></script>
@@ -159,8 +191,8 @@
     <script defer src="js/ganadores.js?v=20251228.15"></script>
     <script defer src="js/sistema-premios.js?v=20260120"></script>
     <script defer src="js/modal-sorteo-finalizado.js?v=20251228.15"></script>
-    <script defer src="js/main.js?v=20251228.15"></script>
-    <script defer src="js/index-public.js?v=20260406.1"></script>
+    <script defer src="js/main.js?v=20260406.2"></script>
+    <script defer src="js/index-public.js?v=20260406.2"></script>
     <script defer src="js/calculo-precios.js?v=20251230.1"></script>
 
     <script defer src="js/oportunidades-manager.js"></script>
@@ -262,7 +294,34 @@
         <div class="container">
             <div class="carrusel">
                 <div class="carrusel-inner">
-                    <!-- Las imágenes se generan dinámicamente desde config.js -->
+                    <script>
+                        (function() {
+                            const imagenInicial = Array.isArray(window.__RIFAPLUS_CACHED_GALERIA__) && window.__RIFAPLUS_CACHED_GALERIA__.length > 0
+                                ? window.__RIFAPLUS_CACHED_GALERIA__[0]
+                                : null;
+
+                            if (!imagenInicial || !imagenInicial.url) {
+                                return;
+                            }
+
+                            const alt = String(imagenInicial.titulo || 'Imagen principal del sorteo')
+                                .replace(/&/g, '&amp;')
+                                .replace(/"/g, '&quot;')
+                                .replace(/</g, '&lt;')
+                                .replace(/>/g, '&gt;');
+
+                            const imageDelivery = window.RifaPlusImageDelivery;
+                            const src = String(imageDelivery?.resolverUrlImagen(imagenInicial.url, 'carouselPreload') || imagenInicial.url)
+                                .replace(/&/g, '&amp;')
+                                .replace(/"/g, '&quot;');
+
+                            document.write(
+                                '<div class="carrusel-item active" data-rifaplus-cached-slide="true">' +
+                                    '<img src="' + src + '" alt="' + alt + '" loading="eager" fetchpriority="high" decoding="async">' +
+                                '</div>'
+                            );
+                        })();
+                    </script>
                 </div>
                 <button class="carrusel-prev" aria-label="Imagen anterior">‹</button>
                 <button class="carrusel-next" aria-label="Siguiente imagen">›</button>

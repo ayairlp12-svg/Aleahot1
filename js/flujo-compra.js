@@ -62,6 +62,120 @@ function getItemSafeFlujo(key) {
 
 var clienteCheckout = null;
 
+function desenfocarElementoActivoFlujo() {
+    if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+    }
+}
+
+function obtenerAccountIdSeguroFlujo(cuenta, idx) {
+    return String(
+        cuenta?.id ?? cuenta?.accountNumber ?? `${cuenta?.nombreBanco || 'cuenta'}_${idx}`
+    );
+}
+
+function prepararModalSeleccionCuenta(modal, transferenciasContainer, efectivoContainer) {
+    transferenciasContainer.innerHTML = '<p class="payment-empty-state">Cargando cuentas de transferencia...</p>';
+    efectivoContainer.innerHTML = '<p class="payment-empty-state">Cargando opciones de pago...</p>';
+    modal.classList.add('show');
+    window.rifaplusModalScrollLock?.sync?.();
+    modal.scrollTop = 0;
+
+    const closeBtn = document.getElementById('closeModalSeleccionCuenta');
+    if (closeBtn) {
+        closeBtn.onclick = cerrarModalSeleccionCuenta;
+    }
+
+    const modalBody = modal.querySelector('.modal-body-cuentas');
+    const modalCard = modal.querySelector('.modal-seleccion-cuentas');
+
+    if (modalBody) {
+        modalBody.scrollTop = 0;
+    }
+
+    if (modalCard) {
+        modalCard.scrollTop = 0;
+    }
+
+    window.requestAnimationFrame(() => {
+        if (modalBody) modalBody.scrollTop = 0;
+        if (modalCard) modalCard.scrollTop = 0;
+    });
+}
+
+async function obtenerCuentasDisponiblesFlujo() {
+    let cuentas = [];
+
+    try {
+        const configPublica = typeof window.rifaplusConfig?.obtenerConfigPublicaCompartida === 'function'
+            ? await window.rifaplusConfig.obtenerConfigPublicaCompartida()
+            : null;
+
+        if (Array.isArray(configPublica?.cuentas) && configPublica.cuentas.length > 0) {
+            cuentas = configPublica.cuentas;
+
+            if (window.rifaplusConfig) {
+                window.rifaplusConfig.tecnica = window.rifaplusConfig.tecnica || {};
+                window.rifaplusConfig.tecnica.bankAccounts = cuentas;
+                window.rifaplusConfig.bankAccounts = cuentas;
+            }
+        }
+    } catch (err) {
+        console.debug('[flujo-compra] No se cargaron cuentas del servidor:', err.message);
+    }
+
+    if (cuentas.length > 0) {
+        return cuentas;
+    }
+
+    return Array.isArray(window.rifaplusConfig?.bankAccounts)
+        ? window.rifaplusConfig.bankAccounts
+        : [];
+}
+
+function construirCuentaHtmlFlujo(cuentas, paymentType, idPrefix, description) {
+    return cuentas
+        .filter((cuenta) => cuenta.paymentType === paymentType)
+        .map((cuenta, idx) => {
+            const id = `${idPrefix}${idx}`;
+            const banco = cuenta.nombreBanco || (paymentType === 'efectivo' ? 'Tienda' : 'Banco');
+            const accountId = obtenerAccountIdSeguroFlujo(cuenta, idx);
+
+            return `
+                <div class="stack-item">
+                    <input type="radio" id="${id}" name="cuentaPago" value="${accountId}" data-account-id="${accountId}" data-payment-type="${paymentType}" class="cuenta-radio">
+                    <label for="${id}" class="stack-label">
+                        <div class="stack-content">
+                            <span class="stack-bank">${banco}</span>
+                            <span class="stack-description">${description}</span>
+                        </div>
+                        <span class="stack-action">Seleccionar</span>
+                    </label>
+                </div>
+            `;
+        })
+        .join('');
+}
+
+function renderizarListasCuentasFlujo(cuentas, transferenciasContainer, efectivoContainer) {
+    const htmlTransferencias = construirCuentaHtmlFlujo(
+        cuentas,
+        'transferencia',
+        'cuenta_',
+        'Haz tu transferencia a esta cuenta.'
+    );
+
+    const htmlEfectivo = construirCuentaHtmlFlujo(
+        cuentas,
+        'efectivo',
+        'cuenta_efe_',
+        'Usa esta opción para pagar en efectivo.'
+    );
+
+    transferenciasContainer.innerHTML = htmlTransferencias || '<p class="payment-empty-state">No hay transferencias disponibles en este momento.</p>';
+    efectivoContainer.innerHTML = htmlEfectivo || '<p class="payment-empty-state">No hay opciones de efectivo disponibles en este momento.</p>';
+}
+
 async function obtenerOrdenIdOficialFlujo(clienteGuardado = {}) {
     const config = window.rifaplusConfig;
     const apiBase = config?.backend?.apiBase;
@@ -179,34 +293,23 @@ function iniciarFlujoPago() {
     
     // Activar modo flujo para que modal-contacto no redirija
     window.rifaplusFlujoPago = true;
-    console.log('[Flujo] ✅ Modo flujo activado (window.rifaplusFlujoPago = true)');
     
     // Definir callback que se ejecuta cuando el usuario confirma el formulario
     window.onContactoConfirmado = function() {
-        console.log('[Flujo] 🎯 onContactoConfirmado ejecutado');
-
-        if (document.activeElement instanceof HTMLElement) {
-            document.activeElement.blur();
-        }
+        desenfocarElementoActivoFlujo();
         
         // El cliente ya está guardado en localStorage por modal-contacto.js
         // Cargar datos
         clienteCheckout = obtenerClienteDelStorage();
-        console.log('[Flujo] ✅ Cliente cargado:', clienteCheckout);
         
         // Cerrar modal de contacto
         if (typeof cerrarModalContacto === 'function') {
-            console.log('[Flujo] 🚪 Cerrando modal contacto');
             cerrarModalContacto();
         }
         
         // Paso 2: Abrir selector de cuenta de pago
-        console.log('[Flujo] ⏳ Esperando 300ms para abrir selector de cuentas');
         setTimeout(() => {
-            if (document.activeElement instanceof HTMLElement) {
-                document.activeElement.blur();
-            }
-            console.log('[Flujo] 🏦 Llamando abrirModalSeleccionCuenta()');
+            desenfocarElementoActivoFlujo();
             abrirModalSeleccionCuenta();
         }, 300);
     };
@@ -226,151 +329,42 @@ function iniciarFlujoPago() {
  * @returns {void}
  */
 async function abrirModalSeleccionCuenta() {
-    console.log('[AbrirModal] 🏦 Iniciando abrirModalSeleccionCuenta()');
-    
     const modal = document.getElementById('modalSeleccionCuenta');
     if (!modal) {
         console.error('❌ [AbrirModal] modalSeleccionCuenta no encontrado');
         return;
     }
-    
-    console.log('[AbrirModal] ✅ Modal encontrado:', modal);
-    
-    // Poblar cuentas
+
     const transferenciasContainer = document.getElementById('transferenciasLista');
     const efectivoContainer = document.getElementById('efectivoLista');
     
     if (!transferenciasContainer || !efectivoContainer) {
         console.error('❌ [AbrirModal] Contenedores de cuentas no encontrados');
-        console.log('[AbrirModal] transferenciasContainer:', transferenciasContainer);
-        console.log('[AbrirModal] efectivoContainer:', efectivoContainer);
         return;
     }
 
-    console.log('[AbrirModal] ✅ Contenedores encontrados');
+    prepararModalSeleccionCuenta(modal, transferenciasContainer, efectivoContainer);
 
-    transferenciasContainer.innerHTML = '<p class="payment-empty-state">Cargando cuentas de transferencia...</p>';
-    efectivoContainer.innerHTML = '<p class="payment-empty-state">Cargando opciones de pago...</p>';
-    modal.classList.add('show');
-    window.rifaplusModalScrollLock?.sync?.();
-    modal.scrollTop = 0;
-
-    const closeBtn = document.getElementById('closeModalSeleccionCuenta');
-    if (closeBtn) {
-        closeBtn.onclick = cerrarModalSeleccionCuenta;
-    }
-
-    const modalBody = modal.querySelector('.modal-body-cuentas');
-    if (modalBody) {
-        modalBody.scrollTop = 0;
-    }
-
-    const modalCard = modal.querySelector('.modal-seleccion-cuentas');
-    if (modalCard) {
-        modalCard.scrollTop = 0;
-    }
-
-    const obtenerAccountIdSeguro = (cuenta, idx) => String(
-        cuenta?.id ?? cuenta?.accountNumber ?? `${cuenta?.nombreBanco || 'cuenta'}_${idx}`
-    );
-
-    // ✅ CARGAR CUENTAS DESDE EL SERVIDOR (backend tiene los datos actualizados)
-    let cuentas = [];
-    try {
-        const configPublica = typeof window.rifaplusConfig?.obtenerConfigPublicaCompartida === 'function'
-            ? await window.rifaplusConfig.obtenerConfigPublicaCompartida()
-            : null;
-
-        if (configPublica?.cuentas && Array.isArray(configPublica.cuentas) && configPublica.cuentas.length > 0) {
-            cuentas = configPublica.cuentas;
-            console.log('[AbrirModal] ✅ Cuentas cargadas desde configuración compartida:', cuentas.length);
-            // Actualizar también en config.js para otros usos
-            window.rifaplusConfig.tecnica.bankAccounts = cuentas;
-            window.rifaplusConfig.bankAccounts = cuentas;
-        }
-    } catch (err) {
-        console.debug('[AbrirModal] No se cargaron cuentas del servidor:', err.message);
-    }
-    
-    // Si no hay cuentas del servidor, usar fallback de config.js
-    if (cuentas.length === 0) {
-        cuentas = (window.rifaplusConfig && window.rifaplusConfig.bankAccounts) 
-            ? window.rifaplusConfig.bankAccounts 
-            : [];
-    }
-    
-    console.log('[AbrirModal] 💰 Cuentas disponibles:', cuentas.length);
+    const cuentas = await obtenerCuentasDisponiblesFlujo();
     
     if (cuentas.length === 0) {
         transferenciasContainer.innerHTML = '<p style="color: var(--danger);">No hay cuentas de pago disponibles</p>';
         efectivoContainer.innerHTML = '<p class="payment-empty-state">No hay opciones de pago disponibles.</p>';
         return;
     }
-    
-    // Separar transferencias y efectivo
-    const transferencias = cuentas.filter(c => c.paymentType === 'transferencia');
-    const efectivo = cuentas.filter(c => c.paymentType === 'efectivo');
-    
-    // Renderizar transferencias
-    let htmlTransferencias = '';
-    transferencias.forEach((cuenta, idx) => {
-        const id = `cuenta_${idx}`;
-        const banco = cuenta.nombreBanco || 'Banco';
-        const accountId = obtenerAccountIdSeguro(cuenta, idx);
-        
-        htmlTransferencias += `
-            <div class="stack-item">
-                <input type="radio" id="${id}" name="cuentaPago" value="${accountId}" data-account-id="${accountId}" data-payment-type="transferencia" class="cuenta-radio">
-                <label for="${id}" class="stack-label">
-                    <div class="stack-content">
-                        <span class="stack-bank">${banco}</span>
-                        <span class="stack-description">Haz tu transferencia a esta cuenta.</span>
-                    </div>
-                    <span class="stack-action">Seleccionar</span>
-                </label>
-            </div>
-        `;
-    });
-    
-    // Renderizar efectivo
-    let htmlEfectivo = '';
-    efectivo.forEach((cuenta, idx) => {
-        const id = `cuenta_efe_${idx}`;
-        const banco = cuenta.nombreBanco || 'Tienda';
-        const accountId = obtenerAccountIdSeguro(cuenta, idx);
-        
-        htmlEfectivo += `
-            <div class="stack-item">
-                <input type="radio" id="${id}" name="cuentaPago" value="${accountId}" data-account-id="${accountId}" data-payment-type="efectivo" class="cuenta-radio">
-                <label for="${id}" class="stack-label">
-                    <div class="stack-content">
-                        <span class="stack-bank">${banco}</span>
-                        <span class="stack-description">Usa esta opción para pagar en efectivo.</span>
-                    </div>
-                    <span class="stack-action">Seleccionar</span>
-                </label>
-            </div>
-        `;
-    });
-    
-    transferenciasContainer.innerHTML = htmlTransferencias || '<p class="payment-empty-state">No hay transferencias disponibles en este momento.</p>';
-    efectivoContainer.innerHTML = htmlEfectivo || '<p class="payment-empty-state">No hay opciones de efectivo disponibles en este momento.</p>';
-    
-    console.log('[AbrirModal] ✅ HTML renderizado');
+
+    renderizarListasCuentasFlujo(cuentas, transferenciasContainer, efectivoContainer);
     
     // Agregar event listeners a los radios
     const radios = document.querySelectorAll('input[type="radio"][name="cuentaPago"]');
-    console.log('[AbrirModal] 📻 Radios encontrados:', radios.length);
     
     radios.forEach(radio => {
         radio.addEventListener('change', function() {
             const accountId = String(this.value);
             const cuentaSeleccionada = cuentas.find((cuenta, idx) =>
-                obtenerAccountIdSeguro(cuenta, idx) === accountId
+                obtenerAccountIdSeguroFlujo(cuenta, idx) === accountId
             );
-            
-            console.log('[AbrirModal] 🔄 Radio seleccionado, accountId:', accountId, 'cuenta:', cuentaSeleccionada);
-            
+
             if (!cuentaSeleccionada) {
                 console.error('[AbrirModal] ❌ Cuenta no encontrada para id:', accountId);
                 return;
@@ -381,17 +375,9 @@ async function abrirModalSeleccionCuenta() {
             
             // Paso 3: Generar y mostrar orden formal
             setTimeout(async () => {
-                console.log('[AbrirModal] 📋 Abriendo orden formal');
                 await mostrarOrdenFormal(cuentaSeleccionada);
             }, 300);
         });
-    });
-    
-    // No hay botones de copiar en el modal
-
-    window.requestAnimationFrame(() => {
-        if (modalBody) modalBody.scrollTop = 0;
-        if (modalCard) modalCard.scrollTop = 0;
     });
     
     // Emitir evento para que otras páginas se enteren
@@ -481,11 +467,6 @@ async function mostrarOrdenFormal(cuenta) {
     }));
     
     setItemSafeFlujo('rifaplus_boletos', JSON.stringify(boletos));
-    
-    // ℹ️  NOTA: Las oportunidades se asignan automáticamente en el servidor
-    // cuando se crea la orden (POST /api/ordenes)
-    // No se necesita recuperarlas o guardarlas del lado del cliente
-    console.log('ℹ️  [flujo-compra] Oportunidades se asignarán en servidor al crear orden');
     
     // Guardar totales
     const precioUnitario = obtenerPrecioDinamico();

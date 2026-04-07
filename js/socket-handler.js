@@ -155,15 +155,34 @@ class SocketHandler {
             disponibles: evento.disponibles
         });
 
-        // Actualizar UI sin necesidad de polling
-        if (typeof actualizarEstadoBoletosVisibles === 'function') {
-            actualizarEstadoBoletosVisibles();
+        if (window.rifaplusConfig?.estado) {
+            if (evento.vendidos !== undefined) {
+                window.rifaplusConfig.estado.boletosVendidos = Number(evento.vendidos) || 0;
+            }
+            if (evento.apartados !== undefined) {
+                window.rifaplusConfig.estado.boletosApartados = Number(evento.apartados) || 0;
+            }
+            if (evento.disponibles !== undefined) {
+                window.rifaplusConfig.estado.boletosDisponibles = Number(evento.disponibles) || 0;
+            }
         }
 
         // Actualizar contador de disponibles
         const availabilityNote = document.getElementById('availabilityNote');
         if (availabilityNote && evento.disponibles !== undefined) {
             availabilityNote.textContent = `${evento.disponibles} boletos disponibles`;
+        }
+
+        if (typeof window.solicitarRefrescoEstadoBoletosActual === 'function') {
+            window.solicitarRefrescoEstadoBoletosActual({
+                motivo: 'socket-boletos-actualizados',
+                delayMs: 40,
+                fullRefresh: true
+            });
+        } else if (typeof cargarBoletosPublicos === 'function') {
+            cargarBoletosPublicos().catch(e => {
+                console.warn('⚠️  Error refrescando disponibilidad:', e.message);
+            });
         }
 
         // Emitir evento global para otros listeners
@@ -180,7 +199,13 @@ class SocketHandler {
         });
 
         // Refrescar disponibilidad si es necesario
-        if (typeof cargarBoletosPublicos === 'function') {
+        if (typeof window.solicitarRefrescoEstadoBoletosActual === 'function') {
+            window.solicitarRefrescoEstadoBoletosActual({
+                motivo: 'socket-orden-creada',
+                delayMs: 40,
+                fullRefresh: true
+            });
+        } else if (typeof cargarBoletosPublicos === 'function') {
             cargarBoletosPublicos().catch(e => {
                 console.warn('⚠️  Error refrescando disponibilidad:', e.message);
             });
@@ -199,7 +224,13 @@ class SocketHandler {
         });
 
         // Refrescar disponibilidad
-        if (typeof cargarBoletosPublicos === 'function') {
+        if (typeof window.solicitarRefrescoEstadoBoletosActual === 'function') {
+            window.solicitarRefrescoEstadoBoletosActual({
+                motivo: 'socket-orden-cancelada',
+                delayMs: 40,
+                fullRefresh: true
+            });
+        } else if (typeof cargarBoletosPublicos === 'function') {
             cargarBoletosPublicos().catch(e => {
                 console.warn('⚠️  Error refrescando disponibilidad:', e.message);
             });

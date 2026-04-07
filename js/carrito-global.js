@@ -71,7 +71,155 @@ const DEBOUNCE_DELAY = 50; // ms
 
 // ⚡ CACHÉ del estado renderizado (evita re-renderizar si no cambió)
 let cachedBoletosHash = null;
+let cachedResumenHash = null;
 let isCarritoModalOpen = false;
+let carritoItemsDelegationBound = false;
+
+function obtenerBoletosOrdenadosCarrito() {
+    return obtenerBoletosSelecionados().slice().sort((a, b) => a - b);
+}
+
+function construirSnapshotBoletosCarrito(numerosOrdenados, oportunidadesHabilitadas) {
+    return JSON.stringify({
+        numeros: numerosOrdenados,
+        oportunidades: Boolean(oportunidadesHabilitadas)
+    });
+}
+
+function construirSnapshotResumenCarrito(calcTotal) {
+    return JSON.stringify({
+        cantidad: calcTotal.cantidadBoletos,
+        subtotal: calcTotal.subtotal,
+        descuento: calcTotal.descuentoMonto,
+        total: calcTotal.totalFinal
+    });
+}
+
+function debeRenderizarCarritoConSnapshot(carritoItems, snapshotBoletos) {
+    return cachedBoletosHash !== snapshotBoletos || !carritoItems || carritoItems.children.length === 0;
+}
+
+function obtenerRefsResumenCarrito() {
+    return {
+        carritoResumen: document.getElementById('carritoResumen'),
+        carritoResumenCantidad: document.getElementById('carritoResumenCantidad'),
+        carritoResumenDescuento: document.getElementById('carritoResumenDescuento'),
+        carritoResumenTotal: document.getElementById('carritoResumenTotal'),
+        carritoResumenSubtotal: document.getElementById('carritoResumenSubtotal'),
+        descuentoPromoLabel: document.getElementById('descuentoPromoLabel'),
+        btnProcederCarrito: document.getElementById('btnProcederCarrito'),
+        carritoFooter: document.getElementById('carritoFooter')
+    };
+}
+
+function configurarDelegacionItemsCarrito() {
+    const carritoItems = document.getElementById('carritoItems');
+    if (!carritoItems || carritoItemsDelegationBound) {
+        return;
+    }
+
+    carritoItems.addEventListener('click', function(e) {
+        const botonEliminar = e.target.closest('.carrito-item-trash-btn');
+        if (!botonEliminar) {
+            return;
+        }
+
+        e.stopPropagation();
+        const numero = parseInt(botonEliminar.getAttribute('data-numero'), 10);
+        removerBoletoSeleccionado(numero);
+    });
+
+    carritoItemsDelegationBound = true;
+}
+
+function aplicarEstadoVacioCarrito({ carritoVacio, carritoLista, carritoResumen, carritoFooter, btnProcederCarrito }) {
+    carritoVacio.style.display = 'flex';
+    carritoLista.style.display = 'none';
+    if (carritoResumen) carritoResumen.style.display = 'none';
+    if (carritoFooter) carritoFooter.style.display = 'none';
+
+    const modalEl = document.querySelector('.modal-carrito');
+    if (modalEl && !modalEl.classList.contains('empty-cart')) {
+        modalEl.classList.add('empty-cart');
+    }
+
+    if (btnProcederCarrito) {
+        btnProcederCarrito.disabled = true;
+        btnProcederCarrito.textContent = 'Ir a Comprar';
+    }
+}
+
+function aplicarEstadoConItemsCarrito({ carritoVacio, carritoLista, carritoResumen, carritoFooter, btnProcederCarrito }) {
+    carritoVacio.style.display = 'none';
+    carritoLista.style.display = 'block';
+
+    const modalEl = document.querySelector('.modal-carrito');
+    if (modalEl && modalEl.classList.contains('empty-cart')) {
+        modalEl.classList.remove('empty-cart');
+    }
+
+    if (carritoResumen) {
+        carritoResumen.style.display = 'flex';
+        carritoResumen.style.visibility = 'visible';
+        carritoResumen.style.opacity = '1';
+    }
+
+    if (carritoFooter) {
+        carritoFooter.style.display = 'flex';
+        carritoFooter.style.visibility = 'visible';
+    }
+
+    if (btnProcederCarrito) {
+        btnProcederCarrito.disabled = false;
+        btnProcederCarrito.textContent = 'Proceder al pago';
+    }
+}
+
+function renderizarItemsCarrito(carritoItems, numerosOrdenados, oportunidadesHabilitadas) {
+    const htmlParts = [];
+
+    for (let i = 0; i < numerosOrdenados.length; i += 1) {
+        const numero = numerosOrdenados[i];
+        const numeroFormato = window.rifaplusConfig.formatearNumeroBoleto(numero);
+
+        htmlParts.push(`<div class="carrito-item" data-numero="${numero}" data-index="${i}"><div class="carrito-item-numero"><div class="carrito-item-ticket-label"><span class="carrito-item-ticket-text">Boleto</span><span class="boleto-numero"><i class="fas fa-ticket-alt"></i> ${numeroFormato}</span></div></div><button class="carrito-item-trash-btn" data-numero="${numero}" aria-label="Eliminar boleto ${numero}" title="Eliminar boleto ${numero}"><i class="fas fa-trash carrito-item-trash" aria-hidden="true"></i></button></div>`);
+
+        if (oportunidadesHabilitadas) {
+            htmlParts.push(`<div class="carrito-item carrito-item-oportunidades-container" data-numero="${numero}" data-oportunidades="pending"><div class="carrito-item-numero carrito-item-numero--full"><span class="carrito-item-oportunidades-text"><i class="fas fa-spinner carrito-item-oportunidades-check carrito-item-oportunidades-check--loading"></i><strong>Oportunidades:</strong> <span class="carrito-item-oportunidades-status">cargando...</span></span></div></div>`);
+        }
+    }
+
+    carritoItems.innerHTML = htmlParts.join('');
+}
+
+function actualizarResumenCarritoDOM(refs, calcTotal) {
+    const resumenHash = construirSnapshotResumenCarrito(calcTotal);
+    if (cachedResumenHash === resumenHash) {
+        return;
+    }
+
+    cachedResumenHash = resumenHash;
+
+    if (refs.carritoResumenCantidad) refs.carritoResumenCantidad.textContent = calcTotal.cantidadBoletos;
+    if (refs.carritoResumenSubtotal) refs.carritoResumenSubtotal.textContent = `$${calcTotal.subtotal.toFixed(2)}`;
+    if (refs.carritoResumenDescuento) refs.carritoResumenDescuento.textContent = `$${calcTotal.descuentoMonto.toFixed(2)}`;
+    if (refs.carritoResumenTotal) refs.carritoResumenTotal.textContent = `$${calcTotal.totalFinal.toFixed(2)}`;
+    if (refs.descuentoPromoLabel) {
+        refs.descuentoPromoLabel.style.display = calcTotal.descuentoMonto > 0 ? 'inline-block' : 'none';
+    }
+
+    try {
+        setItemSafeCarrito('rifaplus_total', JSON.stringify({
+            subtotal: calcTotal.subtotal,
+            descuento: calcTotal.descuentoMonto,
+            totalFinal: calcTotal.totalFinal,
+            precioUnitario: calcTotal.precioUnitario,
+            cantidad: calcTotal.cantidadBoletos
+        }));
+    } catch (e) {
+        // Silent fail.
+    }
+}
 
 /**
  * 🎯 FUNCIÓN GLOBAL: Asegurar OportunidadesManager está cargado
@@ -202,6 +350,7 @@ document.addEventListener('DOMContentLoaded', function() {
 function inicializarCarritoGlobal() {
     const carritoNav = document.getElementById('carritoNav');
     const carritoModal = document.getElementById('carritoModal');
+    configurarDelegacionItemsCarrito();
     
     // Actualizar el contador inmediatamente al cargar la página
     if (window.actualizarContadorCarritoGlobal) window.actualizarContadorCarritoGlobal();
@@ -248,11 +397,13 @@ function inicializarCarritoGlobal() {
         asegurarOportunidadesManagerCargado();
         
         // ⚡ RENDERIZAR SOLO SI CAMBIÓ (check hash rápido)
-        const boletosActuales = obtenerBoletosSelecionados();
-        const hashActual = JSON.stringify(boletosActuales.sort((a, b) => a - b));
+        const boletosActuales = obtenerBoletosOrdenadosCarrito();
+        const hashActual = construirSnapshotBoletosCarrito(
+            boletosActuales,
+            window.rifaplusConfig?.rifa?.oportunidades?.enabled || false
+        );
         
-        if (cachedBoletosHash !== hashActual) {
-            cachedBoletosHash = hashActual;
+        if (debeRenderizarCarritoConSnapshot(document.getElementById('carritoItems'), hashActual)) {
             // ⚡ Usar requestAnimationFrame para no bloquear el thread
             requestAnimationFrame(() => {
                 actualizarVistaCarritoGlobal();
@@ -375,9 +526,6 @@ function actualizarVistaCarritoGlobal() {
     
     // Agregar clase condicional si oportunidades está habilitado
     const oportunidadesHabilitadas = window.rifaplusConfig?.rifa?.oportunidades?.enabled || false;
-    console.log(`[CARRITO] Oportunidades habilitadas: ${oportunidadesHabilitadas}`, { 
-        config: window.rifaplusConfig?.rifa?.oportunidades 
-    });
     
     if (carritoItems) {
         if (oportunidadesHabilitadas) {
@@ -387,130 +535,78 @@ function actualizarVistaCarritoGlobal() {
         }
     }
     const carritoLista = document.getElementById('carritoLista');
-    let carritoResumen = document.getElementById('carritoResumen');
-    let carritoResumenCantidad = document.getElementById('carritoResumenCantidad');
-    let carritoResumenDescuento = document.getElementById('carritoResumenDescuento');
-    let carritoResumenTotal = document.getElementById('carritoResumenTotal');
-    let btnProcederCarrito = document.getElementById('btnProcederCarrito');
-    let carritoFooter = document.getElementById('carritoFooter');
+    let {
+        carritoResumen,
+        carritoResumenCantidad,
+        carritoResumenDescuento,
+        carritoResumenTotal,
+        btnProcederCarrito,
+        carritoFooter
+    } = obtenerRefsResumenCarrito();
 
     if (!carritoItems || !carritoVacio || !carritoLista) return;
 
-    carritoItems.innerHTML = '';
-
     if (selectedNumbers.length === 0) {
-        carritoVacio.style.display = 'flex';
-        carritoLista.style.display = 'none';
-        if (carritoResumen) carritoResumen.style.display = 'none';
-        if (carritoFooter) carritoFooter.style.display = 'none';
-        const modalEl = document.querySelector('.modal-carrito');
-        if (modalEl && !modalEl.classList.contains('empty-cart')) modalEl.classList.add('empty-cart');
-        if (btnProcederCarrito) btnProcederCarrito.disabled = true;
-        if (btnProcederCarrito) {
-            btnProcederCarrito.textContent = 'Ir a Comprar';
-        }
+        carritoItems.innerHTML = '';
+        cachedBoletosHash = construirSnapshotBoletosCarrito([], oportunidadesHabilitadas);
+        cachedResumenHash = null;
+        aplicarEstadoVacioCarrito({
+            carritoVacio,
+            carritoLista,
+            carritoResumen,
+            carritoFooter,
+            btnProcederCarrito
+        });
         return;
     }
 
-    carritoVacio.style.display = 'none';
-    carritoLista.style.display = 'block';
-    
-    const modalEl = document.querySelector('.modal-carrito');
-    if (modalEl && modalEl.classList.contains('empty-cart')) modalEl.classList.remove('empty-cart');
+    const numerosOrdenados = selectedNumbers.slice().sort((a, b) => a - b);
+    const boletosHash = construirSnapshotBoletosCarrito(numerosOrdenados, oportunidadesHabilitadas);
+    const necesitaRenderItems = debeRenderizarCarritoConSnapshot(carritoItems, boletosHash);
+
     if (!carritoFooter) {
         createCarritoFooter();
-        carritoFooter = document.getElementById('carritoFooter');
-        carritoResumen = document.getElementById('carritoResumen');
-        carritoResumenCantidad = document.getElementById('carritoResumenCantidad');
-        carritoResumenDescuento = document.getElementById('carritoResumenDescuento');
-        carritoResumenTotal = document.getElementById('carritoResumenTotal');
-        btnProcederCarrito = document.getElementById('btnProcederCarrito');
-    }
-    if (carritoResumen) {
-        carritoResumen.style.display = 'flex';
-        carritoResumen.style.visibility = 'visible';
-        carritoResumen.style.opacity = '1';
-    }
-    if (carritoFooter) {
-        carritoFooter.style.display = 'flex';
-        carritoFooter.style.visibility = 'visible';
-    }
-    if (btnProcederCarrito) {
-        btnProcederCarrito.disabled = false;
-        btnProcederCarrito.textContent = 'Proceder al pago';
+        ({
+            carritoResumen,
+            carritoResumenCantidad,
+            carritoResumenDescuento,
+            carritoResumenTotal,
+            btnProcederCarrito,
+            carritoFooter
+        } = obtenerRefsResumenCarrito());
     }
 
-    // Crear lista de boletos ordenados
-    const numerosOrdenados = [...selectedNumbers].sort((a, b) => a - b);
+    aplicarEstadoConItemsCarrito({
+        carritoVacio,
+        carritoLista,
+        carritoResumen,
+        carritoFooter,
+        btnProcederCarrito
+    });
+
     const precioUnitario = obtenerPrecioDinamicoCarrito();
-    
-    // ✅ NOTA: Ya no necesitamos calcular digitos - formatearNumeroBoleto() lo hace
-    
-    // ⚡ ESTRATEGIA CORRECTA: RENDERIZAR PRIMERO, CALCULAR DESPUÉS
-    // 1. Renderizar TODOS los items SIN oportunidades (INSTANTÁNEO - milisegundos)
-    // 2. Calcular oportunidades para TODOS en background (no bloquea UI)
-    // 3. Llenar el DOM con oportunidades cuando estén listas
-    
-    const htmlParts = [];
-    
-    for (let i = 0; i < numerosOrdenados.length; i++) {
-        const numero = numerosOrdenados[i];
-        // ✅ Usar función centralizada de config.js
-        const numeroFormato = window.rifaplusConfig.formatearNumeroBoleto(numero);
-        
-        // Item boleto
-        htmlParts.push(`<div class="carrito-item" data-numero="${numero}" data-index="${i}"><div class="carrito-item-numero"><div class="carrito-item-ticket-label"><span class="carrito-item-ticket-text">Boleto</span><span class="boleto-numero"><i class="fas fa-ticket-alt"></i> ${numeroFormato}</span></div></div><button class="carrito-item-trash-btn" data-numero="${numero}" aria-label="Eliminar boleto ${numero}" title="Eliminar boleto ${numero}"><i class="fas fa-trash carrito-item-trash" aria-hidden="true"></i></button></div>`);
-        
-        // Placeholder para oportunidades
-        if (oportunidadesHabilitadas) {
-            htmlParts.push(`<div class="carrito-item carrito-item-oportunidades-container" data-numero="${numero}" data-oportunidades="pending"><div class="carrito-item-numero carrito-item-numero--full"><span class="carrito-item-oportunidades-text"><i class="fas fa-spinner carrito-item-oportunidades-check carrito-item-oportunidades-check--loading"></i><strong>Oportunidades:</strong> <span class="carrito-item-oportunidades-status">cargando...</span></span></div></div>`);
+
+    if (necesitaRenderItems) {
+        renderizarItemsCarrito(carritoItems, numerosOrdenados, oportunidadesHabilitadas);
+        cachedBoletosHash = boletosHash;
+
+        if (oportunidadesHabilitadas && window.oportunidadesManager) {
+            enlazarListenersOportunidadesCarrito(numerosOrdenados);
+            window.oportunidadesManager.cargar(numerosOrdenados).catch(e => {
+                console.error('[CARRITO] Error crítico:', e);
+            });
         }
     }
-    
-    carritoItems.innerHTML = htmlParts.join('');
-    agregarEventListenersCarrito();
-    
-    // ✅ USAR EL NUEVO OPORTUNIDADES MANAGER (PROFESSIONAL)
-    if (oportunidadesHabilitadas && window.oportunidadesManager) {
-        console.log('[CARRITO] 🚀 Iniciando carga de oportunidades con OportunidadesManager...');
 
-        enlazarListenersOportunidadesCarrito(numerosOrdenados);
-
-        // Iniciar carga
-        window.oportunidadesManager.cargar(numerosOrdenados).catch(e => {
-            console.error('[CARRITO] Error crítico:', e);
-        });
-    }
-    
-    // Actualizar resumen (instantáneo)
     const calcTotal = calcularDescuentoGlobal(selectedNumbers.length, precioUnitario);
-    if (carritoResumenCantidad) carritoResumenCantidad.textContent = calcTotal.cantidadBoletos;
-    const subtotalEl = document.getElementById('carritoResumenSubtotal');
-    if (subtotalEl) subtotalEl.textContent = `$${calcTotal.subtotal.toFixed(2)}`;
-    if (carritoResumenDescuento) carritoResumenDescuento.textContent = `$${calcTotal.descuentoMonto.toFixed(2)}`;
-    
-    // Mostrar/ocultar badge PROMO si hay descuento
-    const promoLabel = document.getElementById('descuentoPromoLabel');
-    if (promoLabel) {
-        promoLabel.style.display = calcTotal.descuentoMonto > 0 ? 'inline-block' : 'none';
-    }
-    
-    if (carritoResumenTotal) carritoResumenTotal.textContent = `$${calcTotal.totalFinal.toFixed(2)}`;
-
-    // Guardar totales
-    try {
-        setItemSafeCarrito('rifaplus_total', JSON.stringify({
-            subtotal: calcTotal.subtotal,
-            descuento: calcTotal.descuentoMonto,
-            totalFinal: calcTotal.totalFinal,
-            precioUnitario: calcTotal.precioUnitario,
-            cantidad: calcTotal.cantidadBoletos
-        }));
-    } catch (e) {
-        // Storage lleno o deshabilitado - silent fail
-    }
-    
-    cachedBoletosHash = null;
+    actualizarResumenCarritoDOM({
+        carritoResumen,
+        carritoResumenCantidad,
+        carritoResumenDescuento,
+        carritoResumenTotal,
+        carritoResumenSubtotal: document.getElementById('carritoResumenSubtotal'),
+        descuentoPromoLabel: document.getElementById('descuentoPromoLabel')
+    }, calcTotal);
 }
 
 /**
@@ -525,21 +621,7 @@ function actualizarVistaCarritoGlobal() {
 
 
 function agregarEventListenersCarrito() {
-    const carritoItems = document.getElementById('carritoItems');
-    if (!carritoItems) return;
-    
-    carritoItems.querySelectorAll('.carrito-item-trash-btn').forEach(btn => {
-        // Solo agregar si no tiene listener ya
-        if (!btn.dataset.listenerAdded) {
-            btn.addEventListener('click', function(e) {
-                e.stopPropagation();
-                const numero = parseInt(this.getAttribute('data-numero'), 10);
-                removerBoletoSeleccionado(numero);
-                actualizarVistaCarritoGlobal();
-            });
-            btn.dataset.listenerAdded = 'true';
-        }
-    });
+    configurarDelegacionItemsCarrito();
 }
 
 /**
@@ -547,6 +629,7 @@ function agregarEventListenersCarrito() {
  */
 function invalidarCacheCarrito() {
     cachedBoletosHash = null;
+    cachedResumenHash = null;
     // ⚡ No necesitamos limpiar caché de oportunidades
     // porque es DETERMINÍSTICO: mismo array de boletos = mismas oportunidades
 }
@@ -554,33 +637,17 @@ function invalidarCacheCarrito() {
 function obtenerBoletosSelecionados() {
     // Si estamos en compra.html, usar el Set global
     if (typeof selectedNumbersGlobal !== 'undefined') {
-        // Sincronizar con localStorage (nunca sabemos cuándo puede cambiar en otra tab)
-        const stored = getItemSafeCarrito('rifaplusSelectedNumbers');
-        const storedArray = stored ? JSON.parse(stored) : [];
-        
-        // Si hay diferencia, usar el Set global (es la fuente primaria)
-        // pero actualizar localStorage por si acaso
-        const currentSet = new Set(Array.from(selectedNumbersGlobal));
-        
-        // 🛡️ Guard defensivo: safeTrySetItem puede no estar disponible
-        try {
-            if (typeof window.safeTrySetItem === 'function') {
-                window.safeTrySetItem('rifaplusSelectedNumbers', JSON.stringify(Array.from(currentSet)));
-            } else {
-                // Fallback: intentar localStorage directo
-                localStorage.setItem('rifaplusSelectedNumbers', JSON.stringify(Array.from(currentSet)));
-            }
-        } catch (e) {
-            console.warn('⚠️  Error guardando números en storage:', e.message);
-        }
-        
-        // ⭐ IMPORTANTE: Retornar siempre números (no strings)
-        return Array.from(currentSet).map(n => parseInt(n, 10));
+        return Array.from(selectedNumbersGlobal).map(n => parseInt(n, 10));
     }
     
     // En otras páginas, obtener del localStorage
-    const stored = getItemSafeCarrito('rifaplusSelectedNumbers');
-    const result = stored ? JSON.parse(stored) : [];
+    let result = [];
+    try {
+        const stored = getItemSafeCarrito('rifaplusSelectedNumbers');
+        result = stored ? JSON.parse(stored) : [];
+    } catch (error) {
+        result = [];
+    }
     
     // ⭐ IMPORTANTE: Convertir a números para garantizar tipo consistente
     return result.map(n => parseInt(n, 10));
@@ -671,8 +738,12 @@ function handleLimpiarCarrito() {
         // Este código solo se ejecutará en compra.html donde existen los botones .numero-btn
         numerosAEliminar.forEach(numero => {
             const botonNumero = document.querySelector(`.numero-btn[data-numero="${numero}"]`);
-            if (botonNumero && botonNumero.classList.contains('selected')) {
-                botonNumero.classList.remove('selected');
+            if (typeof window.cancelarValidacionSeleccionPendienteCompra === 'function') {
+                window.cancelarValidacionSeleccionPendienteCompra(numero);
+            }
+            if (botonNumero) {
+                botonNumero.classList.remove('selected', 'is-pending', 'is-processing');
+                botonNumero.disabled = false;
                 botonNumero.style.transform = 'scale(1)';
             }
         });
@@ -714,6 +785,10 @@ function removerBoletoSeleccionado(numero) {
     
     // Asegurar que numero es un integer
     numero = parseInt(numero, 10);
+
+    if (typeof window.cancelarValidacionSeleccionPendienteCompra === 'function') {
+        window.cancelarValidacionSeleccionPendienteCompra(numero);
+    }
     
     // 1. Remover del Set global - INMEDIATO
     if (typeof selectedNumbersGlobal !== 'undefined') {
@@ -722,41 +797,21 @@ function removerBoletoSeleccionado(numero) {
     
     // 2. Desmarcar en la boletera - INMEDIATO
     const botonNumero = document.querySelector(`.numero-btn[data-numero="${numero}"]`);
-    if (botonNumero && botonNumero.classList.contains('selected')) {
-        botonNumero.classList.remove('selected');
+    if (botonNumero) {
+        botonNumero.classList.remove('selected', 'is-pending', 'is-processing');
+        botonNumero.disabled = false;
         botonNumero.style.transform = 'scale(1)';
     }
     
     // 3. Actualizar localStorage INMEDIATO (es rápido)
-    let stored = localStorage.getItem('rifaplusSelectedNumbers');
+    let stored = getItemSafeCarrito('rifaplusSelectedNumbers');
     let numbers = stored ? JSON.parse(stored).map(n => parseInt(n, 10)) : [];
     numbers = numbers.filter(n => n !== numero);
-    localStorage.setItem('rifaplusSelectedNumbers', JSON.stringify(numbers));
+    setItemSafeCarrito('rifaplusSelectedNumbers', JSON.stringify(numbers));
     
     // 4. Actualizar resultados si está visible
-    const resultadosList = document.getElementById('resultadosList');
-    if (resultadosList && resultadosList.offsetHeight > 0) {
-        const resultadoItem = document.querySelector(`.resultado-item:has(button[data-numero="${numero}"])`);
-        if (resultadoItem) {
-            resultadoItem.innerHTML = `
-                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 1.5rem;">
-                    <div>
-                        <span style="font-weight: 600; font-size: 1.1rem; color: var(--text-dark);">Boleto #${numero}</span>
-                        <span style="display: block; font-size: 0.85rem; color: var(--text-light);">Estado: <strong style="color: var(--success)">✅ Disponible</strong></span>
-                    </div>
-                    <button class="btn btn-lo-quiero" data-numero="${numero}" style="padding: 0.5rem 1rem; background: var(--primary); color: white; border: none; border-radius: 0.375rem; cursor: pointer; font-weight: 600; transition: var(--transition-fast);">Lo quiero</button>
-                </div>
-            `;
-            
-            const btnLoQuiero = resultadoItem.querySelector('.btn-lo-quiero');
-            if (btnLoQuiero) {
-                btnLoQuiero.addEventListener('click', function() {
-                    if (typeof agregarBoletoDirectoCarrito === 'function') {
-                        agregarBoletoDirectoCarrito(numero);
-                    }
-                });
-            }
-        }
+    if (typeof restaurarNumeroDisponibleEnBusqueda === 'function') {
+        restaurarNumeroDisponibleEnBusqueda(numero);
     }
     
     // 5. Invalidar caché
@@ -765,7 +820,6 @@ function removerBoletoSeleccionado(numero) {
     // 6. 🧹 LIMPIAR OPORTUNIDADES DEL BOLETO (mantener sincronizado)
     if (window.rifaplusOportunidadesCarrito && typeof window.rifaplusOportunidadesCarrito === 'object') {
         delete window.rifaplusOportunidadesCarrito[String(numero)];
-        console.log(`[CARRITO] 🧹 Limpiadas oportunidades del boleto #${numero}`);
     }
     
     // 7. ⭐ RECALCULAR OPORTUNIDADES EN ORDEN (si existe)
@@ -780,9 +834,7 @@ function removerBoletoSeleccionado(numero) {
                 if (boletoEstabaEnOrden) {
                     // Recalcular oportunidades: solo incluir las del boleto removido
                     if (Array.isArray(ordenTemp.boletosOcultos)) {
-                        // Las oportunidades ya van a ser recalculadas en orden-formal.js
-                        // Aquí solo marcamos que necesita recálculo
-                        console.log(`[CARRITO] 📌 Marcado: Orden necesita recálculo de oportunidades (boleto #${numero} removido)`);
+                        // Las oportunidades se recalculan en orden-formal.js.
                     }
                 }
             }
@@ -826,8 +878,8 @@ function agregarBoletoSelecionado(numero) {
     }
     
     // Actualizar todas las vistas
-    if (window.actualizarVistaCarritoGlobal) window.actualizarVistaCarritoGlobal();
     if (window.actualizarContadorCarritoGlobal) window.actualizarContadorCarritoGlobal();
+    if (isCarritoModalOpen && window.actualizarVistaCarritoGlobal) window.actualizarVistaCarritoGlobal();
     if (window.actualizarResumenCompra) window.actualizarResumenCompra();
     
     return true;
@@ -922,7 +974,6 @@ function sincronizarCarritoAlLocalStorage() {
             try {
                 const numbers = Array.from(selectedNumbersGlobal);
                 setItemSafeCarrito('rifaplusSelectedNumbers', JSON.stringify(numbers));
-                console.debug(`⚡ Sincronizado ${numbers.length} números a localStorage`);
             } catch (e) {
                 console.warn('Error sincronizando a localStorage:', e.message);
             }
@@ -953,18 +1004,6 @@ function actualizarContadorCarritoGlobal() {
             carritoCount.textContent = cantidad;
         }
     }
-    
-    // Sincronizar selectedNumbersGlobal si existe (en compra.html)
-    if (typeof selectedNumbersGlobal !== 'undefined') {
-        const stored = localStorage.getItem('rifaplusSelectedNumbers');
-        const selectedNumbers = stored ? JSON.parse(stored).map(n => parseInt(n, 10)) : [];
-        // Solo sincronizar si hay diferencias
-        if (selectedNumbers.length !== selectedNumbersGlobal.size) {
-            selectedNumbersGlobal.clear();
-            // ⭐ IMPORTANTE: Convertir a números al sincronizar
-            selectedNumbers.forEach(num => selectedNumbersGlobal.add(parseInt(num, 10)));
-        }
-    }
 }
 
 /**
@@ -985,8 +1024,6 @@ function actualizarCarritoConDebounceAgresivo() {
     
     // Ejecutar actualización después de 50ms (agrupa clicks rápidos)
     debounceCarritoTimeout = setTimeout(() => {
-        console.debug(`📦 Actualizando carrito (agrupó ${debounceCarritoTriggers} clicks)`);
-        
         // ⭐ AQUÍ OCURREN TODAS LAS ACTUALIZACIONES DE UNA VEZ
         // Solo el contador es "barato", los demás se evitan si no es necesario
         actualizarContadorCarritoGlobal();
@@ -1020,8 +1057,6 @@ window.removerBoletoSeleccionado = removerBoletoSeleccionado;
 window.actualizarVistaCarritoGlobal = actualizarVistaCarritoGlobal;
 window.actualizarContadorCarritoGlobal = actualizarContadorCarritoGlobal;
 window.actualizarCarritoConDebounceAgresivo = actualizarCarritoConDebounceAgresivo;
-
-console.log('✅ carrito-global.js completamente cargado - Funciones exportadas globalmente');
 
 /**
  * ⚙️ FUNCIONES REMOVIDAS (Sistema antiguo de asignación dinámica)

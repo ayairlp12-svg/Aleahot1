@@ -28,6 +28,33 @@
             : {};
     }
 
+    function obtenerUtilidadesHeroCompra() {
+        const heroUtils = window.__RIFAPLUS_COMPRA_HERO_UTILS__;
+        if (heroUtils?.resolverOrganizador && heroUtils?.construirTitulo) {
+            return heroUtils;
+        }
+
+        const placeholderRegex = /^(sorteo|sorteos|sorteo actual|sorteo en vivo|sorteo demo|organizador|cliente|rifaplus)$/i;
+        return {
+            resolverOrganizador(...candidatos) {
+                for (const candidato of candidatos) {
+                    const nombre = String(candidato || '').replace(/\s+/g, ' ').trim();
+                    if (nombre && !placeholderRegex.test(nombre)) {
+                        return nombre;
+                    }
+                }
+
+                return '';
+            },
+            construirTitulo(organizador, fallback = HERO_TITULO_DEFAULT) {
+                const nombre = this.resolverOrganizador(organizador);
+                return nombre
+                    ? `¿Listo para ser el proximo ganador de ${nombre}? Elige tus boletos y participa ahora`
+                    : fallback;
+            }
+        };
+    }
+
     function obtenerConfigLocalCompartida() {
         try {
             return JSON.parse(localStorage.getItem('rifaplus_config_actual_v2') || '{}');
@@ -37,24 +64,15 @@
     }
 
     function obtenerNombreOrganizadorInicialCompra() {
+        const heroUtils = obtenerUtilidadesHeroCompra();
         const config = obtenerConfigCompra();
-        const nombreConfig = String(config?.cliente?.nombre || '').trim();
-        if (nombreConfig) {
-            return nombreConfig;
-        }
-
-        const nombreLocal = String(obtenerConfigLocalCompartida()?.cliente?.nombre || '').trim();
-        if (nombreLocal) {
-            return nombreLocal;
-        }
-
-        const nombreHero = String(window.__RIFAPLUS_COMPRA_HERO__?.organizador || '').trim();
-        if (nombreHero) {
-            return nombreHero;
-        }
-
         try {
-            return String(localStorage.getItem('rifaplus_compra_hero_organizador') || '').trim();
+            return heroUtils.resolverOrganizador(
+                config?.cliente?.nombre,
+                obtenerConfigLocalCompartida()?.cliente?.nombre,
+                window.__RIFAPLUS_COMPRA_HERO__?.organizador,
+                localStorage.getItem('rifaplus_compra_hero_organizador')
+            );
         } catch (error) {
             return '';
         }
@@ -68,10 +86,9 @@
             return;
         }
 
+        const heroUtils = obtenerUtilidadesHeroCompra();
         const organizador = obtenerNombreOrganizadorInicialCompra();
-        const textoTitulo = organizador
-            ? `¿Listo para ser el proximo ganador de ${organizador}? Elige tus boletos y participa ahora`
-            : HERO_TITULO_DEFAULT;
+        const textoTitulo = heroUtils.construirTitulo(organizador, HERO_TITULO_DEFAULT);
 
         title.textContent = textoTitulo;
 

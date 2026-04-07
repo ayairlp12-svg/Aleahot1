@@ -10,7 +10,10 @@
  */
 
 const db = require('../db');
-const cloudinary = require('../cloudinary-config');
+const {
+    ASSET_TYPES,
+    subirBufferACloudinary
+} = require('./cloudinaryUploadService');
 
 /**
  * Validar que la tabla ordenes tiene las columnas requeridas
@@ -169,34 +172,14 @@ async function validarOrden(numeroOrden, whatsappSanitizado) {
  * @throws {Error} Si falla el upload
  */
 async function subirACloudinary(datos, nombreArchivo, mimetype) {
-    return new Promise((resolve, reject) => {
-        const tipoArchivo = String(mimetype).toLowerCase();
-        const esArchivo = tipoArchivo.includes('pdf') || tipoArchivo.includes('document');
-        const resourceType = esArchivo ? 'raw' : 'auto';
-
-        const uploadStream = cloudinary.uploader.upload_stream(
-            {
-                resource_type: resourceType,
-                public_id: nombreArchivo,
-                folder: 'rifas-comprobantes',
-                overwrite: true,
-                quality: esArchivo ? undefined : 'auto'
-            },
-            (error, result) => {
-                if (error) {
-                    reject(new Error(`Cloudinary upload error: ${error.message}`));
-                } else {
-                    resolve(result.secure_url);
-                }
-            }
-        );
-
-        uploadStream.on('error', (err) => {
-            reject(new Error(`Stream error: ${err.message}`));
-        });
-
-        uploadStream.end(datos);
+    const result = await subirBufferACloudinary({
+        buffer: datos,
+        originalName: nombreArchivo,
+        mimetype,
+        assetType: ASSET_TYPES.COMPROBANTE
     });
+
+    return result.secureUrl;
 }
 
 /**

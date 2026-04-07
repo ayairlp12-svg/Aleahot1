@@ -16,6 +16,23 @@ window.rifaplusOportunidadesLoading = false;      // Flag de carga en progreso (
 window.rifaplusOportunidadesCargandoTimeout = null; // Timeout para resetear flag si se queda stuck
 window.rifaplusOportunidadesStartTime = null;    // Timestamp de inicio de carga (para timeout en flujo-compra.js)
 
+const RIFAPLUS_EVENT_OPTS = Object.freeze({
+    passive: { passive: true },
+    passiveOnce: { passive: true, once: true }
+});
+
+function addPassiveListener(target, eventName, handler, extraOptions) {
+    if (!target || typeof target.addEventListener !== 'function') {
+        return;
+    }
+
+    const options = extraOptions
+        ? { passive: true, ...extraOptions }
+        : RIFAPLUS_EVENT_OPTS.passive;
+
+    target.addEventListener(eventName, handler, options);
+}
+
 /**
  * 🔥 CRÍTICO: Cargar resumen público al iniciar index.html
  * Para sorteos grandes, evita bajar arrays completos innecesarios.
@@ -436,6 +453,7 @@ window.rifaplusUtils = window.utilidadesRifaPlus;
  */
 function inyectarLogoDinamico() {
     try {
+        const imageDelivery = window.RifaPlusImageDelivery;
         const logoConfigCrudo = window.rifaplusConfig?.cliente?.logo || window.rifaplusConfig?.cliente?.logotipo || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 96'%3E%3Crect width='240' height='96' rx='20' fill='%230b2235'/%3E%3Ctext x='120' y='58' font-size='28' text-anchor='middle' fill='%23ffffff' font-family='Arial,sans-serif'%3ERifaPlus%3C/text%3E%3C/svg%3E";
         let logoConfig = logoConfigCrudo;
 
@@ -454,7 +472,7 @@ function inyectarLogoDinamico() {
 
         try {
             localStorage.setItem('rifaplus_cached_logo', logoConfig);
-            window.__RIFAPLUS_CACHED_LOGO__ = logoConfig;
+            window.__RIFAPLUS_CACHED_LOGO__ = imageDelivery?.resolverUrlImagen(logoConfig, 'logo') || logoConfig;
         } catch (error) {
             console.warn('⚠️ No se pudo persistir el logo en localStorage:', error?.message || error);
         }
@@ -472,26 +490,46 @@ function inyectarLogoDinamico() {
         
         logoSelectors.forEach(selector => {
             document.querySelectorAll(selector).forEach(img => {
-                const oldSrc = img.src;
-                img.src = logoConfig;
+                const oldSrc = img.dataset?.rifaplusOriginalSrc || img.getAttribute('src') || img.src || '';
+                const normalizedOldSrc = String(oldSrc || '').trim();
+                const normalizedLogo = String(logoConfig || '').trim();
+                const optimizedLogo = imageDelivery?.resolverUrlImagen(logoConfig, 'logo') || logoConfig;
+
+                if (!img.hasAttribute('fetchpriority')) {
+                    img.setAttribute('fetchpriority', 'high');
+                }
+                if (!img.hasAttribute('decoding')) {
+                    img.setAttribute('decoding', 'async');
+                }
+
+                if (normalizedOldSrc !== normalizedLogo) {
+                    if (imageDelivery?.aplicarImagenOptimizada) {
+                        imageDelivery.aplicarImagenOptimizada(img, {
+                            originalUrl: logoConfig,
+                            profile: 'logo',
+                            widths: [160, 320, 480],
+                            sizes: '(max-width: 768px) 160px, 320px',
+                            fetchPriority: 'high',
+                            decoding: 'async'
+                        });
+                    } else {
+                        img.src = optimizedLogo;
+                    }
+                }
+
                 img.onerror = function() {
                     console.warn(`Logo no encontrado: ${logoConfig}. Usando fallback inline.`);
                     this.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 96'%3E%3Crect width='240' height='96' rx='20' fill='%230b2235'/%3E%3Ctext x='120' y='58' font-size='28' text-anchor='middle' fill='%23ffffff' font-family='Arial,sans-serif'%3ERifaPlus%3C/text%3E%3C/svg%3E";
                 };
-                if (oldSrc !== logoConfig) {
-                    console.debug(`✓ Logo actualizado: ${oldSrc.split('/').pop()} → ${logoConfig.split('/').pop()}`);
-                }
             });
         });
 
         // Estrategia 2: Actualizar favicon si está en links
         document.querySelectorAll('link[rel="icon"], link[rel="apple-touch-icon"]').forEach(link => {
-            const oldHref = link.href;
-            link.href = logoConfig;
-            console.debug(`✓ Favicon actualizado: ${oldHref.split('/').pop()} → ${logoConfig.split('/').pop()}`);
+            link.href = imageDelivery?.resolverUrlImagen(logoConfig, 'logoIcon') || logoConfig;
         });
 
-        console.log('✅ Logo inyectado dinámicamente desde config:', logoConfig);
+        console.log('✅ Logo inyectado dinámicamente desde config');
     } catch (error) {
         console.warn('⚠️ Error inyectando logo:', error);
     }
@@ -548,6 +586,7 @@ document.addEventListener('DOMContentLoaded', function() {
  * Genera dinámicamente los slides desde config.rifa.premios[0].imagenes
  */
 function inicializarCarrusel() {
+    const imageDelivery = window.RifaPlusImageDelivery;
     // Buscar contenedor del carrusel
     const carruselInner = document.querySelector('.carrusel-inner');
     
@@ -572,9 +611,22 @@ function inicializarCarrusel() {
         slide.className = `carrusel-item${index === 0 ? ' active' : ''}`;
         
         const img = document.createElement('img');
-        img.src = imagenPath;
         img.alt = `Imagen ${index + 1} del premio`;
-        img.loading = 'lazy';
+        if (imageDelivery?.aplicarImagenOptimizada) {
+            imageDelivery.aplicarImagenOptimizada(img, {
+                originalUrl: imagenPath,
+                profile: index === 0 ? 'carouselPreload' : 'carousel',
+                widths: [480, 768, 960, 1280, 1600],
+                sizes: '(max-width: 768px) 100vw, min(92vw, 1200px)',
+                loading: index === 0 ? 'eager' : 'lazy',
+                fetchPriority: index === 0 ? 'high' : 'low',
+                decoding: 'async'
+            });
+        } else {
+            img.src = imagenPath;
+            img.loading = index === 0 ? 'eager' : 'lazy';
+            img.decoding = 'async';
+        }
         
         slide.appendChild(img);
         carruselInner.appendChild(slide);
@@ -628,18 +680,10 @@ function inicializarCarrusel() {
     // Event listeners para botones de navegación
     if (botonSiguiente) {
         botonSiguiente.addEventListener('click', siguienteSlide);
-        botonSiguiente.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            siguienteSlide();
-        });
     }
 
     if (botonAnterior) {
         botonAnterior.addEventListener('click', slideAnterior);
-        botonAnterior.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            slideAnterior();
-        });
     }
 
     /**
@@ -647,6 +691,10 @@ function inicializarCarrusel() {
      * OPTIMIZACIÓN: Aumentado de 5 a 10 segundos (menos re-renders del DOM)
      */
     function iniciarAutoavance() {
+        if (intervaloAutoavance || totalSlides <= 1 || document.hidden) {
+            return;
+        }
+
         if (totalSlides > 1) {
             intervaloAutoavance = setInterval(siguienteSlide, 10000); // 10 segundos
         }
@@ -667,8 +715,8 @@ function inicializarCarrusel() {
     if (carrusel) {
         carrusel.addEventListener('mouseenter', pausarAutoavance);
         carrusel.addEventListener('mouseleave', iniciarAutoavance);
-        carrusel.addEventListener('touchstart', pausarAutoavance);
-        carrusel.addEventListener('touchend', () => {
+        addPassiveListener(carrusel, 'touchstart', pausarAutoavance);
+        addPassiveListener(carrusel, 'touchend', () => {
             setTimeout(iniciarAutoavance, 3000);
         });
     }
@@ -688,7 +736,7 @@ function inicializarCarrusel() {
     // OPTIMIZACIÓN: Cleanup - detener carrusel cuando usuario abandona la página
     window.addEventListener('pagehide', function() {
         pausarAutoavance();
-    }, true);
+    }, { capture: true });
     
     console.log('✓ Carrusel inicializado');
 }
@@ -938,6 +986,7 @@ function inicializarFAQ() {
  */
 function inicializarScrollSuave() {
     const enlaces = document.querySelectorAll('a[href^="#"]');
+    const header = document.querySelector('.header');
 
     if (enlaces.length === 0) return;
 
@@ -954,8 +1003,11 @@ function inicializarScrollSuave() {
             evento.preventDefault();
 
             // Calcular posición considerando header fijo
-            const alturaHeader = document.querySelector('.header')?.offsetHeight || 0;
-            const posicionSeccion = seccion.offsetTop - alturaHeader - 20;
+            const alturaHeader = header?.offsetHeight || 0;
+            const posicionSeccion = Math.max(
+                0,
+                seccion.getBoundingClientRect().top + window.pageYOffset - alturaHeader - 20
+            );
 
             // Scroll suave a la sección
             window.scrollTo({
@@ -1049,17 +1101,16 @@ function inicializarNavegacion() {
     /**
      * Throttle del evento scroll para mejor rendimiento
      */
-    let timeoutScroll;
+    let framePendiente = 0;
     function scrollThrottle() {
-        if (!timeoutScroll) {
-            timeoutScroll = setTimeout(() => {
-                timeoutScroll = null;
-                establecerLinkActivo();
-            }, 100);
-        }
+        if (framePendiente) return;
+        framePendiente = requestAnimationFrame(() => {
+            framePendiente = 0;
+            establecerLinkActivo();
+        });
     }
 
-    window.addEventListener('scroll', scrollThrottle);
+    addPassiveListener(window, 'scroll', scrollThrottle);
     establecerLinkActivo(); // Ejecutar al cargar
 
     console.log('✓ Navegación activa inicializada');

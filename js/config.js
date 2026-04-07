@@ -1577,13 +1577,46 @@ window.rifaplusConfig.actualizarNombreClienteEnUI = function() {
     // 6️⃣ HERO DE COMPRA - mantener sincronizado el nombre actual del organizador
     const compraHeroTitle = document.getElementById('compraHeroTitle');
     if (compraHeroTitle) {
-        const nuevoTitulo = nombreCliente
-            ? `¿Listo para ser el proximo ganador de ${nombreCliente}? Elige tus boletos y participa ahora`
-            : 'Elige tus boletos y participa ahora';
+        const heroUtils = window.__RIFAPLUS_COMPRA_HERO_UTILS__;
+        const fallbackTitulo = 'Elige tus boletos y participa ahora';
+        let organizadorCache = '';
 
-        if (compraHeroTitle.textContent !== nuevoTitulo) {
+        try {
+            organizadorCache = String(localStorage.getItem('rifaplus_compra_hero_organizador') || '').trim();
+        } catch (error) {
+            // Ignorar errores de storage para no romper la UI.
+        }
+
+        const organizadorHero = heroUtils?.resolverOrganizador
+            ? heroUtils.resolverOrganizador(this.cliente?.nombre, window.__RIFAPLUS_COMPRA_HERO__?.organizador, organizadorCache)
+            : String(this.cliente?.nombre || '').trim();
+
+        const nuevoTitulo = heroUtils?.construirTitulo
+            ? heroUtils.construirTitulo(organizadorHero, fallbackTitulo)
+            : (
+                organizadorHero
+                    ? `¿Listo para ser el proximo ganador de ${organizadorHero}? Elige tus boletos y participa ahora`
+                    : fallbackTitulo
+            );
+
+        if (organizadorHero && compraHeroTitle.textContent !== nuevoTitulo) {
             compraHeroTitle.textContent = nuevoTitulo;
             console.log('✅ [UI-Update] #compraHeroTitle actualizado');
+        }
+
+        if (organizadorHero) {
+            try {
+                localStorage.setItem('rifaplus_compra_hero_organizador', organizadorHero);
+            } catch (error) {
+                // Ignorar errores de storage para no romper la UI.
+            }
+
+            if (window.__RIFAPLUS_COMPRA_HERO__) {
+                window.__RIFAPLUS_COMPRA_HERO__.organizador = organizadorHero;
+                window.__RIFAPLUS_COMPRA_HERO__.titulo = nuevoTitulo;
+            }
+        } else if (!compraHeroTitle.textContent.trim()) {
+            compraHeroTitle.textContent = fallbackTitulo;
         }
     }
 };

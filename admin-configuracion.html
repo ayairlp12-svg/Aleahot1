@@ -6143,39 +6143,7 @@
                 throw new Error('El archivo es demasiado grande. Maximo 10MB.');
             }
 
-            const token = localStorage.getItem('rifaplusToken') || 
-                          localStorage.getItem('rifaplus_token') ||
-                          localStorage.getItem('rifaplus_admin_token') ||
-                          localStorage.getItem('admin_token') ||
-                          localStorage.getItem('token');
-
-            if (!token) {
-                throw new Error('No hay token de autenticacion');
-            }
-
-            const API_BASE = (window.rifaplusConfig && window.rifaplusConfig.backend)
-                ? window.rifaplusConfig.backend.apiBase
-                : ((window.rifaplusConfig && typeof window.rifaplusConfig.obtenerApiBase === 'function')
-                    ? window.rifaplusConfig.obtenerApiBase()
-                    : window.location.origin);
-
-            const formData = new FormData();
-            formData.append('file', file);
-
-            const response = await fetch(`${API_BASE}/api/admin/upload-image`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                },
-                body: formData
-            });
-
-            const result = await response.json().catch(() => ({}));
-
-            if (!response.ok || !result.success || !result.url) {
-                throw new Error(result.message || 'No se pudo subir el logo al servidor.');
-            }
-
+            const result = await subirImagenAdmin(file, 'logo');
             return result.url;
         }
 
@@ -12467,23 +12435,7 @@
             btnCambiar.disabled = true;
 
             try {
-                const formData = new FormData();
-                formData.append('file', archivo);
-
-                const token = localStorage.getItem('rifaplus_token') || 
-                              localStorage.getItem('rifaplus_admin_token') ||
-                              localStorage.getItem('admin_token') ||
-                              localStorage.getItem('token');
-
-                const response = await fetch(`${API_BASE}/api/admin/upload-image`, {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}` },
-                    body: formData
-                });
-
-                if (!response.ok) throw new Error('Error al subir imagen');
-
-                const data = await response.json();
+                const data = await subirImagenAdmin(archivo, 'principal');
                 const urlImagen = data.url;
                 console.log('✅ Cloudinary retornó URL:', urlImagen);
 
@@ -12697,6 +12649,36 @@
                    localStorage.getItem('token');
         }
 
+        async function subirImagenAdmin(file, assetType = 'gallery') {
+            if (!file) {
+                throw new Error('No se seleccionó archivo');
+            }
+
+            const token = obtenerToken();
+            if (!token) {
+                throw new Error('No autorizado - falta token');
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('assetType', assetType);
+
+            const response = await fetch(`${API_BASE}/api/admin/upload-image`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                body: formData
+            });
+
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok || !result.success || !result.url) {
+                throw new Error(result.message || 'Error al subir imagen');
+            }
+
+            return result;
+        }
+
         async function procesarImagenSorteo(event) {
             const btnAgregar = document.getElementById('btn-agregar-imagen');
             const originalText = btnAgregar?.innerHTML || '';
@@ -12724,30 +12706,12 @@
                     btnAgregar.disabled = true;
                 }
 
-                // Obtener token una sola vez
                 const token = obtenerToken();
                 if (!token) {
                     throw new Error('No autorizado - falta token');
                 }
 
-                // 1️⃣ SUBIR A CLOUDINARY VÍA SERVIDOR
-                const formData = new FormData();
-                formData.append('file', archivo);
-
-                const uploadResponse = await fetch(`${API_BASE}/api/admin/upload-image`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: formData
-                });
-
-                if (!uploadResponse.ok) {
-                    const errorData = await uploadResponse.json().catch(() => ({}));
-                    throw new Error(errorData.message || 'Error al subir imagen');
-                }
-
-                const cloudinaryData = await uploadResponse.json();
+                const cloudinaryData = await subirImagenAdmin(archivo, 'gallery');
 
                 // 2️⃣ AGREGAR URL A LA CONFIGURACIÓN EN MEMORIA
                 if (!window.rifaplusConfig?.rifa?.galeria) {

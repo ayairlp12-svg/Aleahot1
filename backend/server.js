@@ -31,6 +31,7 @@ const OportunidadesInventoryService = require('./services/oportunidadesInventory
 const NuevaRifaService = require('./services/nuevaRifaService');
 const BoletoService = require('./services/boletoService'); // Servicio de boletos para estadísticas y limpieza
 const comprobanteService = require('./services/comprobanteService'); // ✅ Servicio de comprobantes
+const { subirBufferACloudinary, normalizarAssetType } = require('./services/cloudinaryUploadService');
 const SorteoFinalizadoSnapshotService = require('./services/sorteoFinalizadoSnapshotService');
 const { inicializarEventosWebSocket } = require('./services/websocket-events'); // 🔌 Eventos de WebSocket
 const { obtenerConfigExpiracion } = require('./config-loader'); // Fallback/base de arranque
@@ -2464,6 +2465,7 @@ app.post('/api/admin/upload-image', verificarToken, async (req, res) => {
         }
 
         const file = req.files.file;
+        const assetType = normalizarAssetType(req.body?.assetType);
 
         // Validar tipo de archivo
         if (!file.mimetype.startsWith('image/')) {
@@ -2482,46 +2484,26 @@ app.post('/api/admin/upload-image', verificarToken, async (req, res) => {
             });
         }
 
-        // Subir a Cloudinary
-        const uploadResult = await cloudinary.uploader.upload_stream(
-            {
-                folder: 'rifaplus/sorteos',
-                resource_type: 'auto',
-                secure: true
-            },
-            (error, result) => {
-                if (error) throw error;
-                return result;
-            }
-        );
-
-        // Promise-based upload
-        const result = await new Promise((resolve, reject) => {
-            const uploadStream = cloudinary.uploader.upload_stream(
-                {
-                    folder: 'rifaplus/sorteos',
-                    resource_type: 'auto',
-                    secure: true
-                },
-                (error, result) => {
-                    if (error) reject(error);
-                    else resolve(result);
-                }
-            );
-            uploadStream.end(file.data);
+        const result = await subirBufferACloudinary({
+            buffer: file.data,
+            originalName: file.name,
+            mimetype: file.mimetype,
+            assetType
         });
 
         console.log('✅ [Upload-Image] Imagen subida a Cloudinary:', {
             userId: req.user?.id,
-            url: result.secure_url,
-            publicId: result.public_id,
-            size: result.bytes
+            assetType,
+            url: result.secureUrl,
+            publicId: result.publicId,
+            size: result.bytes,
+            format: result.format || 'original'
         });
 
         res.json({
             success: true,
-            url: result.secure_url,
-            publicId: result.public_id,
+            url: result.secureUrl,
+            publicId: result.publicId,
             width: result.width,
             height: result.height,
             size: result.bytes

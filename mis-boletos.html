@@ -8,14 +8,17 @@
     <!-- METADATOS DINÁMICOS - Inyectados por js/meta-inyector.js desde config.js -->
     <title>Mis Boletos</title>
     <link rel="stylesheet" href="css/styles.css?v=20251228.15">
+    <script src="js/image-delivery.js"></script>
 
     <script>
         (function() {
-            const cachedLogo = localStorage.getItem('rifaplus_cached_logo') || 'images/placeholder-logo.svg';
-            window.__RIFAPLUS_CACHED_LOGO__ = cachedLogo;
+            const imageDelivery = window.RifaPlusImageDelivery;
+            const rawLogo = localStorage.getItem('rifaplus_cached_logo') || 'images/placeholder-logo.svg';
+            const cachedLogo = imageDelivery?.resolverUrlImagen(rawLogo, 'logoPreload') || rawLogo;
+            window.__RIFAPLUS_CACHED_LOGO__ = imageDelivery?.resolverUrlImagen(rawLogo, 'logo') || rawLogo;
             document.write('<link rel="preload" as="image" href="' + cachedLogo + '" fetchpriority="high">');
-            document.write('<link rel="icon" href="' + cachedLogo + '" sizes="32x32">');
-            document.write('<link rel="apple-touch-icon" href="' + cachedLogo + '">');
+            document.write('<link rel="icon" href="' + (imageDelivery?.resolverUrlImagen(rawLogo, 'logoIcon') || rawLogo) + '" sizes="32x32">');
+            document.write('<link rel="apple-touch-icon" href="' + (imageDelivery?.resolverUrlImagen(rawLogo, 'logoIcon') || rawLogo) + '">');
         })();
     </script>
     <link rel="stylesheet" href="css/modal-contacto.css?v=20251221.09">
@@ -572,7 +575,7 @@
     </div>
 
     <!-- SCRIPTS -->
-    <script defer src="js/main.js"></script>
+    <script defer src="js/main.js?v=20260406.2"></script>
     <script defer src="js/trigger-busqueda-auto.js"></script>
     <script defer src="js/calculo-precios.js?v=20251230.1"></script>
     <script defer src="js/vendor/jspdf.umd.min.js"></script>

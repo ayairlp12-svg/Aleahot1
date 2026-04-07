@@ -6051,6 +6051,8 @@ body.modal-scroll-locked {
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.22);
     transition: box-shadow var(--transition-fast), filter var(--transition-fast);
     margin-top: 1rem;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .btn-generar:hover {
@@ -6528,6 +6530,8 @@ body.modal-scroll-locked {
     opacity: 1;
     filter: none;
     box-shadow: 0 10px 22px rgba(15, 23, 42, 0.10);
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .generated-actions .btn-success {

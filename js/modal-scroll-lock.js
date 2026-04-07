@@ -1,6 +1,7 @@
 (function modalScrollLockBootstrap() {
     let scrollTop = 0;
     let isLocked = false;
+    let syncFrameId = 0;
 
     const scrollableSelector = [
         '.modal-content',
@@ -62,11 +63,20 @@
     }
 
     function syncModalScrollLock() {
+        syncFrameId = 0;
         if (hasOpenModal()) {
             lockBodyScroll();
         } else {
             unlockBodyScroll();
         }
+    }
+
+    function programarSyncModalScrollLock() {
+        if (syncFrameId) {
+            return;
+        }
+
+        syncFrameId = window.requestAnimationFrame(syncModalScrollLock);
     }
 
     function handleTouchMove(event) {
@@ -81,9 +91,7 @@
     }
 
     function init() {
-        const observer = new MutationObserver(() => {
-            window.requestAnimationFrame(syncModalScrollLock);
-        });
+        const observer = new MutationObserver(programarSyncModalScrollLock);
 
         observer.observe(document.documentElement, {
             subtree: true,
@@ -93,8 +101,8 @@
         });
 
         document.addEventListener('touchmove', handleTouchMove, { passive: false });
-        window.addEventListener('pageshow', syncModalScrollLock);
-        document.addEventListener('visibilitychange', syncModalScrollLock);
+        window.addEventListener('pageshow', programarSyncModalScrollLock, { passive: true });
+        document.addEventListener('visibilitychange', programarSyncModalScrollLock);
         syncModalScrollLock();
     }
 

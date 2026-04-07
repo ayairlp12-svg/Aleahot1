@@ -50,6 +50,13 @@ var selectedNumbersGlobal = new Set();
 var filtroDisponiblesActivo = false;
 var resumenPersistidoSnapshot = '';
 var rangoInitSuscrito = false;
+var validacionesSeleccionPendientes = new Map();
+var secuenciaValidacionSeleccion = 0;
+var refrescoEstadoBoletosTimeoutId = 0;
+var refrescoEstadoBoletosUltimoMotivo = '';
+var observerEstadoBoletosVisibles = null;
+var actualizacionEstadoGridFrameId = 0;
+var actualizacionEstadoGridVersion = 0;
 
 // ⚠️ FLAG DE SINCRONIZACIÓN: Indica si los datos de boletos (sold/reserved) están FRESCOS
 // Previene race conditions donde el Web Worker aún está procesando
@@ -134,13 +141,27 @@ function numeroEnRangoActual(numero) {
 
 async function verificarBoletosEnServidor(numeros) {
     const endpoint = obtenerApiBaseCompra();
-    const respuesta = await fetch(`${endpoint}/api/boletos/verificar`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ numeros })
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 4000);
+    let respuesta;
+
+    try {
+        respuesta = await fetch(`${endpoint}/api/boletos/verificar`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ numeros }),
+            signal: controller.signal
+        });
+    } catch (error) {
+        if (error?.name === 'AbortError') {
+            throw new Error('La validacion del boleto tardo demasiado');
+        }
+        throw error;
+    } finally {
+        clearTimeout(timeoutId);
+    }
 
     if (!respuesta.ok) {
         throw new Error(`No se pudo verificar disponibilidad (${respuesta.status})`);
@@ -170,6 +191,382 @@ async function verificarEstadoBoletoEnServidor(numero) {
         vendido: false,
         apartado: false
     };
+}
+
+function sincronizarSeleccionCompraEnStorage() {
+    try {
+        const numeros = Array.from(selectedNumbersGlobal || []).map((n) => parseInt(n, 10));
+        if (typeof window.safeTrySetItem === 'function') {
+            window.safeTrySetItem('rifaplusSelectedNumbers', JSON.stringify(numeros));
+        } else {
+            localStorage.setItem('rifaplusSelectedNumbers', JSON.stringify(numeros));
+        }
+    } catch (error) {
+        console.warn('No se pudo sincronizar la seleccion local:', error?.message || error);
+    }
+}
+
+function programarActualizacionSeleccionCompra() {
+    if (typeof invalidarCacheCarrito === 'function') {
+        invalidarCacheCarrito();
+    }
+
+    if (typeof actualizarCarritoConDebounceAgresivo === 'function') {
+        actualizarCarritoConDebounceAgresivo();
+        return;
+    }
+
+    if (typeof actualizarResumenCompraConDebounce === 'function') {
+        actualizarResumenCompraConDebounce();
+    }
+    if (window.actualizarVistaCarritoGlobal) {
+        window.actualizarVistaCarritoGlobal();
+    }
+    if (window.actualizarContadorCarritoGlobal) {
+        window.actualizarContadorCarritoGlobal();
+    }
+}
+
+function registrarValidacionSeleccionPendiente(numero) {
+    const token = ++secuenciaValidacionSeleccion;
+    validacionesSeleccionPendientes.set(Number(numero), token);
+    actualizarEstadoBtnComprar();
+    return token;
+}
+
+function esValidacionSeleccionPendiente(numero, token) {
+    return validacionesSeleccionPendientes.get(Number(numero)) === token;
+}
+
+function limpiarValidacionSeleccionPendiente(numero, token = null) {
+    const numeroNormalizado = Number(numero);
+    if (token === null || validacionesSeleccionPendientes.get(numeroNormalizado) === token) {
+        validacionesSeleccionPendientes.delete(numeroNormalizado);
+        actualizarEstadoBtnComprar();
+    }
+}
+
+function cancelarValidacionSeleccionPendienteCompra(numero) {
+    limpiarValidacionSeleccionPendiente(numero);
+}
+
+window.cancelarValidacionSeleccionPendienteCompra = cancelarValidacionSeleccionPendienteCompra;
+
+function solicitarRefrescoEstadoBoletosActual(opciones = {}) {
+    const {
+        delayMs = 90,
+        motivo = 'sincronizacion',
+        fullRefresh = true
+    } = opciones;
+
+    if (refrescoEstadoBoletosTimeoutId) {
+        clearTimeout(refrescoEstadoBoletosTimeoutId);
+    }
+
+    refrescoEstadoBoletosUltimoMotivo = motivo;
+    refrescoEstadoBoletosTimeoutId = setTimeout(() => {
+        refrescoEstadoBoletosTimeoutId = 0;
+
+        if (fullRefresh && typeof cargarBoletosPublicos === 'function') {
+            cargarBoletosPublicos().catch((error) => {
+                console.warn(`No se pudo refrescar el estado de boletos (${refrescoEstadoBoletosUltimoMotivo}):`, error?.message || error);
+            });
+            return;
+        }
+
+        const rangoActual = infiniteScrollState.rangoActual || obtenerRangoVisibleInicial();
+        const endpoint = obtenerApiBaseCompra();
+        cargarDatosCompletosEnBackground(endpoint, rangoActual, {
+            force: true,
+            reason: refrescoEstadoBoletosUltimoMotivo
+        }).catch((error) => {
+            console.warn(`No se pudo refrescar el rango visible (${refrescoEstadoBoletosUltimoMotivo}):`, error?.message || error);
+        });
+    }, Math.max(0, Number(delayMs) || 0));
+}
+
+window.solicitarRefrescoEstadoBoletosActual = solicitarRefrescoEstadoBoletosActual;
+
+function marcarNumeroComoSeleccionadoEnBusqueda(numero) {
+    const resultadoItem = document.querySelector(`.resultado-item:has([data-numero="${numero}"])`);
+    if (resultadoItem) {
+        const statusSpan = resultadoItem.querySelector('strong');
+        if (statusSpan) {
+            statusSpan.textContent = '✔️ Ya seleccionado';
+            statusSpan.style.color = 'var(--primary)';
+        }
+
+        const btnLoQuiero = resultadoItem.querySelector('.btn-lo-quiero');
+        if (btnLoQuiero) {
+            btnLoQuiero.style.display = 'none';
+        }
+    }
+
+    document.querySelectorAll(`.busqueda-grid-btn[data-numero="${numero}"]`).forEach((btnResultado) => {
+        btnResultado.classList.remove('sold', 'reserved');
+        btnResultado.classList.add('selected');
+        btnResultado.disabled = false;
+        btnResultado.title = 'Ya seleccionado';
+    });
+}
+
+function restaurarNumeroDisponibleEnBusqueda(numero) {
+    const resultadoItem = document.querySelector(`.resultado-item:has([data-numero="${numero}"])`);
+    if (resultadoItem) {
+        const statusSpan = resultadoItem.querySelector('strong');
+        if (statusSpan) {
+            statusSpan.textContent = '✅ Disponible';
+            statusSpan.style.color = 'var(--success)';
+        }
+
+        const btnLoQuiero = resultadoItem.querySelector('.btn-lo-quiero');
+        if (btnLoQuiero) {
+            btnLoQuiero.style.display = '';
+        }
+    }
+
+    document.querySelectorAll(`.busqueda-grid-btn[data-numero="${numero}"]`).forEach((btnResultado) => {
+        btnResultado.classList.remove('sold', 'reserved', 'selected');
+        btnResultado.disabled = false;
+        btnResultado.title = 'Disponible';
+    });
+}
+
+function marcarConflictoLocalBoleto(numero, estadoServidor) {
+    const numeroNormalizado = Number(numero);
+    const sold = Array.isArray(window.rifaplusSoldNumbers) ? window.rifaplusSoldNumbers : [];
+    const reserved = Array.isArray(window.rifaplusReservedNumbers) ? window.rifaplusReservedNumbers : [];
+
+    window.rifaplusSoldNumbers = sold.filter((item) => Number(item) !== numeroNormalizado);
+    window.rifaplusReservedNumbers = reserved.filter((item) => Number(item) !== numeroNormalizado);
+
+    if (estadoServidor?.vendido) {
+        window.rifaplusSoldNumbers.push(numeroNormalizado);
+    } else if (estadoServidor?.apartado) {
+        window.rifaplusReservedNumbers.push(numeroNormalizado);
+    }
+}
+
+function aplicarEstadoNoDisponibleEnBusqueda(numero, estadoServidor) {
+    const tituloEstado = estadoServidor?.vendido ? 'Vendido' : 'Apartado';
+    const textoEstado = estadoServidor?.vendido ? '❌ Vendido' : '⏳ Apartado';
+    const colorEstado = estadoServidor?.vendido ? 'var(--danger)' : 'var(--warning)';
+    const claseEstado = estadoServidor?.vendido ? 'sold' : 'reserved';
+
+    const resultadoItem = document.querySelector(`.resultado-item:has([data-numero="${numero}"])`);
+    if (resultadoItem) {
+        const statusSpan = resultadoItem.querySelector('strong');
+        if (statusSpan) {
+            statusSpan.textContent = textoEstado;
+            statusSpan.style.color = colorEstado;
+        }
+
+        const btnLoQuiero = resultadoItem.querySelector('.btn-lo-quiero');
+        if (btnLoQuiero) {
+            btnLoQuiero.style.display = 'none';
+        }
+
+        resultadoItem.setAttribute('data-estado', tituloEstado.toLowerCase());
+    }
+
+    document.querySelectorAll(`.busqueda-grid-btn[data-numero="${numero}"]`).forEach((btnResultado) => {
+        btnResultado.classList.remove('selected');
+        btnResultado.classList.add(claseEstado);
+        btnResultado.disabled = false;
+        btnResultado.title = tituloEstado;
+    });
+}
+
+function marcarBoletoComoSeleccionadoEnGrid(numero, opciones = {}) {
+    const { enfatizar = true } = opciones;
+    const botonEnGrid = obtenerBotonNumeroEnGrid(numero);
+
+    if (!botonEnGrid) {
+        return null;
+    }
+
+    botonEnGrid.classList.remove('sold', 'reserved');
+    botonEnGrid.classList.add('selected');
+
+    if (enfatizar) {
+        enfatizarNumeroSeleccionado(botonEnGrid, numero);
+    }
+
+    return botonEnGrid;
+}
+
+function obtenerBotonNumeroEnGrid(numero) {
+    const numerosGrid = document.getElementById('numerosGrid');
+    if (!numerosGrid) {
+        return null;
+    }
+
+    return numerosGrid.querySelector(`button[data-numero="${numero}"]`);
+}
+
+function obtenerTamanoChunkActualizacionGrid() {
+    const memoria = Number(navigator.deviceMemory || 0);
+    const esMovil = window.matchMedia && window.matchMedia('(max-width: 768px)').matches;
+
+    if (esMovil && memoria > 0 && memoria <= 4) {
+        return 70;
+    }
+
+    if (esMovil) {
+        return 110;
+    }
+
+    if (memoria > 0 && memoria <= 4) {
+        return 120;
+    }
+
+    return 180;
+}
+
+function aplicarEstadoVisualABoton(boton, soldSet, reservedSet) {
+    if (!boton || boton.nodeType !== 1) {
+        return;
+    }
+
+    const numero = parseInt(boton.getAttribute('data-numero'), 10);
+    if (!Number.isInteger(numero)) {
+        return;
+    }
+
+    const estabaVendido = boton.classList.contains('sold');
+    const estabaApartado = boton.classList.contains('reserved');
+    const estaVendido = soldSet.has(numero);
+    const estaApartado = !estaVendido && reservedSet.has(numero);
+    const estaPendiente = boton.classList.contains('is-pending') || boton.classList.contains('is-processing');
+
+    if (estabaVendido !== estaVendido) {
+        boton.classList.toggle('sold', estaVendido);
+    }
+
+    if (estabaApartado !== estaApartado) {
+        boton.classList.toggle('reserved', estaApartado);
+    }
+
+    const debeDeshabilitarse = estaVendido || estaApartado || estaPendiente;
+    if (boton.disabled !== debeDeshabilitarse) {
+        boton.disabled = debeDeshabilitarse;
+    }
+
+    const tituloObjetivo = estaVendido
+        ? 'Vendido'
+        : estaApartado
+            ? 'Apartado'
+            : boton.classList.contains('selected')
+                ? 'Seleccionado'
+                : '';
+
+    if ((boton.getAttribute('title') || '') !== tituloObjetivo) {
+        if (tituloObjetivo) {
+            boton.setAttribute('title', tituloObjetivo);
+        } else {
+            boton.removeAttribute('title');
+        }
+    }
+}
+
+function limpiarEstadoInteractivoBoleto(boton) {
+    if (!boton || boton.nodeType !== 1) {
+        return;
+    }
+
+    boton.classList.remove('selected', 'is-pending', 'is-processing');
+    boton.disabled = false;
+    boton.style.transform = 'scale(1)';
+}
+
+function removerSeleccionLocal(numero) {
+    const numeroNormalizado = Number(numero);
+    if (!selectedNumbersGlobal.has(numeroNormalizado)) {
+        return false;
+    }
+
+    selectedNumbersGlobal.delete(numeroNormalizado);
+    sincronizarSeleccionCompraEnStorage();
+    programarActualizacionSeleccionCompra();
+    return true;
+}
+
+function agregarSeleccionLocal(numero) {
+    const numeroNormalizado = Number(numero);
+    if (selectedNumbersGlobal.has(numeroNormalizado)) {
+        return false;
+    }
+
+    selectedNumbersGlobal.add(numeroNormalizado);
+    sincronizarSeleccionCompraEnStorage();
+    programarActualizacionSeleccionCompra();
+    return true;
+}
+
+async function validarSeleccionOptimista(numero, boton, token) {
+    try {
+        const estadoServidor = await verificarEstadoBoletoEnServidor(numero);
+
+        if (!esValidacionSeleccionPendiente(numero, token)) {
+            return;
+        }
+
+        if (!selectedNumbersGlobal.has(numero)) {
+            limpiarValidacionSeleccionPendiente(numero, token);
+            limpiarEstadoInteractivoBoleto(boton);
+            return;
+        }
+
+        if (estadoServidor.vendido || estadoServidor.apartado) {
+            limpiarValidacionSeleccionPendiente(numero, token);
+            removerSeleccionLocal(numero);
+            marcarConflictoLocalBoleto(numero, estadoServidor);
+            aplicarEstadoNoDisponibleEnBusqueda(numero, estadoServidor);
+
+            const botonGrid = (boton && boton.isConnected ? boton : obtenerBotonNumeroEnGrid(numero));
+            if (botonGrid) {
+                limpiarEstadoInteractivoBoleto(botonGrid);
+                botonGrid.classList.add(estadoServidor.vendido ? 'sold' : 'reserved');
+                botonGrid.setAttribute('title', estadoServidor.vendido ? 'Vendido' : 'Apartado');
+                botonGrid.disabled = true;
+            }
+
+            rifaplusUtils.showFeedback(
+                estadoServidor.vendido
+                    ? `❌ Boleto #${numero} ya se vendio en otro momento`
+                    : `⏳ Boleto #${numero} acaba de quedar apartado`,
+                estadoServidor.vendido ? 'error' : 'warning'
+            );
+            return;
+        }
+
+        limpiarValidacionSeleccionPendiente(numero, token);
+
+        if (boton && boton.isConnected) {
+            boton.classList.remove('is-pending', 'is-processing');
+            boton.disabled = false;
+            boton.setAttribute('title', 'Seleccionado');
+        }
+
+        animarAgregarAlCarrito(null, numero, false);
+    } catch (error) {
+        if (!esValidacionSeleccionPendiente(numero, token)) {
+            return;
+        }
+
+        limpiarValidacionSeleccionPendiente(numero, token);
+
+        if (!selectedNumbersGlobal.has(numero)) {
+            limpiarEstadoInteractivoBoleto(boton);
+            return;
+        }
+
+        removerSeleccionLocal(numero);
+        restaurarNumeroDisponibleEnBusqueda(numero);
+        limpiarEstadoInteractivoBoleto(boton);
+
+        rifaplusUtils.showFeedback('⚠️ No se pudo validar el boleto en este momento. Intenta de nuevo.', 'warning');
+    }
 }
 
 async function generarNumerosVerificadosEnServidor(cantidad) {
@@ -207,7 +604,8 @@ async function generarNumerosVerificadosEnServidor(cantidad) {
         .filter((numero) => Number.isInteger(numero));
 }
 
-async function cargarEstadoRangoVisibleEnBackground(endpoint, inicio, fin) {
+async function cargarEstadoRangoVisibleEnBackground(endpoint, inicio, fin, opciones = {}) {
+    const { force = false, reason = 'normal' } = opciones;
     const rangoInicio = parseInt(inicio, 10);
     const rangoFin = parseInt(fin, 10);
 
@@ -216,6 +614,7 @@ async function cargarEstadoRangoVisibleEnBackground(endpoint, inicio, fin) {
     }
 
     if (
+        !force &&
         rifaplusEstadoRangoActual.cargado &&
         rifaplusEstadoRangoActual.inicio === rangoInicio &&
         rifaplusEstadoRangoActual.fin === rangoFin &&
@@ -231,6 +630,8 @@ async function cargarEstadoRangoVisibleEnBackground(endpoint, inicio, fin) {
     rifaplusEstadoRangoActual.cargado = false;
 
     try {
+        console.debug(`🔄 Refrescando rango ${rangoInicio}-${rangoFin} (${reason})`);
+
         const respuesta = await fetch(
             `${endpoint}/api/public/boletos?inicio=${encodeURIComponent(rangoInicio)}&fin=${encodeURIComponent(rangoFin)}`,
             {
@@ -255,7 +656,7 @@ async function cargarEstadoRangoVisibleEnBackground(endpoint, inicio, fin) {
         rifaplusEstadoRangoActual.cargado = true;
         return true;
     } catch (error) {
-        console.warn(`⚠️ Error cargando rango ${rangoInicio}-${rangoFin}:`, error.message);
+        console.warn(`⚠️ Error cargando rango ${rangoInicio}-${rangoFin} (${reason}):`, error.message);
 
         if (requestId !== rifaplusEstadoRangoActual.requestId) {
             return false;
@@ -580,7 +981,10 @@ async function cargarBoletosPublicos() {
         
         // Cargar solo el rango visible en background
         const rangoInicial = infiniteScrollState.rangoActual || obtenerRangoVisibleInicial();
-        cargarDatosCompletosEnBackground(endpoint, rangoInicial);
+        cargarDatosCompletosEnBackground(endpoint, rangoInicial, {
+            force: true,
+            reason: 'carga-publica'
+        });
         
         return true;
         
@@ -595,12 +999,18 @@ async function cargarBoletosPublicos() {
  * Helper: Carga datos completos en background sin bloquear UI
  * Esta función se ejecuta de forma asincrónica, puede tomar tiempo
  */
-async function cargarDatosCompletosEnBackground(endpoint, rango = null) {
+async function cargarDatosCompletosEnBackground(endpoint, rango = null, opciones = {}) {
     try {
         const rangoObjetivo = rango || infiniteScrollState.rangoActual || obtenerRangoVisibleInicial();
-        console.debug(`📦 Iniciando carga en background del rango ${rangoObjetivo.inicio}-${rangoObjetivo.fin}...`);
+        const { force = false, reason = 'background' } = opciones;
+        console.debug(`📦 Iniciando carga en background del rango ${rangoObjetivo.inicio}-${rangoObjetivo.fin} (${reason})...`);
 
-        const exito = await cargarEstadoRangoVisibleEnBackground(endpoint, rangoObjetivo.inicio, rangoObjetivo.fin);
+        const exito = await cargarEstadoRangoVisibleEnBackground(
+            endpoint,
+            rangoObjetivo.inicio,
+            rangoObjetivo.fin,
+            { force, reason }
+        );
 
         if (exito) {
             // Indicar que los datos de disponibilidad ya se cargaron
@@ -674,101 +1084,53 @@ async function cargarDatosCompletosEnBackground(endpoint, rango = null) {
  * OPTIMIZADO: IntersectionObserver con fallback para Safari (no tiene requestIdleCallback)
  */
 function actualizarEstadoBoletosVisibles() {
-    // Polyfill para Safari que no tiene requestIdleCallback
-    const idleCallback = typeof requestIdleCallback !== 'undefined' ? requestIdleCallback : setTimeout;
-    
-    idleCallback(() => {
-        const grid = document.getElementById('numerosGrid');
-        if (!grid) {
-            console.warn('⚠️  Grid no encontrado para actualizar');
+    const grid = document.getElementById('numerosGrid');
+    if (!grid) {
+        return;
+    }
+
+    if (observerEstadoBoletosVisibles) {
+        observerEstadoBoletosVisibles.disconnect();
+        observerEstadoBoletosVisibles = null;
+    }
+
+    if (actualizacionEstadoGridFrameId) {
+        cancelAnimationFrame(actualizacionEstadoGridFrameId);
+        actualizacionEstadoGridFrameId = 0;
+    }
+
+    const { soldSet, reservedSet } = obtenerEstadoLocalBoletos();
+    const botones = Array.from(grid.querySelectorAll('button[data-numero]'));
+    const versionActual = ++actualizacionEstadoGridVersion;
+    const chunkSize = obtenerTamanoChunkActualizacionGrid();
+    let indice = 0;
+
+    const pintarSiguienteChunk = () => {
+        if (versionActual !== actualizacionEstadoGridVersion) {
             return;
         }
-        
-        const { soldSet, reservedSet } = obtenerEstadoLocalBoletos();
-        
-        console.debug(`🎨 [actualizarEstadoBoletosVisibles] Actualizando colores: ${soldSet.size} vendidos, ${reservedSet.size} apartados`);
-        
-        // Detectar Safari (iOS, macOS, iPad OS) - IntersectionObserver tiene bug en Safari
-        const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome|Edge|Firefox/.test(navigator.userAgent);
-        
-        // 🚀 OPTIMIZACIÓN: En Safari (cualquier plataforma), actualizar TODOS los botones directamente
-        // En otros navegadores, usar IntersectionObserver (más eficiente)
-        if (isSafari) {
-            console.debug('🍎 Safari detectado: actualizando todos los boletos directamente');
-            // Actualizar todos los botones sin IntersectionObserver
-            const botones = grid.querySelectorAll('button[data-numero]');
-            let actualizados = 0;
-            
-            botones.forEach(btn => {
-                const numero = parseInt(btn.getAttribute('data-numero'), 10);
-                
-                // Remover clases antiguas
-                btn.classList.remove('sold', 'reserved');
-                btn.disabled = false;
-                btn.title = '';
-                
-                // Aplicar nuevas clases según estado actual
-                if (soldSet.has(numero)) {
-                    btn.classList.add('sold');
-                    btn.disabled = true;
-                    btn.title = 'Vendido';
-                    actualizados++;
-                } else if (reservedSet.has(numero)) {
-                    btn.classList.add('reserved');
-                    btn.disabled = true;
-                    btn.title = 'Apartado';
-                    actualizados++;
-                }
-            });
-            
-            console.debug(`✅ Safari: ${actualizados}/${botones.length} boletos actualizados`);
-            if (filtroDisponiblesActivo) {
-                aplicarFiltroDisponibles(true);
-            }
-            return; // No continuar con IntersectionObserver
-        }
-        
-        // 🚀 OPTIMIZACIÓN: Usar IntersectionObserver para solo actualizar lo visible
-        const botones = grid.querySelectorAll('button[data-numero]');
-        console.debug(`🔍 Observando ${botones.length} botones con IntersectionObserver`);
-        
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                const btn = entry.target;
-                if (!entry.isIntersecting) return; // Solo procesar si está visible
-                
-                const numero = parseInt(btn.getAttribute('data-numero'), 10);
-                
-                // Remover clases antiguas
-                btn.classList.remove('sold', 'reserved');
-                btn.disabled = false;
-                btn.title = '';
-                
-                // Aplicar nuevas clases según estado actual
-                if (soldSet.has(numero)) {
-                    btn.classList.add('sold');
-                    btn.disabled = true;
-                    btn.title = 'Vendido';
-                } else if (reservedSet.has(numero)) {
-                    btn.classList.add('reserved');
-                    btn.disabled = true;
-                    btn.title = 'Apartado';
-                }
-            });
 
-            if (filtroDisponiblesActivo) {
-                aplicarFiltroDisponibles(true);
-            }
-        }, { 
-            root: grid,
-            rootMargin: '100px', // Precarga 100px antes de ser visible
-            threshold: 0.1 
-        });
-        
-        // Observar todos los botones
-        botones.forEach(btn => observer.observe(btn));
-        console.debug(`✅ Observadores de IntersectionObserver registrados`);
-    }); // Usar solo el callback, sin opciones (Safari compatible)
+        const limite = Math.min(indice + chunkSize, botones.length);
+        for (; indice < limite; indice += 1) {
+            aplicarEstadoVisualABoton(botones[indice], soldSet, reservedSet);
+        }
+
+        if (indice < botones.length) {
+            actualizacionEstadoGridFrameId = requestAnimationFrame(pintarSiguienteChunk);
+            return;
+        }
+
+        actualizacionEstadoGridFrameId = 0;
+        if (filtroDisponiblesActivo) {
+            requestAnimationFrame(() => {
+                if (versionActual === actualizacionEstadoGridVersion) {
+                    aplicarFiltroDisponibles(true);
+                }
+            });
+        }
+    };
+
+    actualizacionEstadoGridFrameId = requestAnimationFrame(pintarSiguienteChunk);
 }
 
 function inicializarMaquinaSuerteMejorada() {
@@ -818,11 +1180,19 @@ function inicializarMaquinaSuerteMejorada() {
         const registrarTapRapido = function(boton, handler) {
             let ultimoTouch = 0;
 
-            boton.addEventListener('touchstart', function(e) {
-                e.preventDefault();
-                ultimoTouch = Date.now();
-                handler();
-            }, { passive: false });
+            if (window.PointerEvent) {
+                boton.addEventListener('pointerup', function(e) {
+                    if (e.pointerType === 'touch' || e.pointerType === 'pen') {
+                        ultimoTouch = Date.now();
+                        handler();
+                    }
+                });
+            } else {
+                boton.addEventListener('touchend', function() {
+                    ultimoTouch = Date.now();
+                    handler();
+                }, { passive: true });
+            }
 
             boton.addEventListener('click', function(e) {
                 if (Date.now() - ultimoTouch < 500) {
@@ -1323,6 +1693,8 @@ function actualizarEstadoBtnComprar() {
     
     const estadoCarga = window.rifaplusOportunidadesEstadoCarga;
     const estaCargando = estadoCarga?.iniciado && !estadoCarga?.completado;
+    const cantidadSeleccionada = selectedNumbersGlobal.size;
+    const hayValidacionesPendientes = validacionesSeleccionPendientes.size > 0;
     
     if (estaCargando) {
         // Deshabilitar botón mientras se cargan oportunidades
@@ -1333,14 +1705,14 @@ function actualizarEstadoBtnComprar() {
         const porcentaje = total > 0 ? Math.round((progreso / total) * 100) : 0;
         btnComprar.textContent = `⏳ Cargando... (${porcentaje}%)`;
         btnComprar.title = `Cargando oportunidades: ${progreso}/${total}`;
-        console.log(`[UI] Botón deshabilitado - Cargando: ${progreso}/${total}`);
     } else {
         // Rehabilitar botón cuando termina la carga
-        btnComprar.disabled = false;
-        btnComprar.classList.remove('disabled');
+        btnComprar.disabled = cantidadSeleccionada === 0 || hayValidacionesPendientes;
+        btnComprar.classList.toggle('disabled', btnComprar.disabled);
         btnComprar.textContent = 'Confirmar compra';
-        btnComprar.title = 'Hacer compra';
-        console.log(`[UI] Botón habilitado`);
+        btnComprar.title = hayValidacionesPendientes
+            ? 'Esperando la validacion final de tus boletos seleccionados'
+            : 'Hacer compra';
     }
 }
 
@@ -1451,7 +1823,7 @@ function scrollSuaveCompraA(target, offset) {
  * 5. Limpiar todo -> handleLimpiarCarrito (limpia carrito) o limpiarSeleccion (limpia selección)
  */
 
-async function manejarClickNumero(boton) {
+function manejarClickNumero(boton) {
     if (boton.classList.contains('is-processing')) {
         return;
     }
@@ -1469,27 +1841,40 @@ async function manejarClickNumero(boton) {
             console.error('❌ Function removerBoletoSeleccionado not available');
         }
     } else {
-        // SELECCIONAR: validar disponibilidad y agregar
-        boton.classList.add('is-processing');
-        boton.disabled = true;
-        
-        // Forzar feedback visual inmediato antes de esperar al servidor
-        requestAnimationFrame(() => {
-            boton.classList.add('is-pending');
-        });
-
-        const seAgrego = await agregarBoletoDirectoCarrito(numero);
-        
-        // Animar si se agregó exitosamente
-        if (seAgrego && selectedNumbersGlobal.has(numero)) {
-            boton.classList.add('selected');
-            enfatizarNumeroSeleccionado(boton, numero);
-            // Mostrar efecto en el carrito sin modificar el botón
-            animarAgregarAlCarrito(null, numero, false);
+        const { soldSet, reservedSet } = obtenerEstadoLocalBoletos();
+        if (soldSet.has(numero) || boton.classList.contains('sold')) {
+            rifaplusUtils.showFeedback(`❌ Boleto #${numero} está vendido`, 'error');
+            return;
         }
 
-        boton.classList.remove('is-pending', 'is-processing');
-        boton.disabled = false;
+        if (reservedSet.has(numero) || boton.classList.contains('reserved')) {
+            rifaplusUtils.showFeedback(`⏳ Boleto #${numero} está apartado`, 'warning');
+            return;
+        }
+
+        if (selectedNumbersGlobal.has(numero)) {
+            boton.classList.add('selected');
+            return;
+        }
+
+        // SELECCIONAR: respuesta inmediata + validación en segundo plano
+        boton.classList.add('is-processing');
+        boton.classList.add('is-pending');
+        boton.disabled = true;
+
+        if (!agregarSeleccionLocal(numero)) {
+            limpiarEstadoInteractivoBoleto(boton);
+            return;
+        }
+
+        boton.classList.add('selected');
+        boton.setAttribute('title', 'Seleccionado');
+        boton.disabled = true;
+        marcarNumeroComoSeleccionadoEnBusqueda(numero);
+        enfatizarNumeroSeleccionado(boton, numero);
+
+        const token = registrarValidacionSeleccionPendiente(numero);
+        void validarSeleccionOptimista(numero, boton, token);
     }
 }
 
@@ -1503,13 +1888,14 @@ function limpiarSeleccion() {
         // Remover clase 'selected' de todos los botones de la boletera
         const seleccionados = document.querySelectorAll('.numero-btn.selected');
         seleccionados.forEach(boton => {
-            boton.classList.remove('selected');
-            boton.style.transform = 'scale(1)';
+            limpiarEstadoInteractivoBoleto(boton);
         });
         
         // Limpiar datos
         selectedNumbersGlobal.clear();
         localStorage.removeItem('rifaplusSelectedNumbers');
+        validacionesSeleccionPendientes.clear();
+        actualizarEstadoBtnComprar();
         
         // Actualizar todas las vistas (usar debounce para resumen)
         actualizarResumenCompraConDebounce();
@@ -1608,7 +1994,7 @@ function actualizarResumenCompra() {
     }
     
     if (btnComprar) {
-        btnComprar.disabled = cantidad === 0;
+        actualizarEstadoBtnComprar();
     }
     
     // Desactivar/activar botón de limpiar según haya boletos
@@ -1769,7 +2155,10 @@ function renderRange(inicio, fin) {
     grid.innerHTML = '';
 
     const endpoint = obtenerApiBaseCompra();
-    cargarDatosCompletosEnBackground(endpoint, { inicio, fin });
+    cargarDatosCompletosEnBackground(endpoint, { inicio, fin }, {
+        force: true,
+        reason: 'cambio-rango'
+    });
 
     // Asegurar que inicio <= fin y que ambos sean enteros
     inicio = parseInt(inicio, 10) || 0;  // DEFAULT: 0 instead of 1
@@ -1812,12 +2201,8 @@ function infiniteScrollLoadMore() {
         return;
     }
     
-    // OPTIMIZACIÓN: Crear datos una sola vez en memoria
     const { soldSet, reservedSet } = obtenerEstadoLocalBoletos();
-
-    // OPTIMIZACIÓN: Usar innerHTML string en chunks de 20 (⭐ más pequeño = mejor rendimiento)
-    let html = '';
-    const CHUNK_SIZE = 20;
+    const htmlParts = [];
     
     for (let i = nextStart; i <= nextEnd; i++) {
         let classes = 'numero-btn';
@@ -1843,17 +2228,11 @@ function infiniteScrollLoadMore() {
             window.rifaplusConfig.formatearNumeroBoleto(i) : 
             String(i).padStart(6, '0');
         
-        html += `<button class="${classes}" data-numero="${i}" ${disabled ? 'disabled' : ''} ${title ? `title="${title}"` : ''}>${numeroFormateado}</button>`;
-        
-        // Insertar en chunks para evitar reflows masivos
-        if ((i - nextStart + 1) % CHUNK_SIZE === 0 || i === nextEnd) {
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = html;
-            while (tempDiv.firstChild) {
-                grid.appendChild(tempDiv.firstChild);
-            }
-            html = '';
-        }
+        htmlParts.push(`<button class="${classes}" data-numero="${i}" ${disabled ? 'disabled' : ''} ${title ? `title="${title}"` : ''}>${numeroFormateado}</button>`);
+    }
+
+    if (htmlParts.length > 0) {
+        grid.insertAdjacentHTML('beforeend', htmlParts.join(''));
     }
     
     infiniteScrollState.boletosCargados += (nextEnd - nextStart + 1);
@@ -2952,76 +3331,14 @@ async function agregarBoletoDirectoCarrito(numero) {
         return false;
     }
 
-    // Agregar al Set global y localStorage
     if (typeof selectedNumbersGlobal !== 'undefined') {
         selectedNumbersGlobal.add(numero);
     }
-    
-    let stored = JSON.parse(localStorage.getItem('rifaplusSelectedNumbers') || '[]');
-    if (!stored.includes(numero)) {
-        stored.push(numero);
-        localStorage.setItem('rifaplusSelectedNumbers', JSON.stringify(stored));
-    }
 
-    // Actualizar todas las vistas (resumen con debounce para agrupar cambios)
-    actualizarResumenCompraConDebounce();
-    actualizarVistaCarritoGlobal();
-    actualizarContadorCarritoGlobal();
-    
-    // Actualizar estado visual en los resultados de búsqueda
-    const resultadoItem = document.querySelector(`.resultado-item:has([data-numero="${numero}"])`);
-    if (resultadoItem) {
-        const statusSpan = resultadoItem.querySelector('strong');
-        if (statusSpan) {
-            statusSpan.textContent = '✔️ Ya seleccionado';
-            statusSpan.style.color = 'var(--primary)';
-        }
-        // Ocultar botón "Lo quiero"
-        const btnLoQuiero = resultadoItem.querySelector('.btn-lo-quiero');
-        if (btnLoQuiero) {
-            btnLoQuiero.style.display = 'none';
-        }
-    }
-
-    document.querySelectorAll(`.busqueda-grid-btn[data-numero="${numero}"]`).forEach((btnResultado) => {
-        btnResultado.classList.remove('sold', 'reserved');
-        btnResultado.classList.add('selected');
-        btnResultado.disabled = false;
-        btnResultado.title = 'Ya seleccionado';
-    });
-    
-    // Marcar el boleto como seleccionado en el grid de la boletera
-    // Búsqueda robusta: intenta múltiples formas de encontrar el botón
-    const numerosGrid = document.getElementById('numerosGrid');
-    if (numerosGrid) {
-        // Método 1: Buscar por data-numero directamente en numerosGrid
-        let botonEnGrid = numerosGrid.querySelector(`[data-numero="${numero}"]`);
-        
-        // Método 2: Si no encuentra, buscar en todos los descendientes (más exhaustivo)
-        if (!botonEnGrid) {
-            const allButtons = numerosGrid.querySelectorAll('button, div');
-            for (let btn of allButtons) {
-                if (btn.getAttribute('data-numero') === numero.toString() || 
-                    btn.getAttribute('data-numero') === numero) {
-                    botonEnGrid = btn;
-                    break;
-                }
-            }
-        }
-        
-        // Si encontró el botón, marcar como seleccionado
-        if (botonEnGrid) {
-            if (!botonEnGrid.classList.contains('selected')) {
-                botonEnGrid.classList.add('selected');
-            }
-            enfatizarNumeroSeleccionado(botonEnGrid, numero);
-            console.log(`✅ Boleto #${numero} marcado como seleccionado en grid`);
-        } else {
-            console.warn(`⚠️ No se encontró boleto #${numero} en el grid. Data-numero: ${numero}`);
-        }
-    } else {
-        console.warn('⚠️ Grid numerosGrid no encontrado en el DOM');
-    }
+    sincronizarSeleccionCompraEnStorage();
+    programarActualizacionSeleccionCompra();
+    marcarNumeroComoSeleccionadoEnBusqueda(numero);
+    marcarBoletoComoSeleccionadoEnGrid(numero);
     
     // Feedback de éxito
     rifaplusUtils.showFeedback(`✅ Boleto #${numero} agregado al carrito`, 'success');
@@ -3655,8 +3972,6 @@ function procesarBoletosEnBackground(sold, reserved) {
         
         window.rifaplusSoldNumbers = sold.map(Number);
         window.rifaplusReservedNumbers = reserved.map(Number);
-        console.debug(`✅ Procesados ${sold.length + reserved.length} boletos`);
-        
         // Actualizar grid y availability note sincronizados
         actualizarEstadoBoletosVisibles();
         if (typeof actualizarNotaDisponibilidad === 'function') {

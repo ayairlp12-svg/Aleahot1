@@ -119,6 +119,7 @@
     // ============================================================
     function actualizarCarrusel(imagenes) {
         log('🖼️ Actualizando carrusel con', imagenes.length, 'imágenes');
+        const imageDelivery = window.RifaPlusImageDelivery;
 
         const carruselInner = document.querySelector('.carrusel-inner');
         if (!carruselInner) {
@@ -144,9 +145,23 @@
             slide.style.transition = 'opacity 0.3s ease';
 
             const img = document.createElement('img');
-            img.src = imagen.url;
             img.alt = imagen.titulo || `Imagen ${index + 1}`;
-            img.loading = 'lazy';
+            if (imageDelivery?.aplicarImagenOptimizada) {
+                imageDelivery.aplicarImagenOptimizada(img, {
+                    originalUrl: imagen.url,
+                    profile: index === 0 ? 'carouselPreload' : 'carousel',
+                    widths: [480, 768, 960, 1280, 1600],
+                    sizes: '(max-width: 768px) 100vw, min(92vw, 1200px)',
+                    loading: index === 0 ? 'eager' : 'lazy',
+                    fetchPriority: index === 0 ? 'high' : 'low',
+                    decoding: 'async'
+                });
+            } else {
+                img.src = imagen.url;
+                img.loading = index === 0 ? 'eager' : 'lazy';
+                img.fetchPriority = index === 0 ? 'high' : 'low';
+                img.decoding = 'async';
+            }
             img.onload = function() {
                 setTimeout(() => {
                     slide.style.opacity = '1';
@@ -156,6 +171,23 @@
             slide.appendChild(img);
             carruselInner.appendChild(slide);
         });
+
+        try {
+            const galleryCache = imagenes
+                .map((imagen) => ({
+                    url: String(imagen?.url || '').trim(),
+                    titulo: String(imagen?.titulo || '').trim()
+                }))
+                .filter((imagen) => imagen.url)
+                .slice(0, 6);
+
+            if (galleryCache.length > 0) {
+                localStorage.setItem('rifaplus_cached_gallery_v1', JSON.stringify(galleryCache));
+                window.__RIFAPLUS_CACHED_GALERIA__ = galleryCache;
+            }
+        } catch (error) {
+            log('⚠️ No se pudo cachear la galeria:', error?.message || error);
+        }
 
         // Re-inicializar controles del carrusel si existen
         if (typeof inicializarCarrusel === 'function') {
