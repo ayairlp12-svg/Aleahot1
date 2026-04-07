@@ -1687,6 +1687,7 @@
         let pollingOrdenesId = null;
         let lastRealtimeToastAt = 0;
         let adminSocketConnectWarned = false;
+        let lastOrdenesSyncAt = 0;
 
         function debugAdminOrdenesRealtime() {
             let enabled = window.RIFAPLUS_DEBUG_ADMIN === true;
@@ -1739,11 +1740,18 @@
         function iniciarPollingOrdenesTiempoReal() {
             detenerPollingOrdenesTiempoReal();
             pollingOrdenesId = setInterval(() => {
-                if (!haySesionAdminActiva() || document.hidden || adminSocketConnected) {
+                if (!haySesionAdminActiva() || document.hidden) {
                     return;
                 }
-                programarRefreshOrdenesTiempoReal('polling');
-            }, 30000);
+
+                const ahora = Date.now();
+                const intervaloMinimoMs = adminSocketConnected ? 5000 : 30000;
+                if ((ahora - lastOrdenesSyncAt) < intervaloMinimoMs) {
+                    return;
+                }
+
+                programarRefreshOrdenesTiempoReal(adminSocketConnected ? 'reconciliacion' : 'polling');
+            }, 5000);
         }
 
         async function refrescarOrdenesTiempoReal(reason = 'actualizacion') {
@@ -1754,6 +1762,7 @@
             }
 
             realtimeRefreshPendiente = false;
+            lastOrdenesSyncAt = Date.now();
 
             try {
                 await loadOrdenes({ preservePage: true, silent: true });
