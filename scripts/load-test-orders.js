@@ -9,7 +9,8 @@ const DEFAULTS = {
     clienteId: process.env.CLIENTE_ID || '',
     pricePerTicket: Number(process.env.PRICE_PER_TICKET || 6),
     allowRemote: false,
-    allowProduction: false
+    allowProduction: false,
+    useAvailablePool: true
 };
 
 const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '::1']);
@@ -40,6 +41,7 @@ function parseArgs(argv) {
         if (key === 'pricePerTicket' && value) config.pricePerTicket = Number(value);
         if (key === 'allowRemote') config.allowRemote = value !== 'false';
         if (key === 'allowProduction') config.allowProduction = value !== 'false';
+        if (key === 'useAvailablePool') config.useAvailablePool = value !== 'false';
     });
 
     return config;
@@ -117,9 +119,96 @@ async function fetchJson(url, options = {}) {
     return { response, json };
 }
 
-async function createOrder(baseUrl, options, orderIndex) {
-    const ticketBase = options.ticketStart + (orderIndex * options.ticketsPerOrder);
-    const tickets = Array.from({ length: options.ticketsPerOrder }, (_, idx) => ticketBase + idx);
+function normalizeTicketList(items) {
+    if (!Array.isArray(items)) return [];
+
+    return items
+        .map((item) => {
+            if (typeof item === 'number') return item;
+            if (typeof item === 'string') return Number(item);
+            if (item && typeof item === 'object') {
+                if (item.numero !== undefined) return Number(item.numero);
+                if (item.number !== undefined) return Number(item.number);
+            }
+            return NaN;
+        })
+        .filter((value) => Number.isInteger(value) && value >= 0);
+}
+
+async function preloadAvailableTickets(baseUrl, options) {
+    if (!options.useAvailablePool) {
+        return [];
+    }
+
+    const estimatedOrders = Math.max(
+        options.concurrency * options.durationSec * 4,
+        options.concurrency * 10
+    );
+    const estimatedTickets = Math.max(
+        200,
+        estimatedOrders * options.ticketsPerOrder
+    );
+
+    const tickets = [];
+    let offset = 0;
+    const limit = 500;
+
+    while (tickets.length < estimatedTickets) {
+        const result = await fetchJson(`${baseUrl}/api/boletos/disponibles?limit=${limit}&offset=${offset}`, {
+            headers: { accept: 'application/json' }
+        });
+
+        if (!result.response.ok || result.json?.success !== true) {
+            throw new Error(`No se pudieron precargar boletos disponibles (status ${result.response.status})`);
+        }
+
+        const pageTickets = normalizeTicketList(result.json?.boletos);
+        if (pageTickets.length === 0) {
+            break;
+        }
+
+        tickets.push(...pageTickets);
+
+        const nextOffset = Number(result.json?.paginacion?.proximo_offset);
+        if (!Number.isInteger(nextOffset) || nextOffset <= offset) {
+            offset += limit;
+        } else {
+            offset = nextOffset;
+        }
+    }
+
+    return tickets;
+}
+
+function takeNextTicketBlock(state, options, orderIndex) {
+    if (!options.useAvailablePool) {
+        const ticketBase = options.ticketStart + (orderIndex * options.ticketsPerOrder);
+        return Array.from({ length: options.ticketsPerOrder }, (_, idx) => ticketBase + idx);
+    }
+
+    const start = state.nextTicketIndex;
+    const end = start + options.ticketsPerOrder;
+
+    if (!Array.isArray(state.availableTickets) || end > state.availableTickets.length) {
+        return null;
+    }
+
+    state.nextTicketIndex = end;
+    return state.availableTickets.slice(start, end);
+}
+
+async function createOrder(baseUrl, options, orderIndex, tickets) {
+    if (!Array.isArray(tickets) || tickets.length !== options.ticketsPerOrder) {
+        return {
+            ok: false,
+            stage: 'ticket-pool',
+            status: 0,
+            body: {
+                success: false,
+                message: 'No hay suficientes boletos disponibles precargados para continuar la prueba'
+            }
+        };
+    }
 
     const counterResult = await fetchJson(`${baseUrl}/api/public/order-counter/next`, {
         method: 'POST',
@@ -170,9 +259,10 @@ async function runWorker(state, baseUrl, options, stopAt, workerIndex) {
     while (Date.now() < stopAt) {
         const orderIndex = state.nextOrderIndex++;
         const startedAt = Date.now();
+        const tickets = takeNextTicketBlock(state, options, orderIndex);
 
         try {
-            const result = await createOrder(baseUrl, options, orderIndex);
+            const result = await createOrder(baseUrl, options, orderIndex, tickets);
             const durationMs = Date.now() - startedAt;
             state.total += 1;
             state.durations.push(durationMs);
@@ -208,6 +298,7 @@ async function main() {
     const options = parseArgs(process.argv.slice(2));
     const baseUrl = ensureSafeTarget(options.baseUrl, options);
     const stopAt = Date.now() + (options.durationSec * 1000);
+    const availableTickets = await preloadAvailableTickets(baseUrl, options);
     const state = {
         total: 0,
         failures: 0,
@@ -215,7 +306,9 @@ async function main() {
         errors: {},
         durations: [],
         nextOrderIndex: 0,
-        failureSamples: []
+        failureSamples: [],
+        availableTickets,
+        nextTicketIndex: 0
     };
 
     console.log(`Order load test -> ${baseUrl}/api/ordenes`);
@@ -223,6 +316,8 @@ async function main() {
     console.log(`Concurrencia -> ${options.concurrency}`);
     console.log(`Boletos por orden -> ${options.ticketsPerOrder}`);
     console.log(`Ticket inicial -> ${options.ticketStart}`);
+    console.log(`Modo pool disponible -> ${options.useAvailablePool ? 'sí' : 'no'}`);
+    if (options.useAvailablePool) console.log(`Boletos precargados -> ${availableTickets.length}`);
     if (options.allowRemote) console.log('Modo remoto -> habilitado');
     if (options.allowProduction) console.log('Modo producción -> habilitado');
 

@@ -225,6 +225,26 @@ function crearFormateadorNumerosOrdenFormal(...colecciones) {
     };
 }
 
+function esOrdenIdOficialActualOrdenFormal(ordenId) {
+    const valor = String(ordenId || '').trim().toUpperCase();
+    if (!valor) return false;
+
+    const esOficial = typeof window.rifaplusConfig?.esOrdenIdOficial === 'function'
+        ? window.rifaplusConfig.esOrdenIdOficial(valor)
+        : /^[A-Z0-9]+-[A-Z]{2}\d{3}$/.test(valor);
+    const tienePrefijoActual = typeof window.rifaplusConfig?.ordenIdTienePrefijoActual === 'function'
+        ? window.rifaplusConfig.ordenIdTienePrefijoActual(valor)
+        : true;
+
+    return esOficial && tienePrefijoActual;
+}
+
+function obtenerOrdenIdVisibleOrdenFormal(ordenId) {
+    return esOrdenIdOficialActualOrdenFormal(ordenId)
+        ? String(ordenId).trim().toUpperCase()
+        : 'Se asigna al confirmar';
+}
+
 /* ============================================================ */
 /* SECCIÓN 2: APERTURA Y CIERRE DE MODAL DE ORDEN              */
 /* ============================================================ */
@@ -257,19 +277,9 @@ function abrirOrdenFormal(cuenta) {
         }
     }
 
-    // Usar solo IDs oficiales y con el prefijo vigente.
     let ordenId = String(cliente.ordenId || '').trim().toUpperCase();
-    const esOrdenIdOficial = typeof window.rifaplusConfig?.esOrdenIdOficial === 'function'
-        ? window.rifaplusConfig.esOrdenIdOficial(ordenId)
-        : /^[A-Z0-9]+-[A-Z]{2}\d{3}$/.test(ordenId);
-    const tienePrefijoActual = typeof window.rifaplusConfig?.ordenIdTienePrefijoActual === 'function'
-        ? window.rifaplusConfig.ordenIdTienePrefijoActual(ordenId)
-        : true;
-
-    if (!ordenId || !esOrdenIdOficial || !tienePrefijoActual) {
-        console.error('❌ [Orden-Formal] ID de orden oficial no disponible:', ordenId);
-        rifaplusUtils.showFeedback('❌ No se pudo preparar un numero de orden valido. Intenta de nuevo.', 'error');
-        return;
+    if (!esOrdenIdOficialActualOrdenFormal(ordenId)) {
+        ordenId = '';
     }
     
     // Guardar el ID oficial en localStorage para futuros usos
@@ -278,6 +288,7 @@ function abrirOrdenFormal(cuenta) {
 
     ordenActual = {
         ordenId: ordenId,
+        ordenIdVisible: obtenerOrdenIdVisibleOrdenFormal(ordenId),
         cliente: {
             nombre: cliente.nombre,
             apellidos: cliente.apellidos,
@@ -291,7 +302,7 @@ function abrirOrdenFormal(cuenta) {
         // Precio dinámico: desde totales (si se calculó) → desde config.js → default 15
         precioUnitario: totales?.precioUnitario || (typeof obtenerPrecioDinamico === 'function' ? obtenerPrecioDinamico() : 15),
         fecha: new Date().toISOString(),
-        referencia: ordenId
+        referencia: ordenId || ''
     };
 
     // Guardar en storage
@@ -424,6 +435,7 @@ function renderizarOrdenFormal(orden) {
     const descuentoBase = Number(descuentoSource ?? 0);
     const descuento = descuentoBase > 0 ? descuentoBase : Math.max(0, subtotal - totalBase);
     const total = totalSource !== null && totalSource !== undefined ? totalBase : Math.max(0, subtotal - descuento);
+    const ordenIdVisible = obtenerOrdenIdVisibleOrdenFormal(orden.ordenIdVisible || orden.ordenId);
 
     const html = `
         <div class="orden-documento" id="documentoPDF">
@@ -436,7 +448,7 @@ function renderizarOrdenFormal(orden) {
                 </div>
                 <div class="orden-header-right">
                     <div class="orden-label">Orden de Pago</div>
-                    <div class="orden-id">${orden.ordenId}</div>
+                    <div class="orden-id">${ordenIdVisible}</div>
                     <div class="orden-fecha">📅 ${fechaFormato}</div>
                     <div class="orden-hora">⏰ ${horaFormato}</div>
                 </div>
@@ -503,7 +515,7 @@ function renderizarOrdenFormal(orden) {
                     </div>
                     <div class="orden-pago-item">
                         <div class="orden-pago-label">Referencia de Pago</div>
-                        <div class="orden-pago-valor-monospace orden-referencia-id">${orden.ordenId || '-'}</div>
+                        <div class="orden-pago-valor-monospace orden-referencia-id">${ordenIdVisible}</div>
                     </div>
                     <div class="orden-pago-item">
                         <div class="orden-pago-label">Beneficiario</div>
@@ -643,7 +655,10 @@ function imprimirOrden() {
                     }
                 }
                 
-                const filename = `orden-${ordenActual ? ordenActual.ordenId : Date.now()}.pdf`;
+                const nombreOrdenPdf = esOrdenIdOficialActualOrdenFormal(ordenActual?.ordenId)
+                    ? ordenActual.ordenId
+                    : Date.now();
+                const filename = `orden-${nombreOrdenPdf}.pdf`;
                 pdf.save(filename);
                 rifaplusUtils.showFeedback('✅ PDF descargado', 'success');
                 
@@ -833,8 +848,12 @@ async function guardarOrden() {
         }
 
         // Preparar payload validado
+        const ordenIdPayload = esOrdenIdOficialActualOrdenFormal(ordenActual.ordenId)
+            ? String(ordenActual.ordenId).trim().toUpperCase().slice(0, 50)
+            : '';
+
         const payload = {
-            ordenId: (ordenActual.ordenId || `RIFA-${Date.now()}`).slice(0, 50),  // Limitar longitud
+            ordenId: ordenIdPayload,
             nombre_sorteo: window.rifaplusConfig?.rifa?.nombre || 'Sorteo',  // Nombre del sorteo from config
             cliente: {
                 nombre: nombre.slice(0, 100),
@@ -1143,6 +1162,21 @@ async function guardarOrden() {
                     };
                     payload.precioUnitario = Number(totalesOficiales.precioUnitario || payload.precioUnitario || 0);
                     logOrdenFormalDebug('[Orden-Formal] Totales oficiales aplicados al cliente:', payload.totales);
+                }
+
+                if (payload.ordenId) {
+                    ordenActual.ordenId = payload.ordenId;
+                    ordenActual.ordenIdVisible = payload.ordenId;
+
+                    try {
+                        const clientePersistido = JSON.parse(getItemSafeOrden('rifaplus_cliente') || '{}');
+                        clientePersistido.ordenId = payload.ordenId;
+                        setItemSafeOrden('rifaplus_cliente', JSON.stringify(clientePersistido));
+                    } catch (errorActualizandoCliente) {
+                        console.warn('⚠️ [Orden-Formal] No se pudo persistir el ordenId oficial:', errorActualizandoCliente?.message || errorActualizandoCliente);
+                    }
+
+                    setItemSafeOrden('rifaplus_orden_actual', JSON.stringify(ordenActual));
                 }
 
                 // ⭐ OCULTAR LOADING INMEDIATAMENTE (cuando se crea exitosamente la orden)

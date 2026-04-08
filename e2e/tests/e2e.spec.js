@@ -107,15 +107,19 @@ test('Flujo completo: compra -> guardar orden -> admin confirma', async ({ page,
     }
   });
 
-  // Debug: obtener ordenActual en memoria
-  const ordenEnMemoria = await page.evaluate(() => {
-    try { return window.ordenActual || null; } catch (e) { return { error: e.message }; }
-  });
-  console.log('DEBUG ordenEnMemoria=', ordenEnMemoria);
-
-  // 8) Reutilizar la orden creada por el propio flujo del frontend
-  const ordenId = ordenEnMemoria?.ordenId;
-  expect(ordenId).toBeTruthy();
+  const ordenId = await expect.poll(async () => {
+    return page.evaluate(() => {
+      try {
+        const ordenFinal = JSON.parse(localStorage.getItem('rifaplus_orden_final') || '{}');
+        return ordenFinal?.ordenId || window.ordenActual?.ordenId || '';
+      } catch (e) {
+        return '';
+      }
+    });
+  }, {
+    timeout: 15000,
+    message: 'La orden no devolvió un ID oficial a tiempo'
+  }).not.toBe('');
 
   await expect.poll(async () => {
     const resp = await request.get(`http://localhost:3000/api/ordenes/${ordenId}`);

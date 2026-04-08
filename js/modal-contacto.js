@@ -396,16 +396,13 @@ function guardarIdEnLocalStorage(orderId) {
  * @returns {Promise<Object>} Objeto con datos guardados
  */
 async function guardarClienteEnStorage(nombre, apellidos, whatsapp, estado, ciudad) {
-    // Generar ID único oficial (ahora es async)
-    const ordenId = await generarIdOrden();
-    
     const clienteData = {
         nombre,
         apellidos,
         whatsapp,
         estado: estado || undefined,
         ciudad: ciudad || undefined,
-        ordenId: ordenId,
+        ordenId: '',
         fecha: new Date().toISOString()
     };
     

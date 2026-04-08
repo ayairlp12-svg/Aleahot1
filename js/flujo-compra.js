@@ -437,23 +437,9 @@ async function mostrarOrdenFormal(cuenta) {
         ordenIdActual = '';
     }
 
-    if (!ordenIdActual) {
-        ordenIdActual = await obtenerOrdenIdOficialFlujo(clienteGuardado);
-    }
-
     if (ordenIdActual && (!esOrdenIdOficial(ordenIdActual) || !tienePrefijoActual(ordenIdActual))) {
         console.error('❌ [flujo-compra] Se obtuvo un ordenId no válido tras intentar regenerarlo:', ordenIdActual);
         ordenIdActual = '';
-    }
-
-    if (!ordenIdActual) {
-        console.error('❌ [flujo-compra] No se pudo obtener un numero de orden oficial');
-        if (window.rifaplusUtils?.showFeedback) {
-            window.rifaplusUtils.showFeedback('❌ No se pudo generar el numero de orden. Intenta de nuevo.', 'error');
-        } else {
-            alert('No se pudo generar el numero de orden. Intenta de nuevo.');
-        }
-        return;
     }
 
     // Guardar datos para orden-formal.js (sin email)
@@ -495,7 +481,7 @@ async function mostrarOrdenFormal(cuenta) {
         boletos: boletos,
         totales: totales,
         fecha: new Date().toISOString(),
-        referencia: ordenIdActual
+        referencia: ordenIdActual || ''
     };
     
     setItemSafeFlujo('rifaplus_orden_actual', JSON.stringify(orden));
