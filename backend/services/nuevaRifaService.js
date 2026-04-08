@@ -205,14 +205,14 @@ class NuevaRifaService {
       runner('boletos_estado')
         .select(
           runner.raw('COUNT(*)::int AS total'),
-          runner.raw(`SUM(CASE WHEN estado = 'apartado' OR numero_orden IS NOT NULL THEN 1 ELSE 0 END)::int AS apartados`),
+          runner.raw(`SUM(CASE WHEN estado = 'apartado' THEN 1 ELSE 0 END)::int AS apartados`),
           runner.raw(`SUM(CASE WHEN estado = 'vendido' THEN 1 ELSE 0 END)::int AS vendidos`)
         )
         .first(),
       runner('orden_oportunidades')
         .select(
           runner.raw('COUNT(*)::int AS total'),
-          runner.raw(`SUM(CASE WHEN estado = 'apartado' OR numero_orden IS NOT NULL THEN 1 ELSE 0 END)::int AS apartadas`),
+          runner.raw(`SUM(CASE WHEN estado = 'apartado' THEN 1 ELSE 0 END)::int AS apartadas`),
           runner.raw(`SUM(CASE WHEN estado = 'vendido' THEN 1 ELSE 0 END)::int AS vendidas`)
         )
         .first()
