@@ -774,37 +774,46 @@ class ModalSorteoFinalizado {
     /**
      * Configura event listeners
      */
+    navegarAMisBoletosRestringido() {
+        try {
+            sessionStorage.setItem('rifaplus_modal_suppressed_until', String(Date.now() + 10000));
+            sessionStorage.setItem('rifaplus_allow_restricted', '1');
+        } catch (err) {
+            console.warn('No se pudo setear suppression/allow en sessionStorage', err);
+        }
+
+        const overlay = document.getElementById('modalSorteoFinalizadoOverlay');
+        if (overlay && overlay.parentNode) {
+            overlay.parentNode.removeChild(overlay);
+        }
+
+        this.desactivarModoRestringido();
+        window.rifaplusModalScrollLock?.sync?.();
+
+        this.log('Redirigiendo a mis-boletos-restringido.html (supresión activa)', 'navegacion');
+        window.location.href = 'mis-boletos-restringido.html';
+    }
+
     configurarEventListeners() {
         try {
-            // Delegated listener on overlay to ensure button works even if DOM timing changes
             const overlay = document.getElementById('modalSorteoFinalizadoOverlay');
             if (overlay) {
+                const btnVerMisBoletos = overlay.querySelector('#btnVerMisBoletos');
+
+                if (btnVerMisBoletos) {
+                    btnVerMisBoletos.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        this.navegarAMisBoletosRestringido();
+                    }, { once: true });
+                }
+
                 overlay.addEventListener('click', (e) => {
                     const btn = e.target.closest && e.target.closest('#btnVerMisBoletos');
                     if (btn) {
-                        // Evitar que el listener global de bloqueo intercepte el click
                         e.preventDefault();
                         e.stopPropagation();
-
-                        // Suprimir modal por un corto periodo para la navegación (10s)
-                        try {
-                            sessionStorage.setItem('rifaplus_modal_suppressed_until', String(Date.now() + 10000));
-                            // Permitir acceso temporal a la página restringida desde el modal
-                            sessionStorage.setItem('rifaplus_allow_restricted', '1');
-                        } catch (err) {
-                            console.warn('No se pudo setear suppression/allow en sessionStorage', err);
-                        }
-
-                        // Remover overlay para liberar navegación inmediata
-                        const ov = document.getElementById('modalSorteoFinalizadoOverlay');
-                        if (ov && ov.parentNode) {
-                            ov.parentNode.removeChild(ov);
-                        }
-                        this.desactivarModoRestringido();
-                        window.rifaplusModalScrollLock?.sync?.();
-
-                        this.log('Redirigiendo a mis-boletos-restringido.html (supresión activa)', 'navegacion');
-                        window.location.href = 'mis-boletos-restringido.html';
+                        this.navegarAMisBoletosRestringido();
                     }
                 });
             }
@@ -1494,6 +1503,8 @@ class ModalSorteoFinalizado {
                 justify-content: center;
                 border-radius: 0 0 28px 28px;
                 flex-shrink: 0;
+                position: relative;
+                z-index: 2;
             }
 
             .btn-verificar {
@@ -1514,7 +1525,9 @@ class ModalSorteoFinalizado {
                 justify-content: center;
                 gap: 10px;
                 position: relative;
+                z-index: 3;
                 overflow: hidden;
+                pointer-events: auto;
             }
 
             .btn-verificar:hover {
