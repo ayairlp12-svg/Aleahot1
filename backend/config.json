@@ -14,6 +14,8 @@
       "instagram": "https://www.instagram.com/joseayair",
       "instagramUsuario": "@joseayair",
       "tiktok": "",
+      "grupoWhatsapp": "",
+      "grupoWhatsappNombre": "",
       "canalWhatsapp": "https://chat.whatsapp.com/Chicas bien - contenido y encuentros",
       "canalWhatsappNombre": "Chicas bien - contenido y encuentros"
     },
@@ -96,6 +98,9 @@
     "horaSorteo": "12:00",
     "zonaHoraria": "Hora Centro México",
     "modalidadSorteo": "Transmisión en Vivo por Facebook",
+    "modalidadEnlace": {
+      "tipo": "facebook"
+    },
     "fechaPresorteo": null,
     "fechaPresorteoFormato": "",
     "horaPresorteo": "",
@@ -142,6 +147,7 @@
       "testimonios": false,
       "ruletazo": true,
       "presorteo": true,
+      "progressBar": true,
       "progressStats": true
     },
     "maquinaSuerte": {

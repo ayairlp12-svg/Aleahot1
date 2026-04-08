@@ -194,6 +194,8 @@ Object.assign(window.rifaplusConfig, {
             instagram: "",
             instagramUsuario: "",
             tiktok: "",
+            grupoWhatsapp: "",
+            grupoWhatsappNombre: "",
             canalWhatsapp: "",
             canalWhatsappNombre: ""
         },
@@ -254,6 +256,9 @@ Object.assign(window.rifaplusConfig, {
         horaSorteo: "",  // Se sincroniza desde config.json
         zonaHoraria: "Hora Centro México",  // Se sincroniza desde config.json
         modalidadSorteo: "",  // Se sincroniza desde config.json
+        modalidadEnlace: {
+            tipo: "facebook"
+        },  // Se sincroniza desde config.json
         fechaPresorteo: "",  // Se sincroniza desde config.json (opcional)
         fechaPresorteoFormato: "",  // Se sincroniza desde config.json (opcional)
         horaPresorteo: "",  // Se sincroniza desde config.json (opcional)
@@ -284,6 +289,7 @@ Object.assign(window.rifaplusConfig, {
             testimonios: false,
             ruletazo: true,
             presorteo: true,
+            progressBar: true,
             progressStats: true
         },  // Se sincroniza desde config.json
         bonos: {

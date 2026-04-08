@@ -10,14 +10,14 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/admin-layout.css?v=20251224">
-    <link rel="stylesheet" href="css/styles.css?v=20251128">
+    <link rel="stylesheet" href="css/styles.css?v=20260407.1">
     <script>
         (function limpiarCacheYFechas() {
             ['rifaplus_fecha_sorteo','rifaplus_timestamp_sorteo','rifaplus_fecha_cierre'].forEach(k => localStorage.removeItem(k));
         })();
     </script>
     <script src="js/deploy-config.js"></script>
-    <script src="js/config.js?v=20251228.15"></script>
+    <script src="js/config.js?v=20260407.1"></script>
     <script src="js/config-sync.js"></script>
     <script src="js/theme-dynamic.js"></script>
     <script src="js/admin-layout.js?v=20260406.1"></script>
@@ -2383,6 +2383,30 @@
                         <textarea class="form-input" id="sorteo-descripcion" rows="3" placeholder="Describe los detalles del sorteo, premios, reglas, etc."></textarea>
                     </div>
 
+                    <div style="margin-top: var(--spacing-lg); padding: 1rem; border: 1px solid #e5e7eb; border-radius: 14px; background: #f8fafc;">
+                        <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+                            <i class="fas fa-broadcast-tower"></i> Modalidad del Sorteo
+                        </h3>
+
+                        <div class="form-group-single">
+                            <label class="form-label">Texto visible en la card</label>
+                            <input type="text" class="form-input" id="sorteo-modalidad-texto" placeholder="Ej: Transmisión en Vivo por Facebook o Resultados publicados por WhatsApp">
+                            <div class="form-helper">Este texto se muestra en la card de detalles del sorteo en la web pública.</div>
+                        </div>
+
+                        <div class="form-group-single" style="margin-top: var(--spacing-lg);">
+                            <label class="form-label">Botón de la card</label>
+                            <select class="form-input" id="sorteo-modalidad-enlace-tipo" onchange="actualizarAyudaModalidadEnlace()">
+                                <option value="facebook">Facebook</option>
+                                <option value="grupo_whatsapp">Grupo de WhatsApp</option>
+                                <option value="canal_whatsapp">Canal de WhatsApp</option>
+                                <option value="whatsapp_personal">WhatsApp personal</option>
+                                <option value="sin_enlace">Sin botón</option>
+                            </select>
+                            <div class="form-helper" id="modalidad-enlace-ayuda">El botón abrirá el Facebook configurado en Contacto y Redes Sociales.</div>
+                        </div>
+                    </div>
+
                     <!-- SECCIÓN DE IMÁGENES DEL SORTEO -->
                     <div style="border-top: 1px solid #e5e7eb; margin-top: 1.5rem; padding-top: 1.5rem;">
                         <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
@@ -3106,14 +3130,25 @@
 
                         <!-- Canal WhatsApp (Grupo/Comunidad) -->
                         <div class="form-group-single" style="margin-top: var(--spacing-lg);">
+                            <label class="form-label">Enlace del Grupo de WhatsApp</label>
+                            <input type="url" class="form-input" id="social-grupo-whatsapp" placeholder="https://chat.whatsapp.com/...">
+                            <small style="color: var(--text-light);">Úsalo si quieres llevar a las personas a un grupo específico.</small>
+                        </div>
+
+                        <div class="form-group-single" style="margin-top: var(--spacing-lg);">
+                            <label class="form-label">Nombre del Grupo de WhatsApp</label>
+                            <input type="text" class="form-input" id="social-grupo-whatsapp-nombre" placeholder="Ej: Grupo VIP del sorteo">
+                        </div>
+
+                        <div class="form-group-single" style="margin-top: var(--spacing-lg);">
                             <label class="form-label">Enlace del Canal/Grupo de WhatsApp</label>
                             <input type="url" class="form-input" id="social-canal-whatsapp" placeholder="https://chat.whatsapp.com/...">
-                            <small style="color: var(--text-light);">Enlace para sumar personas al grupo</small>
+                            <small style="color: var(--text-light);">Puedes usarlo como canal o dejarlo como enlace de respaldo si no configuras un grupo separado.</small>
                         </div>
 
                         <!-- Nombre del Canal WhatsApp -->
                         <div class="form-group-single" style="margin-top: var(--spacing-lg);">
-                            <label class="form-label">Nombre del Grupo de WhatsApp</label>
+                            <label class="form-label">Nombre del Canal o Grupo de Respaldo</label>
                             <input type="text" class="form-input" id="social-canal-whatsapp-nombre" placeholder="Ej: Sorteos Yepe">
                         </div>
                     </div>
@@ -3725,8 +3760,19 @@
                         </label>
                         <label class="publish-item">
                             <div class="publish-item-copy">
+                                <div class="publish-item-title">Barra de progreso del index</div>
+                                <div class="publish-item-text">Muestra u oculta el bloque completo de progreso debajo del countdown.</div>
+                            </div>
+                            <label class="toggle-label">
+                                <input type="checkbox" id="publicacion-progress-bar" class="toggle-input">
+                                <span class="toggle-bg"></span>
+                                <span class="toggle-circle"></span>
+                            </label>
+                        </label>
+                        <label class="publish-item">
+                            <div class="publish-item-copy">
                                 <div class="publish-item-title">Stats de progreso</div>
-                                <div class="publish-item-text">Muestra u oculta el bloque de vendidos y disponibles debajo de la barra del countdown.</div>
+                                <div class="publish-item-text">Muestra u oculta solo el bloque de vendidos y disponibles debajo de la barra.</div>
                             </div>
                             <label class="toggle-label">
                                 <input type="checkbox" id="publicacion-progress-stats" class="toggle-input">
@@ -4292,6 +4338,7 @@
                 testimonios: false,
                 ruletazo: true,
                 presorteo: true,
+                progressBar: true,
                 progressStats: true
             },
             tema: {
@@ -4854,6 +4901,7 @@
             document.getElementById('publicacion-testimonios').checked = publicacion.testimonios === true;
             document.getElementById('publicacion-ruletazo').checked = publicacion.ruletazo !== false;
             document.getElementById('publicacion-presorteo').checked = publicacion.presorteo !== false;
+            document.getElementById('publicacion-progress-bar').checked = publicacion.progressBar !== false;
             document.getElementById('publicacion-progress-stats').checked = publicacion.progressStats !== false;
             document.getElementById('tema-personalizado-activo').checked = tema.personalizado === true;
             aplicarPresetTemaEnFormulario(tema.preset || 'clasico');
@@ -4937,6 +4985,7 @@
                         testimonios: data.publicacion?.testimonios === true,
                         ruletazo: data.publicacion?.ruletazo !== false,
                         presorteo: data.publicacion?.presorteo !== false,
+                        progressBar: data.publicacion?.progressBar !== false,
                         progressStats: data.publicacion?.progressStats !== false
                     },
                     tema: {
@@ -5011,6 +5060,7 @@
                     testimonios: document.getElementById('publicacion-testimonios').checked,
                     ruletazo: document.getElementById('publicacion-ruletazo').checked,
                     presorteo: document.getElementById('publicacion-presorteo').checked,
+                    progressBar: document.getElementById('publicacion-progress-bar').checked,
                     progressStats: document.getElementById('publicacion-progress-stats').checked
                 },
                 tema: temaConstruido,
@@ -6185,6 +6235,8 @@
                 document.getElementById('social-instagram').value = redes.instagram || '';
                 document.getElementById('social-instagram-usuario').value = redes.instagramUsuario || '';
                 document.getElementById('social-tiktok').value = redes.tiktok || '';
+                document.getElementById('social-grupo-whatsapp').value = redes.grupoWhatsapp || '';
+                document.getElementById('social-grupo-whatsapp-nombre').value = redes.grupoWhatsappNombre || '';
                 document.getElementById('social-canal-whatsapp').value = redes.canalWhatsapp || '';
                 document.getElementById('social-canal-whatsapp-nombre').value = redes.canalWhatsappNombre || '';
 
@@ -8630,6 +8682,8 @@
             const edicionActual = document.getElementById('sorteo-edicion').value.trim();
             const nombreActual = document.getElementById('sorteo-nombre').value.trim();
             const descripcionActual = document.getElementById('sorteo-descripcion').value.trim();
+            const modalidadActual = document.getElementById('sorteo-modalidad-texto')?.value?.trim() || '';
+            const modalidadEnlaceTipoActual = normalizarTipoModalidadEnlace(document.getElementById('sorteo-modalidad-enlace-tipo')?.value);
             const imagenPrincipalActual = document.getElementById('sorteo-imagen-principal-url').value.trim();
             const totalBoletosActual = document.getElementById('sorteo-total-boletos')?.value?.trim() || '';
             const tiempoApartadoHorasActual = document.getElementById('tiempo-apartado-horas')?.value?.trim() || '';
@@ -8643,6 +8697,8 @@
                 edicionActual !== window.sorteoValoresOriginales.edicion ||
                 nombreActual !== window.sorteoValoresOriginales.nombre ||
                 descripcionActual !== window.sorteoValoresOriginales.descripcion ||
+                modalidadActual !== window.sorteoValoresOriginales.modalidadSorteo ||
+                modalidadEnlaceTipoActual !== window.sorteoValoresOriginales.modalidadEnlaceTipo ||
                 imagenPrincipalActual !== window.sorteoValoresOriginales.imagenPrincipal ||
                 totalBoletosActual !== window.sorteoValoresOriginales.totalBoletos ||
                 tiempoApartadoHorasActual !== window.sorteoValoresOriginales.tiempoApartadoHoras ||
@@ -8661,6 +8717,8 @@
                 edicion: document.getElementById('sorteo-edicion').value.trim(),
                 nombre: document.getElementById('sorteo-nombre').value.trim(),
                 descripcion: document.getElementById('sorteo-descripcion').value.trim(),
+                modalidadSorteo: document.getElementById('sorteo-modalidad-texto')?.value?.trim() || '',
+                modalidadEnlaceTipo: normalizarTipoModalidadEnlace(document.getElementById('sorteo-modalidad-enlace-tipo')?.value),
                 imagenPrincipal: document.getElementById('sorteo-imagen-principal-url').value.trim(),
                 totalBoletos: document.getElementById('sorteo-total-boletos')?.value?.trim() || '',
                 tiempoApartadoHoras: document.getElementById('tiempo-apartado-horas')?.value?.trim() || '',
@@ -8671,6 +8729,58 @@
                 rangoOculto: serializarRangoSimpleAdmin('oportunidades-rango-oculto-inicio', 'oportunidades-rango-oculto-fin')
             };
             console.log('📝 Valores originales del sorteo guardados:', window.sorteoValoresOriginales);
+        }
+
+        const TIPOS_MODALIDAD_ENLACE_VALIDOS = ['facebook', 'grupo_whatsapp', 'canal_whatsapp', 'whatsapp_personal', 'sin_enlace'];
+
+        function normalizarTipoModalidadEnlace(tipo) {
+            const valor = String(tipo || '').trim().toLowerCase();
+            return TIPOS_MODALIDAD_ENLACE_VALIDOS.includes(valor) ? valor : 'facebook';
+        }
+
+        function obtenerTipoModalidadEnlaceDesdeConfig(rifa = window.rifaplusConfig?.rifa) {
+            return normalizarTipoModalidadEnlace(rifa?.modalidadEnlace?.tipo);
+        }
+
+        function obtenerConfigModalidadDesdeFormulario() {
+            return {
+                modalidadSorteo: document.getElementById('sorteo-modalidad-texto')?.value?.trim() || '',
+                modalidadEnlace: {
+                    tipo: normalizarTipoModalidadEnlace(document.getElementById('sorteo-modalidad-enlace-tipo')?.value)
+                }
+            };
+        }
+
+        function actualizarAyudaModalidadEnlace() {
+            const ayuda = document.getElementById('modalidad-enlace-ayuda');
+            if (!ayuda) return;
+
+            const tipo = normalizarTipoModalidadEnlace(document.getElementById('sorteo-modalidad-enlace-tipo')?.value);
+            const mensajes = {
+                facebook: 'El botón abrirá el Facebook configurado en Contacto y Redes Sociales.',
+                grupo_whatsapp: 'El botón abrirá el enlace del grupo de WhatsApp configurado en Contacto y Redes Sociales.',
+                canal_whatsapp: 'El botón abrirá el enlace del canal de WhatsApp configurado en Contacto y Redes Sociales.',
+                whatsapp_personal: 'El botón abrirá una conversación al WhatsApp personal configurado en Contacto y Redes Sociales.',
+                sin_enlace: 'La card solo mostrará el texto de modalidad, sin botón adicional.'
+            };
+
+            ayuda.textContent = mensajes[tipo] || mensajes.facebook;
+        }
+
+        function cargarModalidadSorteoFormulario() {
+            const rifa = window.rifaplusConfig?.rifa || {};
+            const modalidadInput = document.getElementById('sorteo-modalidad-texto');
+            const modalidadTipoSelect = document.getElementById('sorteo-modalidad-enlace-tipo');
+
+            if (modalidadInput) {
+                modalidadInput.value = rifa.modalidadSorteo || '';
+            }
+
+            if (modalidadTipoSelect) {
+                modalidadTipoSelect.value = obtenerTipoModalidadEnlaceDesdeConfig(rifa);
+            }
+
+            actualizarAyudaModalidadEnlace();
         }
 
         function mostrarModalExitoSorteo(opciones = {}) {
@@ -11858,6 +11968,8 @@
                 instagram: document.getElementById('social-instagram').value?.trim(),
                 instagramUsuario: document.getElementById('social-instagram-usuario').value?.trim(),
                 tiktok: document.getElementById('social-tiktok').value?.trim(),
+                grupoWhatsapp: document.getElementById('social-grupo-whatsapp').value?.trim(),
+                grupoWhatsappNombre: document.getElementById('social-grupo-whatsapp-nombre').value?.trim(),
                 canalWhatsapp: document.getElementById('social-canal-whatsapp').value?.trim(),
                 canalWhatsappNombre: document.getElementById('social-canal-whatsapp-nombre').value?.trim()
             };
@@ -11917,6 +12029,8 @@
                             instagram: redesSociales.instagram || '',
                             instagramUsuario: redesSociales.instagramUsuario || '',
                             tiktok: redesSociales.tiktok || '',
+                            grupoWhatsapp: redesSociales.grupoWhatsapp || '',
+                            grupoWhatsappNombre: redesSociales.grupoWhatsappNombre || '',
                             canalWhatsapp: redesSociales.canalWhatsapp || '',
                             canalWhatsappNombre: redesSociales.canalWhatsappNombre || ''
                         }
@@ -12191,10 +12305,13 @@
                 if (sorteoConfig.nombre) document.getElementById('sorteo-nombre').value = sorteoConfig.nombre;
                 if (sorteoConfig.estado) document.getElementById('sorteo-estado').value = sorteoConfig.estado;
                 if (sorteoConfig.descripcion) document.getElementById('sorteo-descripcion').value = sorteoConfig.descripcion;
+                if (sorteoConfig.modalidadSorteo) document.getElementById('sorteo-modalidad-texto').value = sorteoConfig.modalidadSorteo;
+                if (sorteoConfig.modalidadEnlaceTipo) document.getElementById('sorteo-modalidad-enlace-tipo').value = normalizarTipoModalidadEnlace(sorteoConfig.modalidadEnlaceTipo);
                 if (sorteoConfig.fechaInicio) document.getElementById('sorteo-fecha-inicio').value = sorteoConfig.fechaInicio;
                 if (sorteoConfig.fechaCierre) document.getElementById('sorteo-fecha-cierre').value = sorteoConfig.fechaCierre;
                 if (sorteoConfig.fechaSorteo) document.getElementById('sorteo-fecha-sorteo').value = sorteoConfig.fechaSorteo;
                 if (sorteoConfig.duracion) document.getElementById('sorteo-duracion').value = sorteoConfig.duracion;
+                actualizarAyudaModalidadEnlace();
 
                 // Cargar premios
                 if (sorteoConfig.premios && sorteoConfig.premios.length > 0) {
@@ -12245,6 +12362,7 @@
                 const edicion = document.getElementById('sorteo-edicion').value.trim();
                 const nombre = document.getElementById('sorteo-nombre').value.trim();
                 const descripcion = document.getElementById('sorteo-descripcion').value.trim();
+                const { modalidadSorteo, modalidadEnlace } = obtenerConfigModalidadDesdeFormulario();
                 const imagenes = window.rifaplusConfig?.rifa?.galeria?.imagenes || [];
 
                 if (!edicion) {
@@ -12293,6 +12411,8 @@
                         edicionNombre: edicion,
                         nombreSorteo: nombre,
                         descripcion: descripcion,
+                        modalidadSorteo,
+                        modalidadEnlace,
                         galeria: {
                             enabled: true,
                             imagenes: imagenes
@@ -12345,6 +12465,8 @@
                     edicion,
                     nombre,
                     descripcion,
+                    modalidadSorteo,
+                    modalidadEnlaceTipo: modalidadEnlace.tipo,
                     imagenes,
                     timestamp: new Date().toISOString()
                 };
@@ -12365,6 +12487,8 @@
                     window.rifaplusConfig.rifa.edicionNombre = edicion;
                     window.rifaplusConfig.rifa.nombreSorteo = nombre;
                     window.rifaplusConfig.rifa.descripcion = descripcion;
+                    window.rifaplusConfig.rifa.modalidadSorteo = modalidadSorteo;
+                    window.rifaplusConfig.rifa.modalidadEnlace = modalidadEnlace;
                     if (!window.rifaplusConfig.rifa.galeria) {
                         window.rifaplusConfig.rifa.galeria = { enabled: true, imagenes: [] };
                     }
@@ -12499,6 +12623,8 @@
                 document.getElementById('sorteo-nombre').value = window.rifaplusConfig.rifa.nombreSorteo || '';
                 document.getElementById('sorteo-descripcion').value = window.rifaplusConfig.rifa.descripcion || '';
             }
+
+            cargarModalidadSorteoFormulario();
 
             cargarConfiguracionBoletajeYRangos();
             guardarValoresOriginaleSorteo();
@@ -12909,6 +13035,8 @@
                     edicion: document.getElementById('sorteo-edicion').value || '',
                     nombre: document.getElementById('sorteo-nombre').value || '',
                     descripcion: document.getElementById('sorteo-descripcion').value || '',
+                    modalidadSorteo: document.getElementById('sorteo-modalidad-texto')?.value || '',
+                    modalidadEnlaceTipo: normalizarTipoModalidadEnlace(document.getElementById('sorteo-modalidad-enlace-tipo')?.value),
                     imagenes: window.rifaplusConfig?.rifa?.galeria?.imagenes || [],
                     fechaInicio: document.getElementById('sorteo-fecha-inicio').value,
                     fechaCierre: document.getElementById('sorteo-fecha-cierre').value,
@@ -12936,6 +13064,10 @@
                             rifa: {
                                 nombreSorteo: config.nombre,
                                 descripcion: config.descripcion,
+                                modalidadSorteo: config.modalidadSorteo,
+                                modalidadEnlace: {
+                                    tipo: config.modalidadEnlaceTipo
+                                },
                                 galeria: {
                                     enabled: true,
                                     imagenes: config.imagenes
@@ -12968,6 +13100,7 @@
             if (window.rifaplusConfig?.rifa?.descripcion) {
                 document.getElementById('sorteo-descripcion').value = window.rifaplusConfig.rifa.descripcion;
             }
+            cargarModalidadSorteoFormulario();
             
             cargarImagenesSorteo();
             cargarConfiguracionBoletajeYRangos();

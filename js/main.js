@@ -39,11 +39,12 @@ function addPassiveListener(target, eventName, handler, extraOptions) {
  */
 (async function cargarBoletosEnIndexHtml() {
     try {
+        const mostrarBarraProgreso = window.rifaplusConfig?.rifa?.publicacion?.progressBar !== false;
         const necesitaResumenPublico = !!document.querySelector('.progress-stats')
             || !!document.getElementById('boletos-vendidos')
             || !!document.getElementById('progress-fill');
 
-        if (!necesitaResumenPublico) {
+        if (!necesitaResumenPublico || !mostrarBarraProgreso) {
             console.debug('[main] Resumen público omitido: la página no tiene barra de progreso');
             return;
         }
@@ -1231,12 +1232,27 @@ if (typeof console === "undefined" || typeof console.log === "undefined") {
  * Actualiza los datos de boletos vendidos desde la API
  * @async
  */
-function aplicarVisibilidadProgressStats() {
-    const progressStats = document.querySelector('.progress-stats');
-    if (!progressStats) return;
+function debeMostrarProgressBar() {
+    return window.rifaplusConfig?.rifa?.publicacion?.progressBar !== false;
+}
 
-    const mostrarStats = window.rifaplusConfig?.rifa?.publicacion?.progressStats !== false;
-    progressStats.style.display = mostrarStats ? '' : 'none';
+function debeMostrarProgressStats() {
+    return window.rifaplusConfig?.rifa?.publicacion?.progressStats !== false;
+}
+
+function aplicarVisibilidadProgressStats() {
+    const progressContainer = document.querySelector('.countdown-progress');
+    const progressStats = document.querySelector('.progress-stats');
+    if (!progressContainer && !progressStats) return;
+
+    const mostrarBarra = debeMostrarProgressBar();
+    const mostrarStats = mostrarBarra && debeMostrarProgressStats();
+    if (progressContainer) {
+        progressContainer.style.display = mostrarBarra ? '' : 'none';
+    }
+    if (progressStats) {
+        progressStats.style.display = mostrarStats ? '' : 'none';
+    }
 }
 
 async function actualizarBarraProgreso() {
@@ -1248,6 +1264,9 @@ async function actualizarBarraProgreso() {
         }
 
         aplicarVisibilidadProgressStats();
+        if (!debeMostrarProgressBar()) {
+            return;
+        }
         
         // 🎯 PASO 1: Determinar total y rango de boletos a mostrar
         // Si oportunidades está habilitada, usar SOLO el rango visible

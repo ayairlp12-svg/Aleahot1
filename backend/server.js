@@ -2890,6 +2890,17 @@ app.patch('/api/admin/config', verificarToken, async (req, res) => {
             if (req.body.rifa.totalBoletos !== undefined) config.rifa.totalBoletos = parseInt(req.body.rifa.totalBoletos) || config.rifa.totalBoletos;
             if (req.body.rifa.precioBoleto !== undefined) config.rifa.precioBoleto = parseFloat(req.body.rifa.precioBoleto) || config.rifa.precioBoleto;
             if (req.body.rifa.descripcion) config.rifa.descripcion = req.body.rifa.descripcion;
+            if (req.body.rifa.modalidadSorteo !== undefined) {
+                config.rifa.modalidadSorteo = sanitizar(String(req.body.rifa.modalidadSorteo || '')).trim();
+            }
+            if (req.body.rifa.modalidadEnlace !== undefined) {
+                const tiposModalidadValidos = new Set(['facebook', 'grupo_whatsapp', 'canal_whatsapp', 'whatsapp_personal', 'sin_enlace']);
+                const tipoRecibido = String(req.body.rifa.modalidadEnlace?.tipo || '').trim().toLowerCase();
+                config.rifa.modalidadEnlace = {
+                    ...(config.rifa.modalidadEnlace || {}),
+                    tipo: tiposModalidadValidos.has(tipoRecibido) ? tipoRecibido : 'facebook'
+                };
+            }
             if (req.body.rifa.publicacion) config.rifa.publicacion = req.body.rifa.publicacion;
             if (req.body.rifa.rangos !== undefined) {
                 const rangosNormalizados = Array.isArray(req.body.rifa.rangos)
@@ -3223,6 +3234,8 @@ app.patch('/api/admin/config', verificarToken, async (req, res) => {
                 precioBoleto: config.rifa.precioBoleto,
                 totalBoletos: config.rifa.totalBoletos,
                 fechaSorteo: config.rifa.fechaSorteo,
+                modalidadSorteo: config.rifa.modalidadSorteo,
+                modalidadEnlace: config.rifa.modalidadEnlace,
                 fechaPresorteo: config.rifa.fechaPresorteo,
                 tiempoApartadoHoras: config.rifa.tiempoApartadoHoras,
                 maquinaSuerteLimite: config.rifa.maquinaSuerte?.limiteBoletos,

@@ -346,7 +346,11 @@ class ConfigManagerV2 {
           whatsapp: '',
           facebook: '',
           instagram: '',
-          tiktok: ''
+          tiktok: '',
+          grupoWhatsapp: '',
+          grupoWhatsappNombre: '',
+          canalWhatsapp: '',
+          canalWhatsappNombre: ''
         }
       },
       rifa: {
@@ -359,6 +363,10 @@ class ConfigManagerV2 {
         intervaloLimpiezaMinutos: 10,
         estado: 'activo',
         fechaSorteo: null,
+        modalidadSorteo: '',
+        modalidadEnlace: {
+          tipo: 'facebook'
+        },
         fechaPresorteo: null,
         oportunidades: {
           enabled: false,
@@ -367,6 +375,16 @@ class ConfigManagerV2 {
         descuentos: {
           enabled: false,
           reglas: []
+        },
+        publicacion: {
+          bonos: true,
+          promociones: true,
+          confianza: true,
+          testimonios: false,
+          ruletazo: true,
+          presorteo: true,
+          progressBar: true,
+          progressStats: true
         }
       },
       tema: {},

@@ -2075,6 +2075,27 @@ body {
     line-height: 1.5;
 }
 
+.info-item-action-link {
+    align-self: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 1rem;
+    padding: 0.7rem 1rem;
+    border-radius: 999px;
+    border: 1px solid var(--info-action-color, var(--primary));
+    color: var(--info-action-color, var(--primary));
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: var(--transition-normal);
+}
+
+.info-item-action-link:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+}
+
 @media (max-width: 768px) {
     .info-item {
         padding: 1.5rem 1rem;

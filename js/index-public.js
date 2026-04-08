@@ -109,6 +109,74 @@
         return String(num).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
     }
 
+    function normalizarTipoModalidadEnlace(tipo) {
+        const valor = String(tipo || '').trim().toLowerCase();
+        const tiposValidos = ['facebook', 'grupo_whatsapp', 'canal_whatsapp', 'whatsapp_personal', 'sin_enlace'];
+        return tiposValidos.includes(valor) ? valor : 'facebook';
+    }
+
+    function construirUrlWhatsapp(valor) {
+        const contenido = String(valor || '').trim();
+        if (!contenido) return '';
+        if (/^https?:\/\//i.test(contenido)) return contenido;
+
+        const numero = contenido.replace(/\D/g, '');
+        return numero ? `https://wa.me/${numero}` : '';
+    }
+
+    function normalizarUrlExterna(valor) {
+        const contenido = String(valor || '').trim();
+        if (!/^https?:\/\//i.test(contenido)) return '';
+
+        try {
+            return new URL(contenido).toString();
+        } catch (error) {
+            return '';
+        }
+    }
+
+    function obtenerConfigModalidadInfo(config) {
+        const redes = config?.cliente?.redesSociales || {};
+        const tipo = normalizarTipoModalidadEnlace(config?.rifa?.modalidadEnlace?.tipo);
+        const configuraciones = {
+            facebook: {
+                iconoHtml: '<i class="fab fa-facebook-f" style="color: #1877F2;"></i>',
+                url: normalizarUrlExterna(redes.facebook),
+                textoBoton: 'Ir a Facebook',
+                color: '#1877F2'
+            },
+            grupo_whatsapp: {
+                iconoHtml: '<i class="fab fa-whatsapp" style="color: #25D366;"></i>',
+                url: normalizarUrlExterna(redes.grupoWhatsapp || redes.canalWhatsapp),
+                textoBoton: 'Ir al grupo de WhatsApp',
+                color: '#25D366'
+            },
+            canal_whatsapp: {
+                iconoHtml: '<i class="fab fa-whatsapp" style="color: #25D366;"></i>',
+                url: normalizarUrlExterna(redes.canalWhatsapp || redes.grupoWhatsapp),
+                textoBoton: 'Ir al canal de WhatsApp',
+                color: '#25D366'
+            },
+            whatsapp_personal: {
+                iconoHtml: '<i class="fab fa-whatsapp" style="color: #25D366;"></i>',
+                url: construirUrlWhatsapp(redes.whatsapp),
+                textoBoton: 'Abrir WhatsApp',
+                color: '#25D366'
+            },
+            sin_enlace: {
+                iconoHtml: '📡',
+                url: '',
+                textoBoton: '',
+                color: 'var(--primary)'
+            }
+        };
+
+        return {
+            tipo,
+            ...(configuraciones[tipo] || configuraciones.facebook)
+        };
+    }
+
     function renderizarTarjetasInfo() {
         const infoGrid = document.getElementById('infoRifaGrid');
         const config = window.rifaplusConfig;
@@ -125,9 +193,13 @@
             horaPresorteo: rifa.horaPresorteo || '',
             totalBoletos: rifa.totalBoletos || 0,
             modalidadSorteo: rifa.modalidadSorteo || '',
+            modalidadEnlaceTipo: rifa.modalidadEnlace?.tipo || '',
             zonaHoraria: rifa.zonaHoraria || '',
             presorteo: Array.isArray(rifa.sistemaPremios?.presorteo) ? rifa.sistemaPremios.presorteo.length : 0,
-            facebook: config.cliente?.redesSociales?.facebook || ''
+            facebook: config.cliente?.redesSociales?.facebook || '',
+            whatsapp: config.cliente?.redesSociales?.whatsapp || '',
+            grupoWhatsapp: config.cliente?.redesSociales?.grupoWhatsapp || '',
+            canalWhatsapp: config.cliente?.redesSociales?.canalWhatsapp || ''
         };
 
         if (!actualizarFirmaIndex('tarjetasInfoIndex', firmaTarjetas)) {
@@ -208,27 +280,26 @@
 
             const esModalidad = item.titulo === 'Modalidad del Sorteo' || item.titulo === 'Modalidad';
             if (esModalidad) {
-                const facebookUrl = config.cliente?.redesSociales?.facebook;
-                infoItem.style.cursor = 'pointer';
-                infoItem.onclick = function() {
-                    if (facebookUrl) {
-                        window.open(facebookUrl, '_blank');
-                    }
-                };
-                infoItem.style.transition = 'all var(--transition-normal)';
-                infoItem.onmouseover = function() {
-                    this.style.transform = 'translateY(-8px)';
-                    this.style.boxShadow = '0 12px 24px rgba(0, 0, 0, 0.15)';
-                };
-                infoItem.onmouseout = function() {
-                    this.style.transform = 'translateY(0)';
-                    this.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.08)';
-                };
+                const modalidad = obtenerConfigModalidadInfo(config);
+                const contenidoModalidad = contenido || 'Modalidad por confirmar';
+                const ctaHtml = modalidad.url
+                    ? `
+                        <a
+                            href="${modalidad.url}"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="info-item-action-link"
+                            style="--info-action-color: ${modalidad.color};"
+                        >
+                            ${modalidad.textoBoton} &rarr;
+                        </a>
+                    `
+                    : '';
                 infoItem.innerHTML = `
-                    <span class="info-icon" aria-hidden="true"><i class="fab fa-facebook-f" style="color: #1877F2;"></i></span>
+                    <span class="info-icon" aria-hidden="true">${modalidad.iconoHtml}</span>
                     <h3>${item.titulo}</h3>
-                    <p>${contenido}</p>
-                    <p style="font-size: 0.85rem; color: #1877F2; margin-top: 0.5rem; font-weight: 600;">Haz click para visitarnos →</p>
+                    <p>${contenidoModalidad}</p>
+                    ${ctaHtml}
                 `;
             } else {
                 infoItem.innerHTML = `
