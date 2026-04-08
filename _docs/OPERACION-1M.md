@@ -12,6 +12,20 @@ npm run load:public -- --baseUrl=http://localhost:5001 --path=/api/public/boleto
 npm run load:public -- --baseUrl=http://localhost:5001 --path=/api/public/ordenes-stats --duration=60 --concurrency=50
 ```
 
+Para carga de ordenes:
+
+```bash
+npm run load:orders -- --baseUrl=http://localhost:5001 --duration=30 --concurrency=2 --ticketStart=200000 --ticketsPerOrder=3 --pricePerTicket=6
+```
+
+Guardas actuales:
+
+- `load:orders` solo corre contra `localhost` por defecto.
+- Si usas un staging remoto, debes pasar `--allowRemote=true`.
+- Si apuntas a un host tipo producción, además exige `--allowProduction=true`.
+- No correrlo sobre una BD compartida o una rifa real activa.
+- Antes de usarlo, seguir [_docs/STAGING-LOAD-CHECKLIST.md](/Users/ayair/Desktop/rifas-web/_docs/STAGING-LOAD-CHECKLIST.md).
+
 Criterios recomendados:
 
 - `0` fallos

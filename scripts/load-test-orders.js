@@ -7,8 +7,21 @@ const DEFAULTS = {
     ticketStart: 100000,
     ticketsPerOrder: 3,
     clienteId: process.env.CLIENTE_ID || '',
-    pricePerTicket: Number(process.env.PRICE_PER_TICKET || 6)
+    pricePerTicket: Number(process.env.PRICE_PER_TICKET || 6),
+    allowRemote: false,
+    allowProduction: false
 };
+
+const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '::1']);
+const PRODUCTION_HOST_PATTERNS = [
+    /pages\.dev$/i,
+    /railway\.app$/i,
+    /up\.railway\.app$/i,
+    /vercel\.app$/i,
+    /netlify\.app$/i,
+    /onrender\.com$/i,
+    /herokuapp\.com$/i
+];
 
 function parseArgs(argv) {
     const config = { ...DEFAULTS };
@@ -25,9 +38,38 @@ function parseArgs(argv) {
         if (key === 'ticketsPerOrder' && value) config.ticketsPerOrder = Number(value);
         if (key === 'clienteId' && value) config.clienteId = value;
         if (key === 'pricePerTicket' && value) config.pricePerTicket = Number(value);
+        if (key === 'allowRemote') config.allowRemote = value !== 'false';
+        if (key === 'allowProduction') config.allowProduction = value !== 'false';
     });
 
     return config;
+}
+
+function ensureSafeTarget(baseUrl, options) {
+    let url;
+    try {
+        url = new URL(baseUrl);
+    } catch (error) {
+        throw new Error(`BASE_URL inválida: ${baseUrl}`);
+    }
+
+    const hostname = (url.hostname || '').toLowerCase();
+    const isLocalHost = LOCAL_HOSTS.has(hostname);
+    const isProductionLike = PRODUCTION_HOST_PATTERNS.some((pattern) => pattern.test(hostname));
+
+    if (!isLocalHost && !options.allowRemote) {
+        throw new Error(
+            `Refusando correr contra host remoto (${hostname}). Usa --allowRemote=true solo si es staging aislado.`
+        );
+    }
+
+    if (isProductionLike && !options.allowProduction) {
+        throw new Error(
+            `Refusando correr contra host tipo producción (${hostname}). Si de verdad quieres hacerlo, usa --allowProduction=true y hazlo bajo ventana controlada.`
+        );
+    }
+
+    return url.toString().replace(/\/$/, '');
 }
 
 function buildOrderPayload({ orderId, orderIndex, tickets, pricePerTicket }) {
@@ -164,7 +206,7 @@ function percentile(values, p) {
 
 async function main() {
     const options = parseArgs(process.argv.slice(2));
-    const baseUrl = options.baseUrl.replace(/\/$/, '');
+    const baseUrl = ensureSafeTarget(options.baseUrl, options);
     const stopAt = Date.now() + (options.durationSec * 1000);
     const state = {
         total: 0,
@@ -181,6 +223,8 @@ async function main() {
     console.log(`Concurrencia -> ${options.concurrency}`);
     console.log(`Boletos por orden -> ${options.ticketsPerOrder}`);
     console.log(`Ticket inicial -> ${options.ticketStart}`);
+    if (options.allowRemote) console.log('Modo remoto -> habilitado');
+    if (options.allowProduction) console.log('Modo producción -> habilitado');
 
     const startedAt = Date.now();
     const workers = Array.from(

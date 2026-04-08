@@ -25,6 +25,17 @@ npm run health-check
 npm run load:orders -- --baseUrl=http://localhost:3000 --duration=30 --concurrency=2 --ticketStart=200000 --ticketsPerOrder=3 --pricePerTicket=6
 ```
 
+Notas de seguridad:
+
+- `load:orders` ahora rechaza por defecto cualquier host remoto.
+- Para un staging realmente aislado, debes pasar `--allowRemote=true`.
+- Para producción, además exige `--allowProduction=true`.
+- No usar esos flags si la BD o el backend apuntan a una instancia compartida.
+
+Checklist recomendado:
+
+- seguir [_docs/STAGING-LOAD-CHECKLIST.md](/Users/ayair/Desktop/rifas-web/_docs/STAGING-LOAD-CHECKLIST.md) antes de cualquier prueba dura de ordenes
+
 Luego subir gradualmente:
 
 - `concurrency=2`

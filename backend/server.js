@@ -3492,39 +3492,17 @@ app.post('/api/public/order-counter/next', limiterOrdenes, async (req, res) => {
         const prefijo = obtenerPrefijoOrdenCliente(cliente_id, configActual);
         console.log(`📋 Generando orden para cliente_id="${cliente_id}", prefijo="${prefijo}", config.cliente.prefijoOrden="${configActual?.cliente?.prefijoOrden}"`);
 
-        // Usar transacción SIMPLIFICADA para evitar problemas de lock
+        // Usar transacción con bloqueo explícito para evitar IDs duplicados bajo concurrencia
         const orderId = await db.transaction(async (trx) => {
-            // 1. Obtener registro de contador
-            let counter = await trx('order_id_counter')
-                .where('cliente_id', cliente_id)
-                .first();
+            const counter = await obtenerOCrearCounterOrden(trx, cliente_id);
 
-            // 2. Si no existe, crear uno
-            if (!counter) {
-                const newCounter = {
-                    cliente_id,
-                    ultima_secuencia: 'AA',
-                    ultimo_numero: 0,
-                    proximo_numero: 1,
-                    contador_total: 0,
-                    activo: true,
-                    fecha_ultimo_reset: new Date(),
-                    created_at: new Date(),
-                    updated_at: new Date()
-                };
-                
-                await trx('order_id_counter').insert(newCounter);
-                
-                counter = newCounter;
-            }
-
-            // 3. Generar ID actual usando la secuencia actual
+            // 1. Generar ID actual usando la secuencia actual
             const numero = String(counter.proximo_numero).padStart(3, '0');
             const fullOrderId = `${prefijo}-${counter.ultima_secuencia}${numero}`;
             
             console.log(`✅ Generado orden_id: ${fullOrderId} (num=${numero}, seq=${counter.ultima_secuencia})`);
 
-            // 4. Calcular siguiente número y secuencia
+            // 2. Calcular siguiente número y secuencia
             let nextNum = counter.proximo_numero + 1;
             let nextSeq = counter.ultima_secuencia;
 
@@ -3533,7 +3511,7 @@ app.post('/api/public/order-counter/next', limiterOrdenes, async (req, res) => {
                 nextSeq = incrementarSecuenciaSQL(counter.ultima_secuencia);
             }
 
-            // 5. Actualizar contador con nuevos valores
+            // 3. Actualizar contador con nuevos valores
             const updateData = {
                 ultimo_numero: counter.proximo_numero,
                 ultima_secuencia: nextSeq,
@@ -3712,6 +3690,48 @@ function incrementarSecuenciaSQL(secuencia) {
     return String.fromCharCode(letra1) + String.fromCharCode(letra2);
 }
 
+async function obtenerOCrearCounterOrden(trx, clienteId) {
+    let counter = await trx('order_id_counter')
+        .where('cliente_id', clienteId)
+        .forUpdate()
+        .first();
+
+    if (counter) {
+        return counter;
+    }
+
+    const newCounter = {
+        cliente_id: clienteId,
+        ultima_secuencia: 'AA',
+        ultimo_numero: 0,
+        proximo_numero: 1,
+        contador_total: 0,
+        activo: true,
+        fecha_ultimo_reset: new Date(),
+        created_at: new Date(),
+        updated_at: new Date()
+    };
+
+    try {
+        await trx('order_id_counter').insert(newCounter);
+    } catch (error) {
+        if (error?.code !== '23505') {
+            throw error;
+        }
+    }
+
+    counter = await trx('order_id_counter')
+        .where('cliente_id', clienteId)
+        .forUpdate()
+        .first();
+
+    if (!counter) {
+        throw new Error(`No se pudo obtener el contador de orden para cliente_id=${clienteId}`);
+    }
+
+    return counter;
+}
+
 function obtenerPrefijoOrdenCliente(clienteId, configActor = null) {
     try {
         // 1️⃣ Intentar obtener prefijoOrden desde config (PRIORITARIO)
@@ -3746,25 +3766,7 @@ async function generarSiguienteOrdenId(cliente_id, trx) {
     // Validación mínima
     const cid = cliente_id || 'Sorteos_El_Trebol';
 
-    // 1. Obtener registro de contador
-    let counter = await trx('order_id_counter').where('cliente_id', cid).first();
-
-    // 2. Si no existe, crear uno
-    if (!counter) {
-        const newCounter = {
-            cliente_id: cid,
-            ultima_secuencia: 'AA',
-            ultimo_numero: 0,
-            proximo_numero: 1,
-            contador_total: 0,
-            activo: true,
-            fecha_ultimo_reset: new Date(),
-            created_at: new Date(),
-            updated_at: new Date()
-        };
-        await trx('order_id_counter').insert(newCounter);
-        counter = newCounter;
-    }
+    const counter = await obtenerOCrearCounterOrden(trx, cid);
 
     const numero = String(counter.proximo_numero).padStart(3, '0');
     const prefijo = obtenerPrefijoOrdenCliente(cid);
@@ -4320,6 +4322,25 @@ app.post('/api/ordenes', limiterOrdenes, async (req, res) => {
                 code: 'OPORTUNIDADES_INCONSISTENTES',
                 message: error.message,
                 detalles: error.detalles || null
+            });
+        }
+
+        if (error.code === '23505' && /numero_orden/i.test(String(error.detail || error.constraint || error.message || ''))) {
+            log('warn', 'Colisión de numero_orden detectada', {
+                ordenId,
+                errorCode: error.code || null,
+                constraint: error.constraint || null
+            });
+            logOperacionHttp('POST /api/ordenes (colision-id)', startTime, {
+                ordenId,
+                errorCode: error.code || null,
+                statusCode: 503
+            }, { slowMs: 1200, warnMs: 2500 });
+
+            return res.status(503).json({
+                success: false,
+                code: 'ORDEN_ID_EN_CONTENCION',
+                message: 'La compra se cruzó con otra generación de orden. Intenta de nuevo en unos segundos.'
             });
         }
 
