@@ -3863,6 +3863,75 @@ function normalizarBoletosOrdenParaComparacion(boletos) {
         .sort((a, b) => a - b);
 }
 
+async function obtenerDiagnosticoBoletosOrden(trx, boletosSolicitados) {
+    const boletosOrdenados = Array.from(new Set(
+        (Array.isArray(boletosSolicitados) ? boletosSolicitados : [])
+            .map((numero) => Number(numero))
+            .filter((numero) => Number.isInteger(numero) && numero >= 0)
+    )).sort((a, b) => a - b);
+
+    if (boletosOrdenados.length === 0) {
+        return {
+            numerosConflictivos: [],
+            boletosDisponibles: [],
+            faltantes: []
+        };
+    }
+
+    const filas = await trx('boletos_estado')
+        .whereIn('numero', boletosOrdenados)
+        .select('numero', 'estado', 'numero_orden')
+        .orderBy('numero', 'asc')
+        .timeout(10000);
+
+    const encontrados = new Set(filas.map((fila) => Number(fila.numero)));
+    const faltantes = boletosOrdenados.filter((numero) => !encontrados.has(numero));
+    const ocupados = filas
+        .filter((fila) => fila.estado !== 'disponible' || fila.numero_orden !== null)
+        .map((fila) => Number(fila.numero));
+
+    const numerosConflictivos = Array.from(new Set([...ocupados, ...faltantes])).sort((a, b) => a - b);
+
+    return {
+        numerosConflictivos,
+        boletosDisponibles: boletosOrdenados.filter((numero) => !numerosConflictivos.includes(numero)),
+        faltantes
+    };
+}
+
+async function obtenerDiagnosticoOportunidadesDisponiblesPorBoleto(trx, boletosSolicitados) {
+    const boletosOrdenados = Array.from(new Set(
+        (Array.isArray(boletosSolicitados) ? boletosSolicitados : [])
+            .map((numero) => Number(numero))
+            .filter((numero) => Number.isInteger(numero) && numero >= 0)
+    )).sort((a, b) => a - b);
+
+    if (boletosOrdenados.length === 0) {
+        return [];
+    }
+
+    const filas = await trx('orden_oportunidades')
+        .whereIn('numero_boleto', boletosOrdenados)
+        .where('estado', 'disponible')
+        .whereNull('numero_orden')
+        .select('numero_boleto')
+        .timeout(10000)
+        .count('* as total')
+        .groupBy('numero_boleto');
+
+    const mapaConteos = new Map(
+        filas.map((fila) => [
+            Number(fila.numero_boleto),
+            Number.parseInt(fila.total, 10) || 0
+        ])
+    );
+
+    return boletosOrdenados.map((numero) => ({
+        numero,
+        cantidad: mapaConteos.get(numero) || 0
+    }));
+}
+
 function esMismaOrdenIdempotente(ordenExistente, contexto) {
     if (!ordenExistente || !contexto) return false;
 
@@ -4173,39 +4242,7 @@ app.post('/api/ordenes', limiterOrdenes, async (req, res) => {
                 throw new Error('NO_SE_PUDO_GENERAR_ORDEN_ID_UNICO');
             }
 
-            // PASO 2: Bloquear boletos objetivo y verificar disponibilidad real
-            // El orden consistente reduce riesgo de deadlocks en compras concurrentes.
-            const ticketLockStart = Date.now();
-            const boletosBD = await trx('boletos_estado')
-                .whereIn('numero', boletosOrdenados)
-                .select('numero', 'estado', 'numero_orden')
-                .orderBy('numero', 'asc')
-                .timeout(10000)
-                .forUpdate();
-            perfMarks.ticketLockMs = (perfMarks.ticketLockMs || 0) + (Date.now() - ticketLockStart);
-
-            const boletosEncontrados = new Set(boletosBD.map((boleto) => Number(boleto.numero)));
-            const boletosFaltantes = boletosOrdenados.filter((numero) => !boletosEncontrados.has(numero));
-            const boletosNoDisponibles = boletosBD.filter((b) =>
-                b.estado !== 'disponible' || b.numero_orden !== null
-            );
-
-            if (boletosNoDisponibles.length > 0 || boletosFaltantes.length > 0) {
-                const numerosConflictivos = Array.from(new Set([
-                    ...boletosNoDisponibles.map((b) => Number(b.numero)),
-                    ...boletosFaltantes
-                ])).sort((a, b) => a - b);
-                const boletosDisponibles = boletosValidos.filter((n) => !numerosConflictivos.includes(n));
-
-                throw {
-                    code: 'BOLETOS_CONFLICTO',
-                    boletosConflicto: numerosConflictivos,
-                    boletosDisponibles,
-                    message: `${boletosNoDisponibles.length} boleto(s) no disponible(s)`
-                };
-            }
-
-            // PASO 3: INSERT orden
+            // PASO 2: INSERT orden
             const ordenData = {
                 numero_orden: ordenId,
                 cantidad_boletos: boletosValidos.length,
@@ -4232,8 +4269,8 @@ app.post('/api/ordenes', limiterOrdenes, async (req, res) => {
             await trx('ordenes').insert(ordenData).timeout(10000);
             perfMarks.insertOrderMs = (perfMarks.insertOrderMs || 0) + (Date.now() - insertOrderStart);
 
-            // PASO 4: Reservar boletos de forma condicional.
-            // Si algo cambió entre validación y update, la transacción se revierte.
+            // PASO 3: Reservar boletos de forma condicional.
+            // El UPDATE adquiere los locks necesarios y evita un SELECT ... FOR UPDATE previo.
             const reserveTicketsStart = Date.now();
             const boletosActualizados = await trx('boletos_estado')
                 .whereIn('numero', boletosOrdenados)
@@ -4249,23 +4286,13 @@ app.post('/api/ordenes', limiterOrdenes, async (req, res) => {
 
             if (boletosActualizados !== boletosOrdenados.length) {
                 const conflictQueryStart = Date.now();
-                const boletosConflictoBD = await trx('boletos_estado')
-                    .whereIn('numero', boletosOrdenados)
-                    .where(function() {
-                        this.whereNot('estado', 'disponible').orWhereNotNull('numero_orden');
-                    })
-                    .timeout(10000)
-                    .select('numero');
+                const diagnosticoBoletos = await obtenerDiagnosticoBoletosOrden(trx, boletosOrdenados);
                 perfMarks.conflictQueryMs = (perfMarks.conflictQueryMs || 0) + (Date.now() - conflictQueryStart);
-
-                const numerosConflictivos = Array.from(new Set(
-                    boletosConflictoBD.map((boleto) => Number(boleto.numero))
-                )).sort((a, b) => a - b);
 
                 throw {
                     code: 'BOLETOS_CONFLICTO',
-                    boletosConflicto: numerosConflictivos,
-                    boletosDisponibles: boletosValidos.filter((n) => !numerosConflictivos.includes(n)),
+                    boletosConflicto: diagnosticoBoletos.numerosConflictivos,
+                    boletosDisponibles: diagnosticoBoletos.boletosDisponibles,
                     message: 'Algunos boletos cambiaron de estado mientras se procesaba la orden'
                 };
             }
@@ -4286,42 +4313,6 @@ app.post('/api/ordenes', limiterOrdenes, async (req, res) => {
                     };
                 }
 
-                const oppCountStart = Date.now();
-                const conteosDisponiblesPorBoleto = await trx('orden_oportunidades')
-                    .whereIn('numero_boleto', boletosValidos)
-                    .where('estado', 'disponible')
-                    .whereNull('numero_orden')
-                    .select('numero_boleto')
-                    .timeout(10000)
-                    .count('* as total')
-                    .groupBy('numero_boleto');
-                perfMarks.oppCountMs = (perfMarks.oppCountMs || 0) + (Date.now() - oppCountStart);
-
-                const mapaConteos = new Map(
-                    conteosDisponiblesPorBoleto.map((row) => [
-                        Number(row.numero_boleto),
-                        Number.parseInt(row.total, 10) || 0
-                    ])
-                );
-
-                const boletosConOportunidadesInvalidas = boletosValidos
-                    .map((numero) => ({
-                        numero,
-                        cantidad: mapaConteos.get(Number(numero)) || 0
-                    }))
-                    .filter((item) => item.cantidad !== oportunidadesConfig.multiplicador);
-
-                if (boletosConOportunidadesInvalidas.length > 0) {
-                    throw {
-                        code: 'OPORTUNIDADES_INCONSISTENTES',
-                        message: 'Uno o más boletos no tienen el número correcto de oportunidades preasignadas',
-                        detalles: {
-                            multiplicadorEsperado: oportunidadesConfig.multiplicador,
-                            boletos: boletosConOportunidadesInvalidas
-                        }
-                    };
-                }
-
                 const oppReserveStart = Date.now();
                 const oportunidadesActualizadas = await trx('orden_oportunidades')
                     .whereIn('numero_boleto', boletosValidos)
@@ -4336,6 +4327,10 @@ app.post('/api/ordenes', limiterOrdenes, async (req, res) => {
 
                 const oportunidadesEsperadasOrden = boletosValidos.length * oportunidadesConfig.multiplicador;
                 if (oportunidadesActualizadas !== oportunidadesEsperadasOrden) {
+                    const oppCountStart = Date.now();
+                    const boletosConConteoDisponible = await obtenerDiagnosticoOportunidadesDisponiblesPorBoleto(trx, boletosValidos);
+                    perfMarks.oppCountMs = (perfMarks.oppCountMs || 0) + (Date.now() - oppCountStart);
+
                     throw {
                         code: 'OPORTUNIDADES_INCONSISTENTES',
                         message: 'La asignación de oportunidades no coincidió con el multiplicador configurado',
@@ -4343,7 +4338,8 @@ app.post('/api/ordenes', limiterOrdenes, async (req, res) => {
                             multiplicadorEsperado: oportunidadesConfig.multiplicador,
                             totalBoletos: boletosValidos.length,
                             oportunidadesEsperadas: oportunidadesEsperadasOrden,
-                            oportunidadesActualizadas
+                            oportunidadesActualizadas,
+                            boletos: boletosConConteoDisponible.filter((item) => item.cantidad !== oportunidadesConfig.multiplicador)
                         }
                     };
                 }
