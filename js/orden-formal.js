@@ -435,12 +435,10 @@ function renderizarOrdenFormal(orden) {
     const descuentoBase = Number(descuentoSource ?? 0);
     const descuento = descuentoBase > 0 ? descuentoBase : Math.max(0, subtotal - totalBase);
     const total = totalSource !== null && totalSource !== undefined ? totalBase : Math.max(0, subtotal - descuento);
-    const ordenIdVisible = obtenerOrdenIdVisibleOrdenFormal(orden.ordenIdVisible || orden.ordenId);
-
     const html = `
         <div class="orden-documento" id="documentoPDF">
             
-            <!-- ENCABEZADO: Logo Grande + Nombre Organizador (Izquierda) + ID Orden (Derecha) -->
+            <!-- ENCABEZADO: Logo Grande + Nombre Organizador + fecha -->
             <div class="orden-header">
                 <div class="orden-header-left">
                     <img src="${logoUrl}" alt="logo" data-dynamic-logo="true" class="dynamic-logo" onerror="this.onerror=null; this.src='images/placeholder-logo.svg';" />
@@ -448,7 +446,6 @@ function renderizarOrdenFormal(orden) {
                 </div>
                 <div class="orden-header-right">
                     <div class="orden-label">Orden de Pago</div>
-                    <div class="orden-id">${ordenIdVisible}</div>
                     <div class="orden-fecha">📅 ${fechaFormato}</div>
                     <div class="orden-hora">⏰ ${horaFormato}</div>
                 </div>
@@ -515,7 +512,7 @@ function renderizarOrdenFormal(orden) {
                     </div>
                     <div class="orden-pago-item">
                         <div class="orden-pago-label">Referencia de Pago</div>
-                        <div class="orden-pago-valor-monospace orden-referencia-id">${ordenIdVisible}</div>
+                        <div class="orden-pago-valor">${`${orden.cliente.nombre || ''} ${orden.cliente.apellidos || ''}`.trim() || '-'}</div>
                     </div>
                     <div class="orden-pago-item">
                         <div class="orden-pago-label">Beneficiario</div>

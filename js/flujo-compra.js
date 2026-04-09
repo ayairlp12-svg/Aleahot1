@@ -61,6 +61,7 @@ function getItemSafeFlujo(key) {
 /* ============================================================ */
 
 var clienteCheckout = null;
+let cuentasDisponiblesPromiseFlujo = null;
 
 function desenfocarElementoActivoFlujo() {
     if (document.activeElement instanceof HTMLElement) {
@@ -101,6 +102,29 @@ function prepararModalSeleccionCuenta(modal, transferenciasContainer, efectivoCo
         if (modalBody) modalBody.scrollTop = 0;
         if (modalCard) modalCard.scrollTop = 0;
     });
+}
+
+function obtenerCuentasLocalesFlujo() {
+    return Array.isArray(window.rifaplusConfig?.bankAccounts)
+        ? window.rifaplusConfig.bankAccounts.filter(Boolean)
+        : [];
+}
+
+function precargarCuentasDisponiblesFlujo() {
+    if (cuentasDisponiblesPromiseFlujo) {
+        return cuentasDisponiblesPromiseFlujo;
+    }
+
+    cuentasDisponiblesPromiseFlujo = obtenerCuentasDisponiblesFlujo()
+        .catch((error) => {
+            console.debug('[flujo-compra] No se pudo precargar cuentas:', error?.message || error);
+            return obtenerCuentasLocalesFlujo();
+        })
+        .finally(() => {
+            cuentasDisponiblesPromiseFlujo = null;
+        });
+
+    return cuentasDisponiblesPromiseFlujo;
 }
 
 async function obtenerCuentasDisponiblesFlujo() {
@@ -285,6 +309,8 @@ function iniciarFlujoPago() {
         }
     }
     
+    const carritoEstabaAbierto = !!(document.getElementById('carritoModal')?.classList.contains('active'));
+
     // Cerrar carrito si está abierto
     const carritoModal = document.getElementById('carritoModal');
     if (carritoModal && carritoModal.classList && carritoModal.classList.contains('active')) {
@@ -308,16 +334,18 @@ function iniciarFlujoPago() {
         }
         
         // Paso 2: Abrir selector de cuenta de pago
-        setTimeout(() => {
+        window.requestAnimationFrame(() => {
             desenfocarElementoActivoFlujo();
             abrirModalSeleccionCuenta();
-        }, 300);
+        });
     };
     
     // Abrir modal de contacto
     if (typeof abrirModalContacto === 'function') {
-        abrirModalContacto();
+        abrirModalContacto({ instant: carritoEstabaAbierto });
     }
+
+    precargarCuentasDisponiblesFlujo();
 }
 
 /* ============================================================ */
@@ -345,7 +373,12 @@ async function abrirModalSeleccionCuenta() {
 
     prepararModalSeleccionCuenta(modal, transferenciasContainer, efectivoContainer);
 
-    const cuentas = await obtenerCuentasDisponiblesFlujo();
+    const cuentasLocales = obtenerCuentasLocalesFlujo();
+    if (cuentasLocales.length > 0) {
+        renderizarListasCuentasFlujo(cuentasLocales, transferenciasContainer, efectivoContainer);
+    }
+
+    const cuentas = await (cuentasDisponiblesPromiseFlujo || obtenerCuentasDisponiblesFlujo());
     
     if (cuentas.length === 0) {
         transferenciasContainer.innerHTML = '<p style="color: var(--danger);">No hay cuentas de pago disponibles</p>';
@@ -542,8 +575,8 @@ function mostrarOrdenFormalManual(orden) {
                     <div style="font-weight:700; font-size:0.95rem;">${window.rifaplusConfig?.cliente?.nombre || window.rifaplusConfig?.tecnica?.nombreOrganizador || 'Organizador'}</div>
                 </div>
                 <div style="text-align:right;">
-                    <div style="font-size:0.75rem; color:var(--text-light);">Orden</div>
-                    <div style="font-weight:800; font-family: 'Courier New', monospace;">${orden.ordenId}</div>
+                    <div style="font-size:0.75rem; color:var(--text-light);">Referencia de pago</div>
+                    <div style="font-size:0.85rem; color:var(--text-light); font-weight:700;">${`${orden.cliente.nombre || ''} ${orden.cliente.apellidos || ''}`.trim() || '-'}</div>
                 </div>
             </div>
 

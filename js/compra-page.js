@@ -3,6 +3,7 @@
     const HERO_TITULO_DEFAULT = 'Elige tus boletos y participa ahora';
     const FOOTER_ESLOGAN_DEFAULT = 'Rifas 100% Transparentes y Seguras';
     const REMOTE_PRICE_TTL_MS = 15000;
+    const LOCAL_PRICE_CACHE_KEY = 'rifaplus_compra_precio_cache_v1';
 
     let promocionesSnapshot = '';
     let bonosSnapshot = '';
@@ -63,6 +64,61 @@
         }
     }
 
+    function leerPrecioCompraCacheLocal() {
+        try {
+            const payload = JSON.parse(localStorage.getItem(LOCAL_PRICE_CACHE_KEY) || 'null');
+            const precio = Number(payload?.precio);
+            if (!Number.isFinite(precio) || precio <= 0) {
+                return null;
+            }
+
+            return {
+                precio,
+                timestamp: Number(payload?.timestamp) || 0
+            };
+        } catch (error) {
+            return null;
+        }
+    }
+
+    function guardarPrecioCompraCacheLocal(precio) {
+        const numero = Number(precio);
+        if (!Number.isFinite(numero) || numero <= 0) {
+            return;
+        }
+
+        try {
+            localStorage.setItem(LOCAL_PRICE_CACHE_KEY, JSON.stringify({
+                precio: numero,
+                timestamp: Date.now()
+            }));
+        } catch (error) {
+            // Ignorar errores de almacenamiento para no frenar la UI.
+        }
+    }
+
+    function hidratarPrecioCompraDesdeSnapshot(config) {
+        if (!config?.rifa) {
+            return;
+        }
+
+        const snapshot = window.__RIFAPLUS_COMPRA_PRICE_SNAPSHOT__;
+        const precioSnapshot = Number(snapshot?.precioBoleto);
+        if (!Number.isFinite(precioSnapshot) || precioSnapshot <= 0) {
+            return;
+        }
+
+        config.rifa.precioBoleto = precioSnapshot;
+
+        if (snapshot?.promocionPorTiempo) {
+            config.rifa.promocionPorTiempo = snapshot.promocionPorTiempo;
+        }
+
+        if (snapshot?.descuentoPorcentaje) {
+            config.rifa.descuentoPorcentaje = snapshot.descuentoPorcentaje;
+        }
+    }
+
     function obtenerNombreOrganizadorInicialCompra() {
         const heroUtils = obtenerUtilidadesHeroCompra();
         const config = obtenerConfigCompra();
@@ -116,13 +172,14 @@
     async function obtenerPrecioBoletoRemoto() {
         const config = obtenerConfigCompra();
         const precioLocal = Number(config?.rifa?.precioBoleto);
+        const precioCacheado = leerPrecioCompraCacheLocal()?.precio;
 
         if (Date.now() - remotePriceFetchedAt < REMOTE_PRICE_TTL_MS && Number.isFinite(remotePriceValue)) {
             return remotePriceValue;
         }
 
         if (typeof config?.obtenerConfigPublicaCompartida !== 'function') {
-            return Number.isFinite(precioLocal) ? precioLocal : null;
+            return Number.isFinite(precioLocal) ? precioLocal : (Number.isFinite(precioCacheado) ? precioCacheado : null);
         }
 
         if (remotePricePromise) {
@@ -135,16 +192,17 @@
                 remotePriceFetchedAt = Date.now();
 
                 if (!Number.isFinite(precioRemoto) || precioRemoto <= 0) {
-                    return Number.isFinite(precioLocal) ? precioLocal : null;
+                    return Number.isFinite(precioLocal) ? precioLocal : (Number.isFinite(precioCacheado) ? precioCacheado : null);
                 }
 
                 remotePriceValue = precioRemoto;
+                guardarPrecioCompraCacheLocal(precioRemoto);
                 if (config.rifa) {
                     config.rifa.precioBoleto = precioRemoto;
                 }
                 return precioRemoto;
             })
-            .catch(() => (Number.isFinite(precioLocal) ? precioLocal : null))
+            .catch(() => (Number.isFinite(precioLocal) ? precioLocal : (Number.isFinite(precioCacheado) ? precioCacheado : null)))
             .finally(() => {
                 remotePricePromise = null;
             });
@@ -526,12 +584,19 @@
             return;
         }
 
+        hidratarPrecioCompraDesdeSnapshot(config);
         actualizarHeroCompraDesdeConfig();
-        await obtenerPrecioBoletoRemoto();
         actualizarCardPrecio(config.rifa);
         renderizarPromociones(config.rifa);
         renderizarBonosCompra(config.rifa);
         animarBotonFlotanteSiExiste();
+
+        const precioAntes = Number(config.rifa.precioBoleto);
+        const precioRemoto = await obtenerPrecioBoletoRemoto();
+        if (Number.isFinite(precioRemoto) && precioRemoto > 0 && precioRemoto !== precioAntes) {
+            actualizarCardPrecio(config.rifa);
+            renderizarPromociones(config.rifa);
+        }
     }
 
     function programarRenderCompraPublica() {

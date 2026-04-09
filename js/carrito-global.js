@@ -741,7 +741,6 @@ function handleProcederAlPago() {
         if (typeof iniciarFlujoPago === 'function') {
             iniciarFlujoPago();
         }
-        cerrarCarritoGlobal();
     } else {
         // Si estamos en otra página, marcar para iniciar flujo al llegar a compra.html
         setItemSafeCarrito('rifaplusIniciarFlujoPago', 'true');

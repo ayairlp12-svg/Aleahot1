@@ -18,7 +18,7 @@
     <meta name="twitter:title" content="Compra tus boletos" />
     <meta name="twitter:description" content="Selecciona tus boletos y participa en el sorteo activo." />
     <meta name="twitter:image" content="images/placeholder-cover.svg" />
-    <link rel="stylesheet" href="css/styles.css?v=20260408.2">
+    <link rel="stylesheet" href="css/styles.css?v=20260408.3">
     <script src="js/image-delivery.js"></script>
     <script>
         (function() {
@@ -68,6 +68,60 @@
             };
             window.__RIFAPLUS_COMPRA_HERO_UTILS__ = heroUtils;
             window.__RIFAPLUS_CACHED_LOGO__ = imageDelivery?.resolverUrlImagen(rawLogo, 'logo') || rawLogo;
+
+            function elegirRifaFuentePrecio() {
+                const rifaGlobal = window.rifaplusConfig?.rifa;
+                const rifaLocal = configLocal?.rifa;
+                const precioLocal = Number(rifaLocal?.precioBoleto);
+                if (Number.isFinite(precioLocal) && precioLocal > 0) {
+                    return rifaLocal;
+                }
+                return rifaGlobal || rifaLocal || {};
+            }
+
+            function resolverPrecioVisibleCompra(rifa) {
+                const precioBase = Number(rifa?.precioBoleto);
+                if (!Number.isFinite(precioBase) || precioBase <= 0) {
+                    return null;
+                }
+
+                const ahora = new Date();
+                let mejorPrecio = precioBase;
+
+                const promoTiempo = rifa?.promocionPorTiempo;
+                if (promoTiempo?.enabled && promoTiempo?.precioProvisional !== null && promoTiempo?.precioProvisional !== undefined) {
+                    const inicio = new Date(promoTiempo.fechaInicio);
+                    const fin = new Date(promoTiempo.fechaFin);
+                    const precioPromo = Number(promoTiempo.precioProvisional);
+
+                    if (!Number.isNaN(inicio.getTime()) && !Number.isNaN(fin.getTime()) && ahora >= inicio && ahora <= fin && Number.isFinite(precioPromo) && precioPromo >= 0) {
+                        mejorPrecio = Math.min(mejorPrecio, precioPromo);
+                    }
+                }
+
+                const descuentoPorcentaje = rifa?.descuentoPorcentaje;
+                if (descuentoPorcentaje?.enabled && descuentoPorcentaje?.porcentaje) {
+                    const inicio = new Date(descuentoPorcentaje.fechaInicio);
+                    const fin = new Date(descuentoPorcentaje.fechaFin);
+                    const porcentaje = Number(descuentoPorcentaje.porcentaje);
+
+                    if (!Number.isNaN(inicio.getTime()) && !Number.isNaN(fin.getTime()) && ahora >= inicio && ahora <= fin && Number.isFinite(porcentaje) && porcentaje > 0) {
+                        const precioDescuento = precioBase - ((precioBase * porcentaje) / 100);
+                        mejorPrecio = Math.min(mejorPrecio, precioDescuento);
+                    }
+                }
+
+                return mejorPrecio;
+            }
+
+            const rifaPrecioInicial = elegirRifaFuentePrecio();
+            window.__RIFAPLUS_COMPRA_PRICE_SNAPSHOT__ = {
+                precioBoleto: Number(rifaPrecioInicial?.precioBoleto) || 0,
+                promocionPorTiempo: rifaPrecioInicial?.promocionPorTiempo || null,
+                descuentoPorcentaje: rifaPrecioInicial?.descuentoPorcentaje || null,
+                precioVisible: resolverPrecioVisibleCompra(rifaPrecioInicial)
+            };
+
             window.__RIFAPLUS_COMPRA_HERO__ = (function() {
                 const subtitulo = 'Selecciona los boletos que quieras o deja que la máquina de la suerte elija por ti. ¡Mucha Suerte!';
                 const organizador = heroUtils.resolverOrganizador(
@@ -232,7 +286,7 @@
                 <div id="precioNormalCompra" class="precio-normal-mode">
                     <p class="precio-kicker">Precio por boleto</p>
                     <h3>Compra individual</h3>
-                    <div class="precio-big"><span id="precioDinamico">Cargando...</span></div>
+                    <div class="precio-big"><span id="precioDinamico"><script>document.write((function(){const precio=Number(window.__RIFAPLUS_COMPRA_PRICE_SNAPSHOT__?.precioVisible);return Number.isFinite(precio)&&precio>0?`$${precio.toFixed(2)}`:'$0.00';})());</script></span></div>
                     <p class="precio-caption">Tu entrada directa al sorteo</p>
                 </div>
                 
@@ -727,7 +781,7 @@
     <!-- 🔌 Socket.io para actualizaciones en tiempo real (carga dinámicamente desde el backend) -->
     <script src="js/socket-handler.js"></script>
     <script defer src="js/compra.js?v=20260401.4"></script>
-    <script defer src="js/compra-page.js?v=20260406.1"></script>
+    <script defer src="js/compra-page.js?v=20260408.1"></script>
     <!-- ✅ Inicialización tardía (después de que todos los defer completen) -->
     <script defer src="js/carrito-init.js"></script>
 

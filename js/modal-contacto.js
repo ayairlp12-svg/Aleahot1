@@ -84,12 +84,33 @@ function removeItemSafeModal(key) {
  * abrirModalContacto - Abre el modal de contacto
  * @returns {void}
  */
-function abrirModalContacto() {
+function abrirModalContacto(opciones = {}) {
     const modal = document.getElementById('modalContacto');
     if (modal) {
+        const aperturaInstantanea = !!opciones.instant;
+
+        if (aperturaInstantanea) {
+            modal.classList.add('modal-overlay--instant');
+        } else {
+            modal.classList.remove('modal-overlay--instant');
+        }
+
         modal.classList.add('show');
         window.rifaplusModalScrollLock?.sync?.();
         limpiarFormularioContacto();
+
+        window.requestAnimationFrame(() => {
+            const primerCampo = document.getElementById('clienteNombre');
+            if (primerCampo instanceof HTMLElement) {
+                primerCampo.focus({ preventScroll: true });
+            }
+
+            if (aperturaInstantanea) {
+                window.setTimeout(() => {
+                    modal.classList.remove('modal-overlay--instant');
+                }, 120);
+            }
+        });
     }
 }
 

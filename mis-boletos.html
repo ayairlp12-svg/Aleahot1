@@ -7,7 +7,7 @@
     <meta http-equiv="Content-Security-Policy" content="default-src 'self' http://127.0.0.1:* http://localhost:*; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://fonts.googleapis.com http://localhost:5001 http://127.0.0.1:5001; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; connect-src 'self' http://127.0.0.1:* http://localhost:* https: http://localhost:5001 http://127.0.0.1:5001 ws: wss: ws://localhost:5001 wss://localhost:5001 ws://127.0.0.1:5001 wss://127.0.0.1:5001; img-src 'self' data: https:;">
     <!-- METADATOS DINÁMICOS - Inyectados por js/meta-inyector.js desde config.js -->
     <title>Mis Boletos</title>
-    <link rel="stylesheet" href="css/styles.css?v=20260408.2">
+    <link rel="stylesheet" href="css/styles.css?v=20260408.3">
     <script src="js/image-delivery.js"></script>
 
     <script>
@@ -2583,6 +2583,7 @@
         // Estado de la aplicación
         const appState = {
             currentWhatsapp: null,
+            targetOrdenId: null,
             ordenes: [],
             ordenActualComprobante: null,
             isLoading: false,
@@ -2607,6 +2608,9 @@
         function initializeApp() {
             const btnBuscar = document.getElementById('btnBuscar');
             const whatsappInput = document.getElementById('whatsappInput');
+            const urlParams = new URLSearchParams(window.location.search);
+
+            appState.targetOrdenId = String(urlParams.get('ordenId') || '').trim().toUpperCase() || null;
 
             // Restaurar WhatsApp desde sessionStorage o parámetro URL
             restaurarWhatsapp(whatsappInput);
@@ -2886,10 +2890,116 @@
             return String(boletoNumero).padStart(obtenerDigitosBoletosOrden(), '0');
         }
 
+        async function buscarOrdenPublicaPorId(ordenId, opciones = {}) {
+            const ordenIdLimpio = String(ordenId || '').trim().toUpperCase();
+            if (!ordenIdLimpio) return null;
+
+            const apiBase = window.rifaplusConfig?.backend?.apiBase
+                || window.rifaplusConfig?.obtenerApiBase?.()
+                || window.location.origin;
+            const timeoutMs = Number.isFinite(Number(opciones.timeoutMs)) ? Number(opciones.timeoutMs) : 6000;
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+            try {
+                const response = await fetch(`${apiBase}/api/public/ordenes-cliente/orden/${encodeURIComponent(ordenIdLimpio)}`, {
+                    signal: controller.signal,
+                    cache: 'no-store'
+                });
+
+                if (response.status === 404) {
+                    return null;
+                }
+
+                if (!response.ok) {
+                    throw new Error(`ORDER_LOOKUP_HTTP_${response.status}`);
+                }
+
+                const data = await response.json();
+                return data?.success && data?.data ? data.data : null;
+            } finally {
+                clearTimeout(timeoutId);
+            }
+        }
+
+        async function resolverOrdenObjetivoComoRespaldo(ordenId, whatsapp) {
+            const ordenIdLimpio = String(ordenId || '').trim().toUpperCase();
+            if (!ordenIdLimpio) return null;
+
+            const esperas = whatsapp ? [350, 900, 1800] : [0, 500, 1200, 2200];
+
+            for (const esperaMs of esperas) {
+                if (esperaMs > 0) {
+                    await new Promise(resolve => setTimeout(resolve, esperaMs));
+                }
+
+                try {
+                    const orden = await buscarOrdenPublicaPorId(ordenIdLimpio, { timeoutMs: 5000 + esperaMs });
+                    if (orden) {
+                        return orden;
+                    }
+                } catch (error) {
+                    console.warn('[Mis Boletos] Respaldo por ordenId falló:', error?.message || error);
+                }
+            }
+
+            return null;
+        }
+
+        async function buscarOrdenObjetivoDesdeUrl() {
+            const ordenId = String(appState.targetOrdenId || '').trim().toUpperCase();
+            if (!ordenId) return false;
+
+            const orden = await resolverOrdenObjetivoComoRespaldo(ordenId, appState.currentWhatsapp || '');
+            if (!orden) {
+                return false;
+            }
+
+            const whatsappOrden = String(orden.whatsapp || orden.telefono_cliente || '').replace(/[^0-9]/g, '');
+            if (whatsappOrden) {
+                sessionStorage.setItem(SESSION_KEY_WHATSAPP, whatsappOrden);
+                appState.currentWhatsapp = whatsappOrden;
+                saveToCache(whatsappOrden, [orden]);
+            }
+
+            appState.ordenes = [orden];
+            renderizarOrdenes([orden]);
+            mostrarListaOrdenes();
+            setTimeout(() => enfocarVistaPrincipalOrden(orden.id || orden.numero_orden, { instant: true }), 120);
+            return true;
+        }
+        window.buscarOrdenObjetivoDesdeUrl = buscarOrdenObjetivoDesdeUrl;
+
         function obtenerOrdenPorId(ordenId) {
             return Array.isArray(appState.ordenes)
                 ? appState.ordenes.find((orden) => String(orden.id || orden.numero_orden || '') === String(ordenId || ''))
                 : null;
+        }
+
+        function enfocarVistaPrincipalOrden(ordenId, options = {}) {
+            if (!ordenId) return;
+
+            const selectorSeguro = typeof CSS !== 'undefined' && typeof CSS.escape === 'function'
+                ? CSS.escape(String(ordenId))
+                : String(ordenId).replace(/"/g, '\\"');
+            const ordenCard = document.querySelector(`.orden-card[data-orden-id="${selectorSeguro}"]`);
+            if (!ordenCard) return;
+
+            const objetivo = ordenCard.querySelector('.orden-imagen-principal') || ordenCard;
+            const header = document.querySelector('.header');
+            const headerOffset = header ? Math.max(72, header.offsetHeight + 12) : 96;
+            const rect = objetivo.getBoundingClientRect();
+            const topObjetivo = Math.max(0, rect.top + window.pageYOffset - headerOffset);
+
+            const behavior = options.instant ? 'auto' : 'smooth';
+            window.scrollTo({ top: topObjetivo, behavior });
+
+            if (objetivo instanceof HTMLElement) {
+                if (!objetivo.hasAttribute('tabindex')) {
+                    objetivo.setAttribute('tabindex', '-1');
+                }
+                objetivo.focus({ preventScroll: true });
+            }
         }
 
         function obtenerNombreCompletoOrden(orden) {
@@ -3336,16 +3446,6 @@
                         clearTimeout(timeoutId);
                         
                         // Manejo específico de errores HTTP
-                        if (response.status === 403) {
-                            // No autorizado: no hay órdenes con este WhatsApp
-                            reportError('info', 'No hay órdenes para este WhatsApp', {
-                                whatsapp: whatsapp,
-                                status: 403
-                            });
-                            mostrarSinOrdenes('No tienes órdenes registradas con ese número de WhatsApp.');
-                            return null;
-                        }
-
                         if (response.status === 400) {
                             // Solicitud inválida
                             reportError('warning', 'WhatsApp inválido', {
@@ -3379,7 +3479,7 @@
 
                         return response.json();
                     })
-                    .then(data => {
+                    .then(async (data) => {
                         if (data === null) return; // Ya manejado (403 o reintentando)
 
                         // Validar que sea un array
@@ -3427,6 +3527,21 @@
                                 }, 300);
                             }
                         } else {
+                            const ordenRespaldo = await resolverOrdenObjetivoComoRespaldo(appState.targetOrdenId, whatsapp);
+                            if (ordenRespaldo) {
+                                const whatsappOrden = String(ordenRespaldo.whatsapp || ordenRespaldo.telefono_cliente || '').replace(/[^0-9]/g, '');
+                                if (whatsappOrden) {
+                                    sessionStorage.setItem(SESSION_KEY_WHATSAPP, whatsappOrden);
+                                    appState.currentWhatsapp = whatsappOrden;
+                                    saveToCache(whatsappOrden, [ordenRespaldo]);
+                                }
+                                appState.ordenes = [ordenRespaldo];
+                                renderizarOrdenes([ordenRespaldo]);
+                                mostrarListaOrdenes();
+                                setTimeout(() => enfocarVistaPrincipalOrden(ordenRespaldo.id || ordenRespaldo.numero_orden, { instant: true }), 120);
+                                return;
+                            }
+
                             mostrarSinOrdenes('No se encontraron órdenes con ese WhatsApp.');
                         }
                     })
@@ -3618,6 +3733,7 @@
 
                 // Validar y sanear ID de orden (debe ser formato RIFA-XXXX)
                 const ordenId = String(orden.id || 'UNKNOWN').replace(/[^a-zA-Z0-9\-]/g, '');
+                ordenCard.dataset.ordenId = ordenId;
                 const cantidadBoletos = Array.isArray(orden.boletos) ? orden.boletos.length : 0;
 
                 // Datos del cliente
@@ -4394,6 +4510,15 @@
             if (modal) {
                 modal.classList.remove('show');
                 document.body.style.overflow = 'auto';
+            }
+
+            const ordenIdActual = String(appState.ordenActualComprobante?.id || '').trim();
+            if (ordenIdActual) {
+                window.requestAnimationFrame(() => {
+                    window.setTimeout(() => {
+                        enfocarVistaPrincipalOrden(ordenIdActual);
+                    }, 60);
+                });
             }
         }
 

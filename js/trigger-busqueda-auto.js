@@ -11,13 +11,14 @@
     const urlParams = new URLSearchParams(window.location.search);
     const autoOpen = urlParams.get('autoOpen') === 'true';
     const whatsapp = urlParams.get('whatsapp');
+    const ordenId = String(urlParams.get('ordenId') || '').trim().toUpperCase();
 
     // Solo proceder si venimos del modal
-    if (!autoOpen || !whatsapp) {
+    if (!autoOpen || (!whatsapp && !ordenId)) {
         return;
     }
 
-    console.log('🔍 [TriggerBusqueda] Activada para:', whatsapp);
+    console.log('🔍 [TriggerBusqueda] Activada para:', whatsapp || ordenId);
 
     // Esperar a que DOM esté listo
     if (document.readyState === 'loading') {
@@ -37,6 +38,11 @@
             // Obtener referencias
             const whatsappInput = document.getElementById('whatsappInput');
             const btnBuscar = document.getElementById('btnBuscar');
+
+            if (!whatsapp && ordenId && typeof window.buscarOrdenObjetivoDesdeUrl === 'function') {
+                window.buscarOrdenObjetivoDesdeUrl();
+                return;
+            }
 
             // Si faltan elementos, reintentar
             if (!whatsappInput || !btnBuscar) {

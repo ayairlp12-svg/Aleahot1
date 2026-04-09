@@ -29,18 +29,12 @@
             && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     }
 
-    function esDispositivoTactilPrincipal() {
-        return typeof window.matchMedia === 'function'
-            && window.matchMedia('(pointer: coarse)').matches;
-    }
-
     function ahorroDatosActivo() {
         return !!(navigator.connection && navigator.connection.saveData);
     }
 
     function debeAnimar() {
         return !reduceMotionActiva()
-            && !esDispositivoTactilPrincipal()
             && !ahorroDatosActivo()
             && !document.hidden;
     }

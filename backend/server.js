@@ -3494,28 +3494,19 @@ app.post('/api/public/order-counter/next', limiterOrdenes, async (req, res) => {
 
         // Usar transacción con bloqueo explícito para evitar IDs duplicados bajo concurrencia
         const orderId = await db.transaction(async (trx) => {
-            const counter = await obtenerOCrearCounterOrden(trx, cliente_id);
-
-            // 1. Generar ID actual usando la secuencia actual
-            const numero = String(counter.proximo_numero).padStart(3, '0');
-            const fullOrderId = `${prefijo}-${counter.ultima_secuencia}${numero}`;
+            const { counter, componente } = await obtenerSiguienteComponenteOrdenRobusto(trx, cliente_id, prefijo);
+            const fullOrderId = construirOrdenIdDesdeComponente(prefijo, componente);
             
-            logOrdenesDebug(`✅ Generado orden_id: ${fullOrderId} (num=${numero}, seq=${counter.ultima_secuencia})`);
+            logOrdenesDebug(`✅ Generado orden_id: ${fullOrderId} (num=${String(componente.numero).padStart(3, '0')}, seq=${componente.secuencia})`);
 
             // 2. Calcular siguiente número y secuencia
-            let nextNum = counter.proximo_numero + 1;
-            let nextSeq = counter.ultima_secuencia;
-
-            if (nextNum > 999) {
-                nextNum = 0;
-                nextSeq = incrementarSecuenciaSQL(counter.ultima_secuencia);
-            }
+            const siguiente = avanzarComponenteOrden(componente);
 
             // 3. Actualizar contador con nuevos valores
             const updateData = {
-                ultimo_numero: counter.proximo_numero,
-                ultima_secuencia: nextSeq,
-                proximo_numero: nextNum,
+                ultimo_numero: componente.numero,
+                ultima_secuencia: siguiente.secuencia,
+                proximo_numero: siguiente.numero,
                 contador_total: counter.contador_total + 1,
                 updated_at: new Date()
             };
@@ -3766,6 +3757,131 @@ function obtenerPrefijoOrdenCliente(clienteId, configActor = null) {
     return 'SS';  // ✅ IMPORTANTE: SIEMPRE al menos 2 caracteres, nunca solo 'S'
 }
 
+function descomponerOrdenId(ordenId, prefijoEsperado = '') {
+    const valor = String(ordenId || '').trim().toUpperCase();
+    const prefijo = String(prefijoEsperado || '').trim().toUpperCase();
+    if (!valor || !prefijo || !valor.startsWith(`${prefijo}-`)) {
+        return null;
+    }
+
+    const match = valor.match(/^[A-Z0-9]+-([A-Z]{2})(\d{3})$/);
+    if (!match) {
+        return null;
+    }
+
+    return {
+        secuencia: match[1],
+        numero: Number.parseInt(match[2], 10) || 0
+    };
+}
+
+function compararComponentesOrden(a, b) {
+    if (!a && !b) return 0;
+    if (!a) return -1;
+    if (!b) return 1;
+    if (a.secuencia !== b.secuencia) {
+        return a.secuencia.localeCompare(b.secuencia);
+    }
+    return a.numero - b.numero;
+}
+
+function avanzarComponenteOrden(componente) {
+    const actual = componente || { secuencia: 'AA', numero: 0 };
+    let siguienteNumero = Number.isFinite(Number(actual.numero)) ? Number(actual.numero) + 1 : 1;
+    let siguienteSecuencia = String(actual.secuencia || 'AA');
+
+    if (siguienteNumero > 999) {
+        siguienteNumero = 0;
+        siguienteSecuencia = incrementarSecuenciaSQL(siguienteSecuencia);
+    }
+
+    return {
+        secuencia: siguienteSecuencia,
+        numero: siguienteNumero
+    };
+}
+
+function construirOrdenIdDesdeComponente(prefijo, componente) {
+    const secuencia = String(componente?.secuencia || 'AA').toUpperCase();
+    const numero = String(Number.isFinite(Number(componente?.numero)) ? Number(componente.numero) : 0).padStart(3, '0');
+    return `${prefijo}-${secuencia}${numero}`;
+}
+
+async function obtenerMayorOrdenExistentePorPrefijo(trx, prefijo) {
+    const prefijoLimpio = String(prefijo || '').trim().toUpperCase();
+    if (!prefijoLimpio) {
+        return null;
+    }
+
+    const ultimaOrden = await trx('ordenes')
+        .where('numero_orden', 'like', `${prefijoLimpio}-%`)
+        .orderBy('numero_orden', 'desc')
+        .first('numero_orden');
+
+    if (!ultimaOrden?.numero_orden) {
+        return null;
+    }
+
+    return descomponerOrdenId(ultimaOrden.numero_orden, prefijoLimpio);
+}
+
+async function obtenerSiguienteComponenteOrdenRobusto(trx, clienteId, prefijo) {
+    const counter = await obtenerOCrearCounterOrden(trx, clienteId);
+    const candidatoCounter = {
+        secuencia: String(counter?.ultima_secuencia || 'AA').toUpperCase(),
+        numero: Number.isFinite(Number(counter?.proximo_numero)) ? Number(counter.proximo_numero) : 1
+    };
+    const mayorPersistido = await obtenerMayorOrdenExistentePorPrefijo(trx, prefijo);
+
+    if (compararComponentesOrden(mayorPersistido, candidatoCounter) >= 0) {
+        const reconciliado = avanzarComponenteOrden(mayorPersistido);
+        logOrdenesDebug('♻️ Counter reconciliado con última orden persistida', {
+            clienteId,
+            prefijo,
+            counter: candidatoCounter,
+            mayorPersistido,
+            reconciliado
+        });
+        return { counter, componente: reconciliado };
+    }
+
+    return { counter, componente: candidatoCounter };
+}
+
+function normalizarBoletosOrdenParaComparacion(boletos) {
+    const origen = Array.isArray(boletos) ? boletos : (() => {
+        try {
+            return typeof boletos === 'string' ? JSON.parse(boletos || '[]') : [];
+        } catch (_) {
+            return [];
+        }
+    })();
+
+    return origen
+        .map((n) => Number(n))
+        .filter((n) => Number.isInteger(n) && n >= 0)
+        .sort((a, b) => a - b);
+}
+
+function esMismaOrdenIdempotente(ordenExistente, contexto) {
+    if (!ordenExistente || !contexto) return false;
+
+    const whatsappExistente = String(ordenExistente.telefono_cliente || '').replace(/[^0-9]/g, '');
+    const whatsappContexto = String(contexto.whatsapp || '').replace(/[^0-9]/g, '');
+    if (!whatsappExistente || !whatsappContexto || whatsappExistente !== whatsappContexto) {
+        return false;
+    }
+
+    const boletosExistentes = normalizarBoletosOrdenParaComparacion(ordenExistente.boletos);
+    const boletosContexto = normalizarBoletosOrdenParaComparacion(contexto.boletos);
+
+    if (boletosExistentes.length !== boletosContexto.length) {
+        return false;
+    }
+
+    return boletosExistentes.every((numero, index) => numero === boletosContexto[index]);
+}
+
 /**
  * Genera el siguiente ID de orden para un cliente dado usando la misma lógica
  * que /api/public/order-counter/next pero permitiendo pasar una transacción
@@ -3777,27 +3893,18 @@ function obtenerPrefijoOrdenCliente(clienteId, configActor = null) {
 async function generarSiguienteOrdenId(cliente_id, trx) {
     // Validación mínima
     const cid = cliente_id || 'Sorteos_El_Trebol';
-
-    const counter = await obtenerOCrearCounterOrden(trx, cid);
-
-    const numero = String(counter.proximo_numero).padStart(3, '0');
     const prefijo = obtenerPrefijoOrdenCliente(cid);
-    const fullOrderId = `${prefijo}-${counter.ultima_secuencia}${numero}`;
+    const { counter, componente } = await obtenerSiguienteComponenteOrdenRobusto(trx, cid, prefijo);
+    const fullOrderId = construirOrdenIdDesdeComponente(prefijo, componente);
 
     // Calcular siguiente número y secuencia
-    let nextNum = counter.proximo_numero + 1;
-    let nextSeq = counter.ultima_secuencia;
-
-    if (nextNum > 999) {
-        nextNum = 0;
-        nextSeq = incrementarSecuenciaSQL(counter.ultima_secuencia);
-    }
+    const siguiente = avanzarComponenteOrden(componente);
 
     // Actualizar contador
     const updateData = {
-        ultimo_numero: counter.proximo_numero,
-        ultima_secuencia: nextSeq,
-        proximo_numero: nextNum,
+        ultimo_numero: componente.numero,
+        ultima_secuencia: siguiente.secuencia,
+        proximo_numero: siguiente.numero,
         contador_total: (counter.contador_total || 0) + 1,
         updated_at: new Date()
     };
@@ -3881,11 +3988,10 @@ app.post('/api/ordenes', limiterOrdenes, async (req, res) => {
         }
 
         const secuenciaOficial = ordenIdRecibido.match(/(?:^|[-])([A-Z]{2}\d{3})$/);
-        if (secuenciaOficial) {
-            ordenId = `${prefijoOrdenActual}-${secuenciaOficial[1]}`;
-        } else {
-            ordenId = '';
-        }
+        const ordenIdSolicitado = secuenciaOficial
+            ? `${prefijoOrdenActual}-${secuenciaOficial[1]}`
+            : '';
+        ordenId = '';
 
         const nombre = sanitizar(orden.cliente.nombre || '').trim();
         const apellidos = sanitizar(orden.cliente.apellidos || '').trim();
@@ -3970,44 +4076,101 @@ app.post('/api/ordenes', limiterOrdenes, async (req, res) => {
             await trx.raw("SET LOCAL statement_timeout = '15s'");
             perfMarks.trxSetupMs = Date.now() - trxStart;
 
-            if (!ordenId) {
-                const counterStart = Date.now();
-                ordenId = await generarSiguienteOrdenId(clienteIdActual, trx);
-                perfMarks.counterMs = (perfMarks.counterMs || 0) + (Date.now() - counterStart);
+            if (ordenIdSolicitado) {
+                const duplicateStart = Date.now();
+                const ordenSolicitada = await trx('ordenes')
+                    .where('numero_orden', ordenIdSolicitado)
+                    .timeout(10000)
+                    .first();
+                perfMarks.duplicateCheckMs = (perfMarks.duplicateCheckMs || 0) + (Date.now() - duplicateStart);
+
+                if (ordenSolicitada && esMismaOrdenIdempotente(ordenSolicitada, {
+                    whatsapp,
+                    boletos: boletosOrdenados
+                })) {
+                    const cantidadOportunidadesExistente = oportunidadesHabilitadas
+                        ? Number.parseInt(
+                            (
+                                await (async () => {
+                                    const oppDuplicateStart = Date.now();
+                                    const resultadoOpp = await trx('orden_oportunidades')
+                                        .where('numero_orden', ordenSolicitada.numero_orden)
+                                        .count('* as total')
+                                        .first();
+                                    perfMarks.duplicateOppCountMs = (perfMarks.duplicateOppCountMs || 0) + (Date.now() - oppDuplicateStart);
+                                    return resultadoOpp;
+                                })()
+                            )?.total,
+                            10
+                        ) || 0
+                        : 0;
+
+                    return {
+                        isDuplicate: true,
+                        ordenExistente: ordenSolicitada,
+                        cantidadOportunidades: cantidadOportunidadesExistente
+                    };
+                }
             }
 
-            // PASO 1: Verificar orden duplicada
-            const duplicateStart = Date.now();
-            const ordenExistente = await trx('ordenes')
-                .where('numero_orden', ordenId)
-                .timeout(10000)
-                .first();
-            perfMarks.duplicateCheckMs = (perfMarks.duplicateCheckMs || 0) + (Date.now() - duplicateStart);
+            for (let intentoOrdenId = 0; intentoOrdenId < 5; intentoOrdenId++) {
+                if (!ordenId) {
+                    const counterStart = Date.now();
+                    ordenId = await generarSiguienteOrdenId(clienteIdActual, trx);
+                    perfMarks.counterMs = (perfMarks.counterMs || 0) + (Date.now() - counterStart);
+                }
 
-            if (ordenExistente) {
-                const cantidadOportunidadesExistente = oportunidadesHabilitadas
-                    ? Number.parseInt(
-                        (
-                            await (async () => {
-                                const oppDuplicateStart = Date.now();
-                                const resultadoOpp = await trx('orden_oportunidades')
-                                    .where('numero_orden', ordenExistente.numero_orden)
-                                    .count('* as total')
-                                    .first();
-                                perfMarks.duplicateOppCountMs = (perfMarks.duplicateOppCountMs || 0) + (Date.now() - oppDuplicateStart);
-                                return resultadoOpp;
-                            })()
-                        )?.total,
-                        10
-                    ) || 0
-                    : 0;
+                // PASO 1: Verificar orden duplicada del ID generado por backend
+                const duplicateStart = Date.now();
+                const ordenExistente = await trx('ordenes')
+                    .where('numero_orden', ordenId)
+                    .timeout(10000)
+                    .first();
+                perfMarks.duplicateCheckMs = (perfMarks.duplicateCheckMs || 0) + (Date.now() - duplicateStart);
 
-                // 200 OK: orden ya existe (idempotencia)
-                return {
-                    isDuplicate: true,
-                    ordenExistente: ordenExistente,
-                    cantidadOportunidades: cantidadOportunidadesExistente
-                };
+                if (!ordenExistente) {
+                    break;
+                }
+
+                if (esMismaOrdenIdempotente(ordenExistente, {
+                    whatsapp,
+                    boletos: boletosOrdenados
+                })) {
+                    const cantidadOportunidadesExistente = oportunidadesHabilitadas
+                        ? Number.parseInt(
+                            (
+                                await (async () => {
+                                    const oppDuplicateStart = Date.now();
+                                    const resultadoOpp = await trx('orden_oportunidades')
+                                        .where('numero_orden', ordenExistente.numero_orden)
+                                        .count('* as total')
+                                        .first();
+                                    perfMarks.duplicateOppCountMs = (perfMarks.duplicateOppCountMs || 0) + (Date.now() - oppDuplicateStart);
+                                    return resultadoOpp;
+                                })()
+                            )?.total,
+                            10
+                        ) || 0
+                        : 0;
+
+                    // 200 OK: orden ya existe (idempotencia real)
+                    return {
+                        isDuplicate: true,
+                        ordenExistente: ordenExistente,
+                        cantidadOportunidades: cantidadOportunidadesExistente
+                    };
+                }
+
+                console.warn('⚠️ [POST /api/ordenes] ordenId recibido o generado ya pertenece a otra orden; se regenerará', {
+                    ordenId,
+                    telefonoExistente: ordenExistente.telefono_cliente,
+                    telefonoActual: whatsapp
+                });
+                ordenId = '';
+            }
+
+            if (!ordenId) {
+                throw new Error('NO_SE_PUDO_GENERAR_ORDEN_ID_UNICO');
             }
 
             // PASO 2: Bloquear boletos objetivo y verificar disponibilidad real
@@ -5135,6 +5298,95 @@ app.get('/api/public/ordenes-cliente', async (req, res) => {
             success: false,
             message: 'Error al consultar órdenes',
             error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+    }
+});
+
+/**
+ * GET /api/public/ordenes-cliente/orden/:ordenId
+ * Endpoint PÚBLICO para consultar una orden específica por numero_orden.
+ * Se usa como respaldo cuando el flujo viene de una orden recién creada
+ * y la recuperación por WhatsApp todavía no es suficiente.
+ */
+app.get('/api/public/ordenes-cliente/orden/:ordenId', async (req, res) => {
+    try {
+        const ordenId = sanitizar(req.params?.ordenId || '').trim().toUpperCase();
+
+        if (!ordenId) {
+            return res.status(400).json({
+                success: false,
+                message: 'El parámetro ordenId es obligatorio'
+            });
+        }
+
+        const orden = await db('ordenes')
+            .where('numero_orden', ordenId)
+            .first();
+
+        if (!orden) {
+            return res.status(404).json({
+                success: false,
+                message: 'Orden no encontrada'
+            });
+        }
+
+        const oportunidades = await db('orden_oportunidades')
+            .where('numero_orden', orden.numero_orden)
+            .pluck('numero_oportunidad');
+
+        let boletosParsados = [];
+        try {
+            if (typeof orden.boletos === 'string') {
+                boletosParsados = JSON.parse(orden.boletos || '[]');
+            } else if (Array.isArray(orden.boletos)) {
+                boletosParsados = orden.boletos;
+            }
+        } catch (e) {
+            console.warn(`Error parseando boletos de orden ${orden.numero_orden}:`, e);
+            boletosParsados = [];
+        }
+
+        return res.json({
+            success: true,
+            data: {
+                id: orden.numero_orden,
+                numero_orden: orden.numero_orden,
+                nombre_cliente: orden.nombre_cliente || '',
+                apellido_cliente: orden.apellido_cliente || '',
+                estado_cliente: orden.estado_cliente || '',
+                ciudad_cliente: orden.ciudad_cliente || '',
+                whatsapp: orden.telefono_cliente || '',
+                telefono_cliente: orden.telefono_cliente || '',
+                cantidad_boletos: orden.cantidad_boletos || 0,
+                precio_unitario: Number(orden.precio_unitario ?? 0),
+                subtotal: Number(orden.subtotal ?? 0),
+                descuento: Number(orden.descuento ?? 0),
+                boletos: boletosParsados,
+                oportunidades: Array.isArray(oportunidades)
+                    ? oportunidades.filter(op => op !== null && op !== '')
+                    : [],
+                total: Number(orden.total ?? 0),
+                tipo_pago: orden.metodo_pago || 'No especificado',
+                metodo_pago: orden.metodo_pago || 'No especificado',
+                estado: orden.estado || 'pendiente',
+                detalles_pago: orden.detalles_pago || null,
+                nombre_banco: orden.nombre_banco || null,
+                numero_referencia: orden.numero_referencia || null,
+                nombre_beneficiario: orden.nombre_beneficiario || null,
+                comprobante_path: orden.comprobante_path || null,
+                createdAt: orden.created_at,
+                updatedAt: orden.updated_at
+            }
+        });
+    } catch (error) {
+        log('error', 'GET /api/public/ordenes-cliente/orden/:ordenId error', {
+            error: error.message,
+            ordenId: req.params?.ordenId,
+            ip: req.ip
+        });
+        return res.status(500).json({
+            success: false,
+            message: 'Error interno del servidor'
         });
     }
 });

@@ -143,31 +143,36 @@
                 iconoHtml: '<i class="fab fa-facebook-f" style="color: #1877F2;"></i>',
                 url: normalizarUrlExterna(redes.facebook),
                 textoBoton: 'Ir a Facebook',
-                color: '#1877F2'
+                color: '#1877F2',
+                claseBoton: 'facebook'
             },
             grupo_whatsapp: {
                 iconoHtml: '<i class="fab fa-whatsapp" style="color: #25D366;"></i>',
                 url: normalizarUrlExterna(redes.grupoWhatsapp || redes.canalWhatsapp),
-                textoBoton: 'Ir al grupo de WhatsApp',
-                color: '#25D366'
+                textoBoton: 'Ir a WhatsApp',
+                color: '#25D366',
+                claseBoton: 'whatsapp'
             },
             canal_whatsapp: {
                 iconoHtml: '<i class="fab fa-whatsapp" style="color: #25D366;"></i>',
                 url: normalizarUrlExterna(redes.canalWhatsapp || redes.grupoWhatsapp),
-                textoBoton: 'Ir al canal de WhatsApp',
-                color: '#25D366'
+                textoBoton: 'Ir a WhatsApp',
+                color: '#25D366',
+                claseBoton: 'whatsapp'
             },
             whatsapp_personal: {
                 iconoHtml: '<i class="fab fa-whatsapp" style="color: #25D366;"></i>',
                 url: construirUrlWhatsapp(redes.whatsapp),
-                textoBoton: 'Abrir WhatsApp',
-                color: '#25D366'
+                textoBoton: 'Ir a WhatsApp',
+                color: '#25D366',
+                claseBoton: 'whatsapp'
             },
             sin_enlace: {
                 iconoHtml: '📡',
                 url: '',
                 textoBoton: '',
-                color: 'var(--primary)'
+                color: 'var(--primary)',
+                claseBoton: 'neutral'
             }
         };
 
@@ -288,10 +293,11 @@
                             href="${modalidad.url}"
                             target="_blank"
                             rel="noopener noreferrer"
-                            class="info-item-action-link"
+                            class="info-item-action-link info-item-action-link--${modalidad.claseBoton}"
                             style="--info-action-color: ${modalidad.color};"
+                            aria-label="${modalidad.textoBoton}"
                         >
-                            ${modalidad.textoBoton} &rarr;
+                            <span class="info-item-action-text">${modalidad.textoBoton}</span>
                         </a>
                     `
                     : '';
