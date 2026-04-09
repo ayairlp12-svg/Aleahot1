@@ -1129,9 +1129,34 @@ function inicializarMenuMovil() {
     const botonHamburguesa = document.getElementById('hamburger');
     const menuOverlay = document.getElementById('overlayMenu');
     const botonCerrar = document.getElementById('overlayClose');
+    const body = document.body;
+    const html = document.documentElement;
+    const mediaDesktop = window.matchMedia('(min-width: 769px)');
+    let scrollTopBloqueado = 0;
 
     if (!botonHamburguesa || !menuOverlay) {
         return;
+    }
+
+    menuOverlay.setAttribute('aria-hidden', 'true');
+    menuOverlay.setAttribute('inert', '');
+
+    function bloquearScroll() {
+        scrollTopBloqueado = window.scrollY || window.pageYOffset || 0;
+        body.classList.add('mobile-menu-open');
+        body.style.top = `-${scrollTopBloqueado}px`;
+        html.style.scrollBehavior = 'auto';
+    }
+
+    function restaurarScroll() {
+        if (!body.classList.contains('mobile-menu-open')) {
+            return;
+        }
+
+        body.classList.remove('mobile-menu-open');
+        body.style.top = '';
+        window.scrollTo(0, scrollTopBloqueado);
+        html.style.scrollBehavior = '';
     }
 
     /**
@@ -1140,14 +1165,20 @@ function inicializarMenuMovil() {
     function abrirOverlay() {
         menuOverlay.classList.add('show');
         menuOverlay.removeAttribute('inert');
+        menuOverlay.setAttribute('aria-hidden', 'false');
         botonHamburguesa.setAttribute('aria-expanded', 'true');
-        document.body.style.overflow = 'hidden';
+        bloquearScroll();
 
         // Animar icono de hamburguesa a X
         const iconoInterno = botonHamburguesa.querySelector('.hamburger-inner');
         if (iconoInterno) {
             iconoInterno.style.transform = 'rotate(45deg)';
             iconoInterno.style.backgroundColor = 'var(--primary-light)';
+        }
+
+        const primerEnlace = menuOverlay.querySelector('.overlay-link');
+        if (primerEnlace) {
+            requestAnimationFrame(() => primerEnlace.focus());
         }
     }
 
@@ -1157,14 +1188,21 @@ function inicializarMenuMovil() {
     function cerrarOverlay() {
         menuOverlay.classList.remove('show');
         menuOverlay.setAttribute('inert', '');
+        menuOverlay.setAttribute('aria-hidden', 'true');
         botonHamburguesa.setAttribute('aria-expanded', 'false');
-        document.body.style.overflow = '';
+        restaurarScroll();
 
         // Animar icono de X a hamburguesa
         const iconoInterno = botonHamburguesa.querySelector('.hamburger-inner');
         if (iconoInterno) {
             iconoInterno.style.transform = 'rotate(0)';
             iconoInterno.style.backgroundColor = 'white';
+        }
+    }
+
+    function sincronizarConViewport() {
+        if (mediaDesktop.matches && menuOverlay.classList.contains('show')) {
+            cerrarOverlay();
         }
     }
 
@@ -1184,6 +1222,7 @@ function inicializarMenuMovil() {
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && menuOverlay.classList.contains('show')) {
             cerrarOverlay();
+            botonHamburguesa.focus();
         }
     });
 
@@ -1200,7 +1239,15 @@ function inicializarMenuMovil() {
         enlace.addEventListener('click', cerrarOverlay);
     });
 
-    console.log('✓ Menú móvil inicializado');
+    window.addEventListener('resize', sincronizarConViewport);
+    window.addEventListener('orientationchange', sincronizarConViewport);
+
+    const mediaListener = () => sincronizarConViewport();
+    if (typeof mediaDesktop.addEventListener === 'function') {
+        mediaDesktop.addEventListener('change', mediaListener);
+    } else if (typeof mediaDesktop.addListener === 'function') {
+        mediaDesktop.addListener(mediaListener);
+    }
 }
 
 // ============================================================ //
