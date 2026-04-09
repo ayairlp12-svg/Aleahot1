@@ -31,9 +31,9 @@ const IMAGE_UPLOAD_PRESETS = Object.freeze({
     },
     [ASSET_TYPES.COMPROBANTE]: {
         folder: 'rifas-comprobantes',
-        maxWidth: 2200,
-        maxHeight: 2600,
-        quality: 'auto:best',
+        maxWidth: 1800,
+        maxHeight: 2200,
+        quality: 'auto:good',
         format: 'jpg'
     }
 });

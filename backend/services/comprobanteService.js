@@ -15,11 +15,18 @@ const {
     subirBufferACloudinary
 } = require('./cloudinaryUploadService');
 
+const SCHEMA_CACHE_TTL_MS = 10 * 60 * 1000;
+let schemaOrdenesValidadoHasta = 0;
+
 /**
  * Validar que la tabla ordenes tiene las columnas requeridas
  * @throws {Error} Si faltan columnas
  */
 async function validarSchemaOrdenes() {
+    if (Date.now() < schemaOrdenesValidadoHasta) {
+        return true;
+    }
+
     try {
         const result = await db.raw(`
             SELECT column_name 
@@ -42,8 +49,10 @@ async function validarSchemaOrdenes() {
             );
         }
 
+        schemaOrdenesValidadoHasta = Date.now() + SCHEMA_CACHE_TTL_MS;
         return true;
     } catch (error) {
+        schemaOrdenesValidadoHasta = 0;
         console.error('[ComprobanteService] Error validando schema:', error.message);
         throw error;
     }

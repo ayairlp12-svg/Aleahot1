@@ -5438,27 +5438,35 @@ app.post('/api/public/ordenes-cliente/:numero_orden/comprobante', async (req, re
             statusCode: 200
         }, { slowMs: 1500, warnMs: 4000 });
 
-        if (wsEvents) {
-            try {
-                wsEvents.emitirOrdenActualizadaAdmin({
-                    numero_orden,
-                    estado: 'pendiente',
-                    comprobante_path: '__present__',
-                    updated_at: new Date().toISOString()
-                });
-            } catch (wsError) {
-                console.warn(`⚠️  Error emitiendo actualización admin de comprobante:`, wsError.message);
-            }
-        }
-
-        refrescarCachesTrasCambioInventario();
-
         // 🔒 NO retornar URL completa al cliente (solo confirmación)
-        return res.json({
+        res.json({
             success: true,
             message: 'Comprobante subido correctamente',
             numero_orden: resultado.numero_orden
         });
+
+        setImmediate(() => {
+            if (wsEvents) {
+                try {
+                    wsEvents.emitirOrdenActualizadaAdmin({
+                        numero_orden,
+                        estado: 'pendiente',
+                        comprobante_path: '__present__',
+                        updated_at: new Date().toISOString()
+                    });
+                } catch (wsError) {
+                    console.warn(`⚠️  Error emitiendo actualización admin de comprobante:`, wsError.message);
+                }
+            }
+
+            try {
+                refrescarCachesTrasCambioInventario();
+            } catch (cacheError) {
+                console.warn(`⚠️  Error refrescando cachés tras comprobante:`, cacheError.message);
+            }
+        });
+
+        return;
 
     } catch (error) {
         // Error classification

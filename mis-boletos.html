@@ -4405,6 +4405,30 @@
         }
 
         function marcarComprobanteComoExitoso() {
+            const ordenIdActual = String(appState.ordenActualComprobante?.id || '').trim();
+            if (ordenIdActual) {
+                appState.ordenes = (Array.isArray(appState.ordenes) ? appState.ordenes : []).map((orden) => {
+                    const idOrden = String(orden?.id || orden?.numero_orden || '').trim();
+                    if (idOrden !== ordenIdActual) {
+                        return orden;
+                    }
+
+                    return {
+                        ...orden,
+                        comprobante_path: orden.comprobante_path || '__pending_refresh__',
+                        comprobante_fecha: orden.comprobante_fecha || new Date().toISOString(),
+                        updated_at: new Date().toISOString()
+                    };
+                });
+
+                if (appState.currentWhatsapp && Array.isArray(appState.ordenes) && appState.ordenes.length > 0) {
+                    saveToCache(appState.currentWhatsapp, appState.ordenes);
+                }
+
+                renderizarOrdenes(appState.ordenes);
+                mostrarListaOrdenes();
+            }
+
             const modalConfirmacion = document.getElementById('modalComprobanteConfirmado');
             if (modalConfirmacion) {
                 cerrarModalComprobante();
@@ -4621,22 +4645,19 @@
 
                 marcarComprobanteComoExitoso();
 
-                // 🔥 FORZAR ACTUALIZACIÓN INMEDIATA DE DISPONIBILIDAD DE BOLETOS
-                // Esto asegura que si el usuario está viendo compra.html, los boletos aparezcan como apartados
+                // 🔥 FORZAR ACTUALIZACIÓN DE DISPONIBILIDAD EN BACKGROUND
                 if (window.fetchBoletosPublic && typeof window.fetchBoletosPublic === 'function') {
-                    try {
-                        // Esperar un poco para que el backend procese el cambio
-                        await new Promise(resolve => setTimeout(resolve, 500));
-                        // Forzar caché a expirar
-                        if (window.rifaplusBoletosLoaded !== undefined) {
-                            window.rifaplusBoletosLoaded = false;
+                    window.setTimeout(async () => {
+                        try {
+                            if (window.rifaplusBoletosLoaded !== undefined) {
+                                window.rifaplusBoletosLoaded = false;
+                            }
+                            await window.fetchBoletosPublic();
+                            console.log('✅ Disponibilidad de boletos actualizada');
+                        } catch (e) {
+                            console.warn('⚠️ No se pudo actualizar disponibilidad de boletos:', e);
                         }
-                        // Llamar inmediatamente sin esperar al poll
-                        await window.fetchBoletosPublic();
-                        console.log('✅ Disponibilidad de boletos actualizada');
-                    } catch (e) {
-                        console.warn('⚠️ No se pudo actualizar disponibilidad de boletos:', e);
-                    }
+                    }, 0);
                 }
 
                 // ✅ CRÍTICO: Invalida el caché de órdenes para forzar refrescado fresco
@@ -4659,7 +4680,7 @@
                         }
                     }
                     buscarOrdenes(); // Ahora hará request fresh al servidor
-                }, 800);
+                }, 150);
 
             } catch (error) {
                 console.error('Error al subir comprobante:', error);
