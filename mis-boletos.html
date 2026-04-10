@@ -310,7 +310,7 @@
             <!-- 📱 BOLETERA DIGITAL CTA - LÍNEA DISCRETA -->
             <div class="footer-boletera-cta">
                 <div class="boletera-content">
-                    ¿Necesitas una boletera digital? <a href="https://wa.me/4341068932?text=Hola%2C%20me%20interesa%20conocer%20m%C3%A1s%20sobre%20las%20boleteras%20digitales" class="btn-boletera-whatsapp" target="_blank" rel="noopener noreferrer">Consulta aquí</a>
+                    ¿Necesitas una boletera digital? <a href="https://wa.me/524591153960?text=Hola%2C%20me%20interesa%20conocer%20m%C3%A1s%20sobre%20las%20boleteras%20digitales" class="btn-boletera-whatsapp" target="_blank" rel="noopener noreferrer">Consulta aquí</a>
                 </div>
             </div>
 
@@ -3067,6 +3067,152 @@
             return y + altura;
         }
 
+        function obtenerLogoPdfOrdenConfirmada() {
+            const logoConfig = String(
+                window.rifaplusConfig?.cliente?.logo
+                || window.rifaplusConfig?.cliente?.logotipo
+                || window.__RIFAPLUS_CACHED_LOGO__
+                || localStorage.getItem('rifaplus_cached_logo')
+                || ''
+            ).trim();
+
+            return logoConfig && logoConfig !== 'images/placeholder-logo.svg'
+                ? logoConfig
+                : '';
+        }
+
+        async function cargarImagenComoDataUrl(url) {
+            const urlLimpia = String(url || '').trim();
+            if (!urlLimpia) return null;
+
+            try {
+                const response = await fetch(urlLimpia, { mode: 'cors', cache: 'force-cache' });
+                if (!response.ok) return null;
+                const blob = await response.blob();
+                const dataUrl = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(String(reader.result || ''));
+                    reader.onerror = reject;
+                    reader.readAsDataURL(blob);
+                });
+                const metadata = await new Promise((resolve) => {
+                    const image = new Image();
+                    image.onload = () => resolve({
+                        width: Number(image.naturalWidth || image.width || 0),
+                        height: Number(image.naturalHeight || image.height || 0)
+                    });
+                    image.onerror = () => resolve({ width: 0, height: 0 });
+                    image.src = dataUrl;
+                });
+                return {
+                    dataUrl,
+                    width: metadata.width,
+                    height: metadata.height
+                };
+            } catch (_) {
+                return null;
+            }
+        }
+
+        function calcularCajaAjustadaPdf({ maxWidth, maxHeight, sourceWidth, sourceHeight }) {
+            const caja = {
+                width: Math.max(0, Number(maxWidth) || 0),
+                height: Math.max(0, Number(maxHeight) || 0),
+                offsetX: 0,
+                offsetY: 0
+            };
+            const origenAncho = Math.max(1, Number(sourceWidth) || 0);
+            const origenAlto = Math.max(1, Number(sourceHeight) || 0);
+            const escala = Math.min(caja.width / origenAncho, caja.height / origenAlto);
+
+            caja.width = Math.max(1, origenAncho * escala);
+            caja.height = Math.max(1, origenAlto * escala);
+            caja.offsetX = (Math.max(0, Number(maxWidth) || 0) - caja.width) / 2;
+            caja.offsetY = (Math.max(0, Number(maxHeight) || 0) - caja.height) / 2;
+            return caja;
+        }
+
+        function dibujarEtiquetaEstadoPdf(pdf, { x, y, texto, fillColor, textColor }) {
+            const paddingX = 4.5;
+            const alto = 8;
+            const textoSeguro = sanitizarTextoPdf(texto);
+            const ancho = pdf.getTextWidth(textoSeguro) + (paddingX * 2);
+            pdf.setFillColor(...fillColor);
+            pdf.roundedRect(x, y, ancho, alto, 3, 3, 'F');
+            pdf.setFont('helvetica', 'bold');
+            pdf.setFontSize(8.5);
+            pdf.setTextColor(...textColor);
+            pdf.text(textoSeguro, x + paddingX, y + 5.4);
+            return ancho;
+        }
+
+        function sanitizarTextoPdf(value) {
+            const texto = String(value ?? '').trim();
+            if (!texto) return '-';
+
+            return texto
+                .normalize('NFKD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .replace(/[^\x20-\x7E]/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim() || '-';
+        }
+
+        function parsearColorPdf(color) {
+            const valor = String(color || '').trim();
+            if (!valor) return null;
+
+            const hexMatch = valor.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
+            if (hexMatch) {
+                const hex = hexMatch[1].length === 3
+                    ? hexMatch[1].split('').map((char) => char + char).join('')
+                    : hexMatch[1];
+                return [
+                    parseInt(hex.slice(0, 2), 16),
+                    parseInt(hex.slice(2, 4), 16),
+                    parseInt(hex.slice(4, 6), 16)
+                ];
+            }
+
+            const rgbMatch = valor.match(/rgba?\(\s*(\d{1,3})\s*[,\s]\s*(\d{1,3})\s*[,\s]\s*(\d{1,3})/i);
+            if (rgbMatch) {
+                return rgbMatch.slice(1, 4).map((parte) => Math.max(0, Math.min(255, parseInt(parte, 10) || 0)));
+            }
+
+            return null;
+        }
+
+        function mezclarColorPdf(colorBase, colorDestino = [255, 255, 255], factor = 0.5) {
+            const origen = Array.isArray(colorBase) && colorBase.length === 3 ? colorBase : [17, 24, 39];
+            const destino = Array.isArray(colorDestino) && colorDestino.length === 3 ? colorDestino : [255, 255, 255];
+            const peso = Math.max(0, Math.min(1, Number(factor) || 0));
+
+            return origen.map((valor, index) => Math.round(valor + ((destino[index] - valor) * peso)));
+        }
+
+        function obtenerTemaPdfOrdenConfirmada() {
+            const estilos = getComputedStyle(document.documentElement);
+            const primary = parsearColorPdf(estilos.getPropertyValue('--primary'))
+                || parsearColorPdf(estilos.getPropertyValue('--secondary'))
+                || [17, 24, 39];
+            const textDark = parsearColorPdf(estilos.getPropertyValue('--text-dark'))
+                || [31, 41, 55];
+            const textSoft = parsearColorPdf(estilos.getPropertyValue('--text-light'))
+                || [100, 116, 139];
+
+            return {
+                primary,
+                primarySoft: mezclarColorPdf(primary, [255, 255, 255], 0.9),
+                surface: [250, 247, 242],
+                white: [255, 255, 255],
+                border: [226, 232, 240],
+                textDark,
+                textSoft,
+                successBg: [220, 252, 231],
+                successText: [22, 101, 52]
+            };
+        }
+
         async function descargarOrdenConfirmada(ordenId) {
             const orden = obtenerOrdenPorId(ordenId);
 
@@ -3111,9 +3257,7 @@
                     format: 'a4'
                 });
 
-                const colorPrimario = [15, 58, 125];
-                const colorTexto = [30, 41, 59];
-                const colorSuave = [100, 116, 139];
+                const colors = obtenerTemaPdfOrdenConfirmada();
                 const margen = 16;
                 const anchoPagina = pdf.internal.pageSize.getWidth();
                 const altoPagina = pdf.internal.pageSize.getHeight();
@@ -3141,128 +3285,209 @@
                 const fechaSorteo = window.rifaplusConfig?.obtenerFechaSorteoFormato?.()
                     || window.rifaplusConfig?.rifa?.fechaSorteoFormato
                     || 'Por confirmar';
-                const nombreCliente = obtenerNombreCompletoOrden(orden);
-                const nombreSorteo = orden.nombre_sorteo
+                const nombreCliente = sanitizarTextoPdf(obtenerNombreCompletoOrden(orden));
+                const nombreSorteo = sanitizarTextoPdf(orden.nombre_sorteo
                     || orden.sorteo_nombre
                     || window.rifaplusConfig?.rifa?.nombreSorteo
-                    || 'Sorteo';
-                const nombreOrganizador = window.rifaplusConfig?.cliente?.nombre || 'Organizador';
-                const whatsapp = orden.whatsapp || orden.telefono_cliente || appState.currentWhatsapp || '-';
-
-                function dibujarEncabezadoBoletos(actualY) {
-                    pdf.setFillColor(255, 255, 255);
-                    pdf.setDrawColor(226, 232, 240);
-                    pdf.roundedRect(margen, actualY, anchoContenido, 14, 4, 4, 'FD');
-                    pdf.setFont('helvetica', 'bold');
-                    pdf.setFontSize(11);
-                    pdf.setTextColor(...colorTexto);
-                    pdf.text('Boletos comprados', margen + 5, actualY + 9);
-                    pdf.setFont('courier', 'normal');
-                    pdf.setFontSize(10);
-                    pdf.setTextColor(...colorTexto);
-                    return actualY + 18;
-                }
+                    || 'Sorteo');
+                const nombreOrganizador = sanitizarTextoPdf(window.rifaplusConfig?.cliente?.nombre || 'Organizador');
+                const fechaSorteoBonita = window.rifaplusConfig?.rifa?.fechaSorteo
+                    ? sanitizarTextoPdf(new Date(window.rifaplusConfig.rifa.fechaSorteo).toLocaleDateString('es-MX', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    }))
+                    : sanitizarTextoPdf(fechaSorteo);
+                const whatsapp = sanitizarTextoPdf(orden.whatsapp || orden.telefono_cliente || appState.currentWhatsapp || '-');
+                const logoDataUrl = await cargarImagenComoDataUrl(obtenerLogoPdfOrdenConfirmada());
+                const bancoConfirmado = sanitizarTextoPdf(orden.nombre_banco || orden.banco || 'Pago confirmado');
 
                 let y = margen;
+                pdf.setFillColor(255, 255, 255);
+                pdf.rect(0, 0, anchoPagina, altoPagina, 'F');
 
-                pdf.setFillColor(...colorPrimario);
-                pdf.roundedRect(margen, y, anchoContenido, 26, 5, 5, 'F');
+                const headerAltura = 32;
+                const logoBoxWidth = 36;
+                const rightBoxWidth = 54;
+                const centerWidth = anchoContenido - logoBoxWidth - rightBoxWidth - 8;
+
+                pdf.setFillColor(...colors.primary);
+                pdf.roundedRect(margen, y, anchoContenido, headerAltura, 6, 6, 'F');
+
+                if (logoDataUrl?.dataUrl) {
+                    try {
+                        const logoBoxX = margen + 5;
+                        const logoBoxY = y + 4;
+                        const logoMaxWidth = 26;
+                        const logoMaxHeight = 24;
+                        const logoFit = calcularCajaAjustadaPdf({
+                            maxWidth: logoMaxWidth,
+                            maxHeight: logoMaxHeight,
+                            sourceWidth: logoDataUrl.width,
+                            sourceHeight: logoDataUrl.height
+                        });
+
+                        pdf.addImage(
+                            logoDataUrl.dataUrl,
+                            'PNG',
+                            logoBoxX + logoFit.offsetX,
+                            logoBoxY + logoFit.offsetY,
+                            logoFit.width,
+                            logoFit.height,
+                            undefined,
+                            'FAST'
+                        );
+                    } catch (_) {
+                        // Si falla el logo, seguimos solo con texto.
+                    }
+                }
+
+                const xTextoHeader = margen + logoBoxWidth;
                 pdf.setTextColor(255, 255, 255);
                 pdf.setFont('helvetica', 'bold');
-                pdf.setFontSize(18);
-                pdf.text(nombreOrganizador, margen + 6, y + 10);
-                pdf.setFontSize(11);
+                pdf.setFontSize(15);
+                pdf.text(pdf.splitTextToSize(nombreOrganizador, centerWidth).slice(0, 1), xTextoHeader, y + 10);
                 pdf.setFont('helvetica', 'normal');
-                pdf.text(`Orden confirmada · ${nombreSorteo}`, margen + 6, y + 17);
-                pdf.setFont('helvetica', 'bold');
-                pdf.text(`#${String(orden.id || orden.numero_orden || '-')}`, anchoPagina - margen - 6, y + 11, { align: 'right' });
-                pdf.setFont('helvetica', 'normal');
-                pdf.text(fechaOrdenLarga, anchoPagina - margen - 6, y + 17, { align: 'right' });
+                pdf.setFontSize(9.5);
+                pdf.text('Constancia de participacion confirmada', xTextoHeader, y + 18);
+                pdf.setFontSize(8.2);
+                pdf.text('Documento oficial de orden confirmada', xTextoHeader, y + 24);
 
-                y += 34;
+                dibujarEtiquetaEstadoPdf(pdf, {
+                    x: anchoPagina - margen - rightBoxWidth + 4,
+                    y: y + 4.5,
+                    texto: 'PAGO VERIFICADO',
+                    fillColor: colors.successBg,
+                    textColor: colors.successText
+                });
+
+                const xDatosDerecha = anchoPagina - margen - 6;
+                pdf.setTextColor(255, 255, 255);
+                pdf.setFont('helvetica', 'bold');
+                pdf.setFontSize(10.5);
+                pdf.text(`#${sanitizarTextoPdf(String(orden.id || orden.numero_orden || '-'))}`, xDatosDerecha, y + 18, { align: 'right' });
+                pdf.setFont('helvetica', 'normal');
+                pdf.setFontSize(8.2);
+                pdf.text(pdf.splitTextToSize(sanitizarTextoPdf(fechaOrdenLarga), rightBoxWidth - 4).slice(0, 2), xDatosDerecha, y + 24, { align: 'right' });
+
+                y += 36;
+
+                pdf.setFillColor(...colors.white);
+                pdf.setDrawColor(...colors.border);
+                pdf.roundedRect(margen, y, anchoContenido, 16, 4, 4, 'FD');
+                pdf.setTextColor(...colors.textDark);
+                pdf.setFont('helvetica', 'bold');
+                pdf.setFontSize(10.4);
+                pdf.text(pdf.splitTextToSize(`Sorteo: ${nombreSorteo}`, anchoContenido - 12).slice(0, 2), margen + 6, y + 10);
+
+                y += 22;
+
+                pdf.setFillColor(...colors.white);
+                pdf.setDrawColor(...colors.border);
+                pdf.roundedRect(margen, y, anchoContenido, 22, 5, 5, 'FD');
+                pdf.setTextColor(...colors.textDark);
+                pdf.setFont('helvetica', 'bold');
+                pdf.setFontSize(13.2);
+                pdf.text('Ya estas participando en este sorteo', margen + 6, y + 9);
+                pdf.setFont('helvetica', 'normal');
+                pdf.setFontSize(9.6);
+                const subtituloParticipacion = pdf.splitTextToSize(
+                    'Tu pago fue validado correctamente. Conserva este documento como respaldo oficial de tu participacion y de tus boletos asignados.',
+                    anchoContenido - 12
+                );
+                pdf.text(subtituloParticipacion, margen + 6, y + 15);
+
+                y += 28;
 
                 const mitad = (anchoContenido - 4) / 2;
-                const baseY = y;
-                const yIzquierda = dibujarBloqueInfoPdf(pdf, {
+                const yCliente = dibujarBloqueInfoPdf(pdf, {
                     x: margen,
-                    y: baseY,
+                    y,
                     width: mitad,
-                    title: 'Cliente',
+                    title: 'Titular de la orden',
                     rows: [
-                        { label: 'Nombre', value: nombreCliente },
+                        { label: 'Cliente', value: nombreCliente },
                         { label: 'WhatsApp', value: whatsapp },
-                        { label: 'Sorteo', value: nombreSorteo },
-                        { label: 'Fecha sorteo', value: fechaSorteo }
+                        { label: 'Orden', value: String(orden.id || orden.numero_orden || '-') }
                     ]
                 });
-                const yDerecha = dibujarBloqueInfoPdf(pdf, {
+                const ySorteo = dibujarBloqueInfoPdf(pdf, {
                     x: margen + mitad + 4,
-                    y: baseY,
+                    y,
                     width: mitad,
-                    title: 'Resumen',
+                    title: 'Datos del sorteo',
                     rows: [
-                        { label: 'Cantidad', value: `${boletosFormateados.length} boletos` },
-                        { label: 'Subtotal', value: `$${subtotal.toFixed(2)}` },
-                        { label: 'Total', value: `$${total.toFixed(2)}` }
+                        { label: 'Sorteo', value: nombreSorteo },
+                        { label: 'Fecha sorteo', value: fechaSorteoBonita || fechaSorteo },
+                        { label: 'Estado pago', value: 'Verificado y confirmado' },
+                        { label: 'Banco', value: bancoConfirmado }
                     ]
                 });
-                y = Math.max(yIzquierda, yDerecha) + 8;
+                y = Math.max(yCliente, ySorteo) + 8;
+
+                const yCompra = dibujarBloqueInfoPdf(pdf, {
+                    x: margen,
+                    y,
+                    width: anchoContenido,
+                    title: 'Resumen de la participacion',
+                    rows: [
+                        { label: 'Cantidad', value: `${boletosFormateados.length} boleto(s)` },
+                        { label: 'Subtotal', value: `$${subtotal.toFixed(2)}` },
+                        ...(descuento > 0 ? [{ label: 'Descuento', value: `-$${descuento.toFixed(2)}` }] : []),
+                        { label: 'Total pagado', value: `$${total.toFixed(2)}` }
+                    ]
+                });
+                y = yCompra + 8;
+
+                pdf.setFillColor(...colors.white);
+                pdf.setDrawColor(...colors.border);
+                pdf.roundedRect(margen, y, anchoContenido, 16, 4, 4, 'FD');
+                pdf.setFont('helvetica', 'bold');
+                pdf.setFontSize(11);
+                pdf.setTextColor(...colors.textDark);
+                pdf.text('Boletos confirmados', margen + 5, y + 9);
+                pdf.setFont('helvetica', 'normal');
+                pdf.setFontSize(9.1);
+                pdf.setTextColor(...colors.textSoft);
+                pdf.text('Estos son los boletos con los que ya participas en el sorteo.', anchoPagina - margen - 5, y + 9, { align: 'right' });
+                y += 20;
 
                 const lineasBoletos = construirLineasBoletosPdf(boletosFormateados);
-                y = dibujarEncabezadoBoletos(y);
+                pdf.setFont('courier', 'bold');
+                pdf.setFontSize(10);
+                pdf.setTextColor(...colors.textDark);
 
                 lineasBoletos.forEach((linea) => {
                     const lineasRender = pdf.splitTextToSize(linea, anchoTextoBoletos);
                     const altoLinea = Math.max(1, lineasRender.length) * 5.2;
 
-                    if (y + altoLinea > altoPagina - 24) {
+                    if (y + altoLinea > altoPagina - 36) {
                         pdf.addPage();
-                        y = margen;
-                        y = dibujarEncabezadoBoletos(y);
+                        pdf.setFillColor(255, 255, 255);
+                        pdf.rect(0, 0, anchoPagina, altoPagina, 'F');
+                        y = margen + 8;
                     }
 
                     pdf.text(lineasRender, margen + 2, y);
                     y += altoLinea;
                 });
 
-                y += 4;
-                if (y > altoPagina - 42) {
-                    pdf.addPage();
-                    y = margen;
-                }
-
-                pdf.setDrawColor(226, 232, 240);
-                pdf.line(margen, y, anchoPagina - margen, y);
-                y += 8;
-
+                const yFooter = altoPagina - 26;
+                pdf.setDrawColor(...mezclarColorPdf(colors.primary, [255, 255, 255], 0.75));
+                pdf.line(margen, yFooter - 5, anchoPagina - margen, yFooter - 5);
                 pdf.setFont('helvetica', 'bold');
-                pdf.setFontSize(12);
-                pdf.setTextColor(...colorTexto);
-                pdf.text('Totales de la orden', margen, y);
-                y += 8;
-
-                pdf.setFontSize(10.5);
+                pdf.setFontSize(10);
+                pdf.setTextColor(...colors.textDark);
+                pdf.text('Documento de respaldo de orden confirmada', margen, yFooter);
                 pdf.setFont('helvetica', 'normal');
-                pdf.text(`Subtotal: $${subtotal.toFixed(2)}`, margen, y);
-                y += 6.5;
-
-                if (descuento > 0) {
-                    pdf.text(`Descuento: -$${descuento.toFixed(2)}`, margen, y);
-                    y += 6.5;
-                }
-
-                pdf.setFont('helvetica', 'bold');
-                pdf.setTextColor(...colorPrimario);
-                pdf.text(`Total pagado: $${total.toFixed(2)}`, margen, y);
-
-                pdf.setFont('helvetica', 'normal');
-                pdf.setFontSize(8.5);
-                pdf.setTextColor(...colorSuave);
+                pdf.setFontSize(8.8);
+                pdf.setTextColor(...colors.textSoft);
                 pdf.text(
-                    'Este documento resume tu orden confirmada. Conserva este PDF como respaldo de tus boletos.',
+                    'Conserva este PDF. Tu participacion ya fue validada y tu pago fue confirmado por el organizador.',
                     margen,
-                    altoPagina - 10
+                    yFooter + 6
                 );
+                pdf.text(`Emitido para ${nombreCliente}`, anchoPagina - margen, yFooter + 6, { align: 'right' });
 
                 const nombreArchivo = `orden-${String(orden.id || orden.numero_orden || 'confirmada').replace(/[^a-zA-Z0-9-_]/g, '-')}.pdf`;
                 pdf.save(nombreArchivo);
@@ -3739,6 +3964,7 @@
                 // Datos del cliente
                 const nombreCliente = orden.nombre_cliente || orden.nombre || 'Cliente';
                 const apellidosCliente = orden.apellido_cliente || orden.apellidos || '';
+                const referenciaPagoCliente = `${nombreCliente} ${apellidosCliente}`.trim() || nombreCliente || ordenId;
                 const whatsappCliente = orden.whatsapp || '';
                 const estadoCliente = orden.estado_cliente || '';
                 const ciudadCliente = orden.ciudad_cliente || '';
@@ -4096,8 +4322,8 @@
                             <div style="margin-bottom: 1.5rem;">
                                 <div style="font-size: 0.85rem; font-weight: 600; color: #6B7280; margin-bottom: 0.5rem;">Referencia de Pago</div>
                                 <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                    <span style="font-size: 1.1rem; color: #111111; font-weight: 800;">${ordenId}</span>
-                                    <button type="button" class="btn-copiar-inline" data-copiar="${ordenId}" title="Copiar referencia" style="background: #111111; color: white; border: none; padding: 0.4rem 0.6rem; border-radius: 4px; cursor: pointer; font-size: 0.7rem; font-weight: 700; display: flex; align-items: center; gap: 0.3rem; white-space: nowrap;">
+                                    <span style="font-size: 1.1rem; color: #111111; font-weight: 800;">${referenciaPagoCliente}</span>
+                                    <button type="button" class="btn-copiar-inline" data-copiar="${referenciaPagoCliente}" title="Copiar referencia" style="background: #111111; color: white; border: none; padding: 0.4rem 0.6rem; border-radius: 4px; cursor: pointer; font-size: 0.7rem; font-weight: 700; display: flex; align-items: center; gap: 0.3rem; white-space: nowrap;">
                                         <i class="fas fa-copy"></i> Copiar
                                     </button>
                                 </div>
